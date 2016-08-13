@@ -10,7 +10,7 @@ It has been compiled exclusively with g++ and C++14. Add -std=c++14 to the g++ c
 
 ##Dependencies
 [ICU](http://site.icu-project.org/) - [license](http://source.icu-project.org/repos/icu/icu/trunk/LICENSE).
-ID3-Tagging-Library requires the icu-uc package. Add `pkg-config icu-uc --cflags --libs` to the g++ command when compiling.
+ID3-Tagging-Library requires the icu-uc package. Add `\`pkg-config icu-uc --cflags --libs\`` to the g++ command when compiling.
 
 ##What ID3-Tagging-Library does do
 - Read ID3v1, ID3v1.1, and ID3v1 Extended tags.
