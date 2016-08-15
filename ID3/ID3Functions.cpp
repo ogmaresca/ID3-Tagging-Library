@@ -123,8 +123,8 @@ std::string ID3::getFrameName(const Frames frameID) {
 	//A vector that has a 1:1 correspondence with the Frames enum.
 	static std::vector<std::string> frames = {
 		"TALB", //0  - ALBUM
+		"TPE2", //2  - ALBUMARTIST
 		"TPE1", //1  - ARTIST
-		"TPE2", //2  - BAND
 		"TBPM", //3  - BPM
 		"COMM", //4  - COMMENT
 		"TCOM", //5  - COMPOSER

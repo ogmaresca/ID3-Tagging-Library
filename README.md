@@ -3,8 +3,9 @@ ID3-Tagging-Library
 
 This is a C++ library to read ID3 tags from MP3 files.
 
-DO NOT USE THIS. This is currently in very early alpha. Testing has been minimal, and it is lacking in features.
-It has also been developed and tested exclusively on Linux. I give no guarantees that it will work at all on Windows, OS X, or another OS.
+ID3-Tagging-Library is currently in alpha. I do not recommend using this library for a full product at the moment. Testing is currently minimal, and it is lacking in features.
+
+This library been developed and tested exclusively on Linux, I give no guarantees that it will work on Windows, OS X, or another OS.
 
 It has been compiled exclusively with g++ and C++14. Add `-std=c++14` to the g++ compilation command to compile with C++14.
 

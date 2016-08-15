@@ -13,10 +13,10 @@
 #ifndef ID3_H
 #define ID3_H
 
-#include <fstream>
-#include <vector>
-#include <unordered_map>
-#include <memory>
+#include <fstream>       //For std::ifstream
+#include <vector>        //For std::vector
+#include <unordered_map> //For std::unordered_map and std::pair
+#include <memory>        //For std::shared_ptr
 
 #include "ID3Frame.h"
 
@@ -179,10 +179,11 @@ namespace ID3 {
 		ALBUM=0,   //TALB - The 'Album/Movie/Show title' frame is
 		           //intended for the title of the recording(/source of
 		           //sound) which the audio in the file is taken from. 
-		ARTIST=1,  //TPE1 - The 'Lead artist(s)/Lead performer(s)/Soloist(s)/
+		ALBUMARTIST=1,//TPE2 - The 'Band/Orchestra/Accompaniment' frame
+		           //is used for additional information about the
+		           //performers in the recording.
+		ARTIST=2,  //TPE1 - The 'Lead artist(s)/Lead performer(s)/Soloist(s)/
 		           //Performing group' is used for the main artist(s)
-		BAND=2,    //TPE2 - The 'Band/Orchestra/Accompaniment' frame is used for
-		           //additional information about the performers in the recording. 
 		BPM=3,     //TBPM - The 'BPM' frame contains the number of beats
 		           //per minute in the mainpart of the audio. The BPM is
 		           //an integer and represented as a numerical string. 
@@ -395,6 +396,14 @@ namespace ID3 {
 			 *         no title set.
 			 */
 			std::string album() const;
+			
+			/**
+			 * Get the album artist/band/orchestra/accompaniment tag.
+			 * 
+			 * @return The Album artist of the music file, or "" if
+			 *         there is no tag set.
+			 */
+			std::string albumArtist() const;
 			
 			/**
 			 * Get the year tag.

@@ -55,7 +55,7 @@ namespace ID3 {
 			 * @return true if the frame was read/created succesfully,
 			 *         false if not.
 			 */
-			virtual bool null() const final;
+			bool null() const;
 			
 			/**
 			 * Get the position of the byte at the end of the file
@@ -65,7 +65,7 @@ namespace ID3 {
 			 * 
 			 * @return The last byte it read from.
 			 */
-			virtual unsigned long end() const final;
+			unsigned long end() const;
 			
 			/**
 			 * Get the size of the frame.
@@ -73,27 +73,27 @@ namespace ID3 {
 			 * 
 			 * @return The size of the frame.
 			 */
-			virtual unsigned long size() const final;
+			unsigned long size() const;
 			
 			/**
 			 * Get the string ID of the frame (ex: "TIT2" for titles).
 			 * 
 			 * @return The frame ID.
 			 */
-			virtual std::string frame() const final;
+			std::string frame() const;
 			
 			/**
 			 * Get the content of the frame as bytes.
 			 * 
 			 * @return The frame content, including the header.
 			 */
-			virtual ByteArray bytes() const final;
+			ByteArray bytes() const;
 			
 			/**
 			 * Revert any changes made to the frame since it was last
 			 * read, created, or written.
 			 */
-			virtual void revert() final;
+			void revert();
 			
 			/**
 			 * Check if the Frame has been edited. Call revert() to undo
@@ -101,7 +101,7 @@ namespace ID3 {
 			 * 
 			 * @return true if the Frame has been edited, false if not.
 			 */
-			virtual bool edited() const final;
+			bool edited() const;
 			
 			/**
 			 * Check how the Frame was created.
@@ -109,7 +109,7 @@ namespace ID3 {
 			 * @return true if the constructor with an file object was
 			 *         called, false if not.
 			 */
-			virtual bool createdFromFile() const final;
+			bool createdFromFile() const;
 			
 			/**
 			 * Save any changes made to the frame, and get the updated

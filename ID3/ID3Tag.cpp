@@ -82,6 +82,11 @@ std::string Tag::artist() const {
 }
 
 ///@pkg ID3.h
+std::string Tag::albumArtist() const {
+	return getFrameText(Frames::ALBUMARTIST);
+}
+
+///@pkg ID3.h
 std::string Tag::album() const {
 	return getFrameText(Frames::ALBUM);
 }
