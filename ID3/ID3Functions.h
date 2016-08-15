@@ -6,13 +6,15 @@
  * certain conditions.                                                 *
  *                                                                     *
  * @author Gerard Godone-Maresca                                       *
+ * @copyright Gerard Godone-Maresca, 2016, GNU Public License v3       *
+ * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
 #ifndef ID3_FUNCTIONS_H
 #define ID3_FUNCTIONS_H
 
-#include <string>
-#include <vector>
+#include <string> //For std::string
+#include <vector> //For std::vector
 
 /**
  * The ID3 namespace defines everything related to reading and writing
@@ -26,11 +28,16 @@
  */
 namespace ID3 {
 	/**
-	 * A function to get the genre of a song, from an ID3v1 genre int.
-	 * @param genre The integer ID for the ID3v1 genre.
-	 * @returns The genre if the genre was found, and a blank string otherwise.
+	 * ID3v1 Functions.
 	 */
-	std::string getGenreString(int genre);
+	namespace V1 {
+		/**
+		 * A function to get the genre of a song, from an ID3v1 genre int.
+		 * @param genre The integer ID for the ID3v1 genre.
+		 * @returns The genre if the genre was found, and a blank string otherwise.
+		 */
+		std::string getGenreString(int genre);
+	}
 	
 	/**
 	 * Receives a char array, and calculates the multi-byte integer that
@@ -71,7 +78,7 @@ namespace ID3 {
 	 * @param u16s The char vector that contains a UTF-16 encoded string.
 	 * @return The UTF-8 encoded string.
 	 */
-	std::string utf16toutf8(const std::vector<char>& u16s);
+	std::string utf16toutf8(const ByteArray& u16s);
 	
 	/**
 	 * Convert a Frames enum value to the ID3v2 frame name string.
@@ -79,7 +86,7 @@ namespace ID3 {
 	 * @param frameID A Frames enum variable.
 	 * @return The ID3v2 frame ID string.
 	 */
-	std::string getFrameName(Frames frameID);
+	std::string getFrameName(const Frames frameID);
 }
 
 #endif

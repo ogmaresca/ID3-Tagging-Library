@@ -6,9 +6,11 @@
  * certain conditions.                                                 *
  *                                                                     *
  * @author Gerard Godone-Maresca                                       *
+ * @copyright Gerard Godone-Maresca, 2016, GNU Public License v3       *
+ * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <iostream>
+//#include <iostream> //For printing
 
 #include "ID3.h"
 #include "ID3Frame.h"
@@ -16,131 +18,98 @@
 
 using namespace ID3;
 
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+//////////////////////////////  F R A M E //////////////////////////////
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
 ///@pkg ID3Frame.h
-Frame::Frame(std::ifstream& file,
-             const unsigned long readpos,
-             const unsigned int version,
-             const unsigned long filesize) : Frame::Frame() {
-	startpos = readpos;
-	
-	FrameHeader header;
-	
-	file.seekg(readpos, std::ifstream::beg);
-	if(file.fail()) return;
-	
-	file.read(reinterpret_cast<char *>(&header), HEADER_BYTE_SIZE);
-	frameSize = uchar_arr_binary_num(header.size, 4, version >= 4);
-	endpos = startpos + frameSize + HEADER_BYTE_SIZE;
-	
-	id = terminatedstring(header.id, 4);
-	
-	if(frameSize == 0 || endpos > filesize) return;
-	
-	isNull = false;
-	
-	if(isTextFrame())
-		getTextFrame(file);
-}
+Frame::Frame() noexcept : ID3Ver(MAX_SUPPORTED_VERSION),
+                          endPosition(0),
+                          isNull(true),
+                          isEdited(false),
+                          isFromFile(false) {}
 
 ///@pkg ID3Frame.h
 Frame::Frame(const std::string& frameName,
-             const std::string& text) : Frame::Frame() {
-	id = frameName;
-	if(isTextFrame()) {
-		textContent = text;
-		textContentOnFile = textContent;
-		frameSize = textContent.size();
-		isNull = false;
-	}
-}
+		     const unsigned short version,
+		     ByteArray& frameBytes,
+		     const unsigned long end) : id(frameName),
+		                                ID3Ver(version),
+		                                frameContent(frameBytes),
+		                                endPosition(end),
+		                                isNull(true),
+		                                isEdited(false),
+		                                isFromFile(true) {}
 
 ///@pkg ID3Frame.h
-Frame::Frame() : startpos(0),
-                 endpos(0),
-                 frameSize(0),
-                 isNull(true) {}
+Frame::~Frame() {}
 
 ///@pkg ID3Frame.h
 bool Frame::null() const { return isNull; }
 
 ///@pkg ID3Frame.h
-unsigned long Frame::start() const { return startpos; }
+unsigned long Frame::end() const { return endPosition; }
 
 ///@pkg ID3Frame.h
-unsigned long Frame::end() const { return endpos; }
-
-///@pkg ID3Frame.h
-unsigned long Frame::size() const { return frameSize; }
+unsigned long Frame::size() const { return frameContent.size(); }
 
 ///@pkg ID3Frame.h
 std::string Frame::frame() const { return id; }
 
 ///@pkg ID3Frame.h
-bool Frame::isTextFrame() const {
-	return id[0] == 'T' || id == "COMM";
-}
+void Frame::revert() { read(frameContent); }
 
 ///@pkg ID3Frame.h
-std::string Frame::text() const { return textContent; }
+bool Frame::edited() const { return isEdited; }
 
 ///@pkg ID3Frame.h
-void Frame::text(std::string newValue) {
-	if(isTextFrame())
-		textContent = newValue;
-}
+bool Frame::createdFromFile() const { return isFromFile; }
 
 ///@pkg ID3Frame.h
-void Frame::revert() {
-	if(isTextFrame())
-		textContent = textContentOnFile;
-}
+ByteArray Frame::bytes() const { return frameContent; }
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+///////////////////////  U N K N O W N F R A M E ///////////////////////
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3Frame.h
-void Frame::save() {
-	if(isTextFrame())
-		textContentOnFile = textContent;
-}
-
-///@pkg ID3Frame.h
-bool Frame::edited() const {
-	if(isTextFrame())
-		return textContent == textContentOnFile;
-	
-	return false;
-}
-
-///@pkg ID3Frame.h
-bool Frame::createdFromFile() const {
-	return startpos > 0 && endpos > 0 && frameSize > 0;
-}
-
-///@pkg ID3Frame.h
-void Frame::getTextFrame(std::ifstream& file) {
-	uint8_t encodingChar;
-	FrameEncoding encoding(FrameEncoding::LATIN1);
-	
-	//Get the frame's encoding. Default to LATIN-1.
-	//NOTE: LATIN-1 is not currently supported beyond ASCII characters.
-	file.seekg(startpos + HEADER_BYTE_SIZE, std::ifstream::beg);
-	file.read(reinterpret_cast<char *>(&encodingChar), 1);
-	switch((int)encodingChar) {
-		case FrameEncoding::UTF16BOM: { encoding = FrameEncoding::UTF16BOM; break; }
-		case FrameEncoding::UTF16BE: { encoding = FrameEncoding::UTF16BE; break; }
-		case FrameEncoding::UTF8: { encoding = FrameEncoding::UTF8; break; }
-		case FrameEncoding::LATIN1: default: { break; }
+UnknownFrame::UnknownFrame(const std::string& frameName,
+                           const unsigned short version,
+			               ByteArray& frameBytes,
+			               const unsigned long end) : Frame::Frame(frameName,
+			                                                       version,
+			                                                       frameBytes,
+			                                                       end) {
+	//If the frame is only its header, or not even that, then it's
+	//invalid and thus null
+	if(frameContent.size() > HEADER_BYTE_SIZE) {
+		read(frameBytes);
+		isNull = false;
 	}
+}
+
+///@pkg ID3Frame.h
+UnknownFrame::UnknownFrame(const std::string& frameName) : Frame::Frame() {
+	id = frameName;
+}
+
+///@pkg ID3Frame.h
+UnknownFrame::UnknownFrame() noexcept : Frame::Frame() {}
+
+///@pkg ID3Frame.h
+ByteArray UnknownFrame::write(unsigned short version) {
+	return frameContent;
+}
+
+///@pkg ID3Frame.h
+void UnknownFrame::read(ByteArray& frameBytes) {
+	frameContent = frameBytes;
 	
-	std::vector<char> text(frameSize - 1);
-	file.seekg(startpos + HEADER_BYTE_SIZE + 1, std::ifstream::beg);
-	file.read(&text.front(), frameSize - 1);
-	
-	if(encoding == FrameEncoding::UTF16BOM || encoding == FrameEncoding::UTF16BE) {
-		textContent = utf16toutf8(text);
-	} else { //TODO: Differentiate between UTF-8 and LATIN-1.
-		textContent = std::string(text.begin(), text.end());
-	}
-	
-	std::cout << "Content for frame " << id << ": " << textContent << std::endl;
-	
-	textContentOnFile = textContent;
+	//Pictures are huge, don't want to print that
+	//if(id != "APIC")
+	//	std::cout << "Content for UnknownFrame " << id << ": " << std::string(frameBytes.begin()+HEADER_BYTE_SIZE, frameBytes.end()) << std::endl;
 }

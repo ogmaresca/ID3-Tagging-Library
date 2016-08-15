@@ -6,6 +6,8 @@
  * certain conditions.                                                 *
  *                                                                     *
  * @author Gerard Godone-Maresca                                       *
+ * @copyright Gerard Godone-Maresca, 2016, GNU Public License v3       *
+ * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
 #include <iostream>  //For printing
@@ -15,6 +17,7 @@
 
 #include "ID3.h"
 #include "ID3Functions.h"
+#include "ID3FrameFactory.h"
 #include "ID3Frame.h"
 
 using namespace ID3;
@@ -67,7 +70,7 @@ std::string Tag::genre(bool process) const {
 			int genreInt = atoi(genreIntStr.substr(1, genreIntStr.length() - 1).c_str());
 			genreString = std::regex_replace(genreString, findV1Genre, "");
 			if(genreString.length() <= 0)
-				genreString = getGenreString(genreInt);
+				genreString = V1::getGenreString(genreInt);
 		}
 	}
 	return genreString;
@@ -192,8 +195,8 @@ void Tag::getFile(std::ifstream& file, bool close) {
 	
 	isNull = false;
 	
-	getFileV1(file);
 	getFileV2(file);
+	getFileV1(file);
 	
 	try {
 		if(close) file.close();
@@ -252,20 +255,15 @@ void Tag::getFileV2(std::ifstream& file) {
 		
 		if(memcmp(tagsHeader.header, "ID3", 3) != 0)
 			return;
-			
-		tagsSet.v2 = true;
 		
 		v2TagInfo.majorVer = tagsHeader.majorVer;
 		v2TagInfo.minorVer = tagsHeader.minorVer;
+		
+		//Make sure the ID3v2 version is supported
 		if(v2TagInfo.majorVer < MIN_SUPPORTED_VERSION ||
 		   v2TagInfo.majorVer > MAX_SUPPORTED_VERSION ||
-		   v2TagInfo.minorVer != SUPPORTED_MINOR_VERSION) {
-			std::cout << "File uses ID3v2 version " << v2TagInfo.majorVer
-			          << "." << v2TagInfo.minorVer << ", which does not"
-			          << " have read support in this program." << std::endl;
-			tagsSet.v2 = false;
+		   v2TagInfo.minorVer != SUPPORTED_MINOR_VERSION)
 			return;
-		}
 		
 		v2TagInfo.size = uchar_arr_binary_num(tagsHeader.size, 4, true);
 		if((unsigned int)tagsHeader.flags & FLAG_UNSYNCHRONISATION == FLAG_UNSYNCHRONISATION)
@@ -277,17 +275,20 @@ void Tag::getFileV2(std::ifstream& file) {
 		if((unsigned int)tagsHeader.flags & FLAG_FOOTER == FLAG_FOOTER)
 			v2TagInfo.flagFooter = true;
 			
-		if(v2TagInfo.size > filesize) {
-			if(!tagsSet.v1 && !tagsSet.v1_1 && !tagsSet.v1Extended)
-				isNull = true;
+		if(v2TagInfo.size > filesize)
 			return;
-		}
+			
+		tagsSet.v2 = true;
 		
 		//The position to start reading from the file
 		int frameStartPos = HEADER_BYTE_SIZE;
 		
 		//Skip over the extended header
 		if(v2TagInfo.flagExtHeader) {
+			//Verify that there space in the file for an extended header
+			if(frameStartPos + HEADER_BYTE_SIZE > filesize)
+				return;
+			
 			ExtHeader extHeader;
 			file.seekg(frameStartPos, std::ifstream::beg);
 			if(!file.fail()) {
@@ -298,14 +299,27 @@ void Tag::getFileV2(std::ifstream& file) {
 			}
 		}
 		
+		//The byte position on the file when the ID3v2 tags end
+		const long ID3EndPos = frameStartPos + v2TagInfo.size;
+		
+		//Validate the size of the ID3v2 tag
+		if(ID3EndPos > filesize)
+			return;
+			
+		//A FrameFactory to read the frames off the file
+		FrameFactory factory(file, v2TagInfo.majorVer, ID3EndPos);
+		
 		//Loop over the ID3 tags, and stop once all ID3 frames have been
 		//reached or a frame is null. Add every frame to the frames map.
-		while(frameStartPos + 10 < v2TagInfo.size && frameStartPos < filesize) {
-			Frame frame(file, frameStartPos, v2TagInfo.majorVer, filesize);
-			frameStartPos = frame.end();
-			if(frame.null())
-				break;
-			frames[frame.frame()] = frame;
+		while(frameStartPos + HEADER_BYTE_SIZE < ID3EndPos) {
+			//Create a new Frame at this position
+			FramePtr frame = factory.create(frameStartPos);
+			//Get the byte that it ends at
+			frameStartPos = frame->end();
+			//Break at a null Frame
+			if(frame->null()) break;
+			//Add the Frame to the map
+			frames.emplace(frame->frame(), frame);
 		}
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::getFileV2(const std::ifstream& file): " << e.what() << std::endl;
@@ -314,6 +328,7 @@ void Tag::getFileV2(std::ifstream& file) {
 
 ///@pkg ID3.h
 void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
+	//Check if this isn't actually a ID3v1.1 tag
 	if(zeroCheck && tags.comment[28] == '\0') {
 		V1::P1Tag correctID3VerTags;
 		std::memcpy(&correctID3VerTags, &tags, sizeof correctID3VerTags);
@@ -323,13 +338,28 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 	
 	tagsSet.v1 = true;
 	
+	//Save the V1 tags as Frame objects.
+	//Since I'm using std::unordered_map.emplace(), these will not
+	//overwrite any V2 tags.
 	try {
-		frames["TIT2"] = Frame("TIT2", terminatedstring(tags.title, 30));
-		frames["TPE1"] = Frame("TPE1", terminatedstring(tags.artist, 30));
-		frames["TALB"] = Frame("TALB", terminatedstring(tags.album, 30));
-		frames["TYER"] = Frame("TYER", terminatedstring(tags.year, 4));
-		//frames["COMM"] = Frame("COMM", terminatedstring(tags.comment, 30));
-		frames["TCON"] = Frame("TCON", getGenreString(tags.genre));
+		frames.emplace(FrameFactory::createPair(Frames::TITLE,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.title, 30)));
+		frames.emplace(FrameFactory::createPair(Frames::ARTIST,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.artist, 30)));
+		frames.emplace(FrameFactory::createPair(Frames::ALBUM,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.album, 30)));
+		frames.emplace(FrameFactory::createPair(Frames::YEAR,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.year, 4)));
+		/*frames.emplace(FrameFactory::createPair(Frames::COMMENT,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.comment, 30)));*/
+		frames.emplace(FrameFactory::createPair(Frames::GENRE,
+		                                        v2TagInfo.majorVer,
+		                                        V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(const ID3::v1Tag& tags, bool zeroCheck): " << e.what() << std::endl;
 	}
@@ -337,6 +367,7 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 
 ///@pkg ID3.h
 void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
+	//Check that this isn't actually an ID3v1 tag
 	if(zeroCheck && tags.zero != '\0') {
 		V1::Tag correctID3VerTags;
 		std::memcpy(&correctID3VerTags, &tags, sizeof correctID3VerTags);
@@ -346,14 +377,31 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 	
 	tagsSet.v1_1 = true;
 	
+	//Save the V1.1 tags as Frame objects.
+	//Since I'm using std::unordered_map.emplace(), these will not
+	//overwrite any V2 tags.
 	try {
-		frames["TIT2"] = Frame("TIT2", terminatedstring(tags.title, 30));
-		frames["TPE1"] = Frame("TPE1", terminatedstring(tags.artist, 30));
-		frames["TALB"] = Frame("TALB", terminatedstring(tags.album, 30));
-		frames["TYER"] = Frame("TYER", terminatedstring(tags.year, 4));
-		//frames["COMM"] = Frame("COMM", terminatedstring(tags.comment, 28));
-		frames["TRCK"] = Frame("TRCK", std::to_string(tags.trackNum));
-		frames["TCON"] = Frame("TCON", getGenreString(tags.genre));
+		frames.emplace(FrameFactory::createPair(Frames::TITLE,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.title, 30)));
+		frames.emplace(FrameFactory::createPair(Frames::ARTIST,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.artist, 30)));
+		frames.emplace(FrameFactory::createPair(Frames::ALBUM,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.album, 30)));
+		frames.emplace(FrameFactory::createPair(Frames::YEAR,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.year, 4)));
+		/*frames.emplace(FrameFactory::createPair(Frames::COMMENT,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.comment, 28)));*/
+		frames.emplace(FrameFactory::createPair(Frames::TRACK,
+		                                        v2TagInfo.majorVer,
+		                                        std::to_string(tags.trackNum)));
+		frames.emplace(FrameFactory::createPair(Frames::GENRE,
+		                                        v2TagInfo.majorVer,
+		                                        V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(const ID3::v1_1Tag& tags, bool zeroCheck): " << e.what() << std::endl;
 	}
@@ -361,16 +409,29 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 
 ///@pkg ID3.h
 void Tag::setTags(const V1::ExtendedTag& tags) {
+	//Save the V1 Extended tags as Frame objects.
+	//Since I'm using std::unordered_map.emplace(), these will not
+	//overwrite any V2 tags.
 	try {
-		unsigned int speed;
-		
 		tagsSet.v1Extended = true;
 		
-		frames["TIT2"] = Frame("TIT2", terminatedstring(tags.title, 60));
-		frames["TPE1"] = Frame("TPE1", terminatedstring(tags.artist, 60));
-		frames["TALB"] = Frame("TALB", terminatedstring(tags.album, 60));
-		frames["TCON"] = Frame("TCON", terminatedstring(tags.genre, 30));
-		/*startTime = atoi(tags.startTime);
+		frames.emplace(FrameFactory::createPair(Frames::TITLE,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.title, 60)));
+		frames.emplace(FrameFactory::createPair(Frames::ARTIST,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.artist, 60)));
+		frames.emplace(FrameFactory::createPair(Frames::ALBUM,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.album, 60)));
+		frames.emplace(FrameFactory::createPair(Frames::GENRE,
+		                                        v2TagInfo.majorVer,
+		                                        terminatedstring(tags.genre, 30)));
+		/*
+		 * Placeholder comment for when I add playback speed support and
+		 * support for start and end times.
+		unsigned int speed;
+		startTime = atoi(tags.startTime);
 		endTime = atoi(tags.endTime);
 		speed = tags.speed;
 		
@@ -388,12 +449,24 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 
 ///@pkg ID3.h
 std::string Tag::getFrameText(Frames frameID) const {
+	//Get the frame ID
 	const std::string frameIDStr = getFrameName(frameID);
-	const std::unordered_map<std::string,Frame>::const_iterator result = frames.find(frameIDStr);
+	
+	//Check if the Frame is in the map
+	const FrameMap::const_iterator result = frames.find(frameIDStr);
 	if(result == frames.end()) return "";
-	const Frame& frameObj = result->second;
-	if(frameObj.null()) return "";
-	else                return frameObj.text();
+	
+	//If the frame is in the map, get it
+	FramePtr frameObj = result->second;
+	
+	//If the frame is "null" or not a TextFrame then return an empty string
+	if(frameObj->null())
+		return "";
+	
+	//Get the text frame
+	TextFrame* textFrameObj = dynamic_cast<TextFrame*>(frameObj.get());
+	
+	return textFrameObj == nullptr ? "" : textFrameObj->content();
 }
 
 ///@pkg ID3.h

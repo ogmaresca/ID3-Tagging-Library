@@ -6,6 +6,8 @@
  * certain conditions.                                                 *
  *                                                                     *
  * @author Gerard Godone-Maresca                                       *
+ * @copyright Gerard Godone-Maresca, 2016, GNU Public License v3       *
+ * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
 #ifndef ID3_H
@@ -14,6 +16,7 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include "ID3Frame.h"
 
@@ -28,8 +31,8 @@
  * All strings are stored in UTF-8. LATIN-1 is not currently supported
  * beyond the first 128 characters of ASCII.
  * 
- * ID3v2.3.0 standard: http://id3.org/id3v2.3.0
- * ID3v2.4.0 standard: http://id3.org/id3v2.4.0-structure
+ * ID3v2.3.0 standard: @link http://id3.org/id3v2.3.0
+ * ID3v2.4.0 standard: @link http://id3.org/id3v2.4.0-structure
  * 
  * @todo Add LATIN-1 support beyond ASCII characters.
  * @todo Add write support.
@@ -39,7 +42,6 @@
  * @todo Add support for multiple values.
  * @todo Add support for non-text frames.
  * @todo Add support for comment (COMM) frames.
- * @todo Create a frame factory and multiple Frame children.
  * @todo Support frame flags.
  * @todo Read the ID3v2 Extended Header.
  * @todo Read the ID3v2 Footer.
@@ -47,10 +49,19 @@
 namespace ID3 {
 	////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////
+	/////////////////////////  T Y P E D E F S /////////////////////////
+	////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////
+	typedef std::vector<char> ByteArray;
+	typedef std::shared_ptr<Frame> FramePtr;
+	typedef std::unordered_map<std::string, FramePtr> FrameMap;
+	typedef std::pair<std::string, FramePtr> FramePair;
+	
+	////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////
 	////////////////////////  C O N S T A N T S ////////////////////////
 	////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////
-	
 	/**
 	 * ID3v1 contstants.
 	 */
@@ -103,6 +114,14 @@ namespace ID3 {
 	extern const short FLAG_EXT_HEADER;
 	extern const short FLAG_EXPERIMENTAL;
 	extern const short FLAG_FOOTER;
+	
+	/**
+	 * The maximum size allowed for ID3v2 tags.
+	 * The ID3v2 size field is 4 bytes long, and each byte is unsigned
+	 * and synchsafe (the most significant bit is always 0).
+	 * The value is therefore 2^28 - 1, ~268MB, or ~256MiB.
+	 */
+	extern const long MAX_TAG_SIZE;
 	
 	////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////
@@ -574,12 +593,10 @@ namespace ID3 {
 			
 			/**
 			 * Helper method to get text content from a frame.
-			 * This does not check first to see if the Frame is a text
-			 * frame or not.
 			 * 
 			 * @param frameID The Frame enum member.
 			 * @returns The text content, or "" if the frame does not
-			 *          exist or is null.
+			 *          exist, is null, or is not a TextFrame.
 			 */
 			std::string getFrameText(Frames frameID) const;
 			
@@ -608,7 +625,7 @@ namespace ID3 {
 			 * A map of all frames created from ID3v1 tags and read from
 			 * ID3v2 frames.
 			 */
-			std::unordered_map<std::string, Frame> frames;
+			FrameMap frames;
 	};
 }
 

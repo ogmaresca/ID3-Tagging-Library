@@ -6,10 +6,11 @@
  * certain conditions.                                                 *
  *                                                                     *
  * @author Gerard Godone-Maresca                                       *
+ * @copyright Gerard Godone-Maresca, 2016, GNU Public License v3       *
+ * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <vector>
-#include <glibmm/ustring.h>
+#include <vector> //For std::vector
 
 #include "ID3.h"
 
@@ -38,6 +39,9 @@ const short ID3::FLAG_UNSYNCHRONISATION = 0b10000000;
 const short ID3::FLAG_EXT_HEADER =        0b01000000;
 const short ID3::FLAG_EXPERIMENTAL =      0b00100000;
 const short ID3::FLAG_FOOTER =            0b00010000;
+
+///@pkg ID3.h
+const long ID3::MAX_TAG_SIZE = (1 << 28) - 1;
 
 ///@pkg ID3.h
 const std::vector<std::string> ID3::V1::GENRES = {

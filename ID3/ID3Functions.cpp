@@ -6,6 +6,8 @@
  * certain conditions.                                                 *
  *                                                                     *
  * @author Gerard Godone-Maresca                                       *
+ * @copyright Gerard Godone-Maresca, 2016, GNU Public License v3       *
+ * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
 #include <cstring>          //For ::strlen()
@@ -17,7 +19,7 @@
 using namespace ID3;
 
 ///@pkg ID3Functions.h
-std::string ID3::getGenreString(int genre) {
+std::string ID3::V1::getGenreString(int genre) {
 	if(genre >= 0 && genre < V1::GENRES.size())
 		return V1::GENRES[genre];
 	return "";
@@ -56,7 +58,7 @@ std::string ID3::terminatedstring(const char* str, std::string::size_type maxlen
 }
 
 ///@pkg ID3Functions.h
-std::string ID3::utf16toutf8(const std::vector<char>& u16s) {
+std::string ID3::utf16toutf8(const ByteArray& u16s) {
 	const int u16sSize = u16s.size();
 	
 	//UTF-16 uses 2-byte character widths. If there's 0 bytes then
@@ -117,22 +119,22 @@ std::string ID3::utf16toutf8(const std::vector<char>& u16s) {
 }
 
 ///@pkg ID3Functions.h
-std::string ID3::getFrameName(Frames frameID) {
+std::string ID3::getFrameName(const Frames frameID) {
 	//A vector that has a 1:1 correspondence with the Frames enum.
 	static std::vector<std::string> frames = {
-		"TALB", //ALBUM
-		"TPE1", //ARTIST
-		"TPE2", //BAND
-		"TBPM", //BPM
-		"COMM", //COMMENT
-		"TCOM", //COMPOSER
-		"TCOP", //COPYRIGHT
-		"TPOS", //DISC
-		"TCON", //GENRE
-		"TEXT", //LYRICIST
-		"TIT2", //TITLE
-		"TRCK", //TRACK
-		"TYET"  //YEAR
+		"TALB", //0  - ALBUM
+		"TPE1", //1  - ARTIST
+		"TPE2", //2  - BAND
+		"TBPM", //3  - BPM
+		"COMM", //4  - COMMENT
+		"TCOM", //5  - COMPOSER
+		"TCOP", //6  - COPYRIGHT
+		"TPOS", //7  - DISC
+		"TCON", //8  - GENRE
+		"TEXT", //9  - LYRICIST
+		"TIT2", //10 - TITLE
+		"TRCK", //11 - TRACK
+		"TYET"  //12 - YEAR
 	};
 	
 	if((unsigned int)frameID > frames.size())
