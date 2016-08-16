@@ -28,13 +28,20 @@
  * Items relating to ID3v1 are kept in the namespace ID3::V1. V2 related
  * items are kept within the ID3 namespace.
  * 
- * All strings are stored in UTF-8. LATIN-1 is not currently supported
- * beyond the first 128 characters of ASCII.
+ * All strings are stored in UTF-8 text encoding.
+ * 
+ * ID3 class knowledge:
+ *     The ID3::Tag class knows the C++ type equivalent of what each frame
+ *     stores, and any special formatting the frame has, as well as the ID3
+ *     header, footer, and ID3v1.
+ *     The ID3::FrameFactory class knows the frame header and how to create a
+ *     Frame object.
+ *     The ID3::Frame class' children know how to parse and store the bytes of
+ *     their frame(s), but not if the data is invalid or not.
  * 
  * ID3v2.3.0 standard: @link http://id3.org/id3v2.3.0
  * ID3v2.4.0 standard: @link http://id3.org/id3v2.4.0-structure
  * 
- * @todo Add LATIN-1 support beyond ASCII characters.
  * @todo Add write support.
  * @todo Test it on a greater variety of ID3 files, and unit tests.
  * @todo Properly process the TXXX (User-Defined Text) frame with its
@@ -47,21 +54,21 @@
  * @todo Read the ID3v2 Footer.
  */
 namespace ID3 {
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
-	/////////////////////////  T Y P E D E F S /////////////////////////
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	////////////////////////////// T Y P E D E F S //////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
 	typedef std::vector<char> ByteArray;
 	typedef std::shared_ptr<Frame> FramePtr;
 	typedef std::unordered_map<std::string, FramePtr> FrameMap;
 	typedef std::pair<std::string, FramePtr> FramePair;
 	
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
-	////////////////////////  C O N S T A N T S ////////////////////////
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	///////////////////////////// C O N S T A N T S /////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
 	/**
 	 * ID3v1 contstants.
 	 */
@@ -123,11 +130,11 @@ namespace ID3 {
 	 */
 	extern const long MAX_TAG_SIZE;
 	
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////  E N U M S ////////////////////////////
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////// E N U M S /////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
 	
 	/**
 	 * ID3v1 enums.
@@ -151,8 +158,8 @@ namespace ID3 {
 	enum FrameEncoding {
 		LATIN1   = 0, //AKA ISO-8859-1
 		UTF16BOM = 1, //AKA UCS-2
-		UTF16BE  = 2, //Supposedly ID3v2.4.0+ only
-		UTF8     = 3  //Supposedly ID3v2.4.0+ only
+		UTF16BE  = 2, //ID3v2.4+ only, ID3-Tagging-Library will read in ID3v2.3
+		UTF8     = 3  //ID3v2.4+ only, ID3-Tagging-Library will read in ID3v2.3
 	};
 	
 	/**
@@ -174,63 +181,121 @@ namespace ID3 {
 	 * An enum of different frames used in ID3v2. Use
 	 * ID3::getFrameName(ID3::Frames) to get the frame name used in the
 	 * standard.
+	 * 
+	 * @see http://id3.org/id3v2.3.0
+	 * @see http://id3.org/id3v2.4.0-frames
+	 * @todo Add values for each frame ID.
 	 */
 	enum Frames {
-		ALBUM=0,   //TALB - The 'Album/Movie/Show title' frame is
-		           //intended for the title of the recording(/source of
-		           //sound) which the audio in the file is taken from. 
-		ALBUMARTIST=1,//TPE2 - The 'Band/Orchestra/Accompaniment' frame
-		           //is used for additional information about the
-		           //performers in the recording.
-		ARTIST=2,  //TPE1 - The 'Lead artist(s)/Lead performer(s)/Soloist(s)/
-		           //Performing group' is used for the main artist(s)
-		BPM=3,     //TBPM - The 'BPM' frame contains the number of beats
-		           //per minute in the mainpart of the audio. The BPM is
-		           //an integer and represented as a numerical string. 
-		COMMENT=4, //COMM - This frame is indended for any kind of full
-		           //text information that does not fit in any other frame.
-		           //It consists of a frame header followed by encoding,
-		           //language and content descriptors and is ended with
-		           //the actual comment as a text string. Newline characters
-		           //are allowed in the comment text string. There may be
-		           //more than one comment frame in each tag, but only
-		           //one with the same language and content descriptor. 
-		COMPOSER=5,//TCOM - The 'Composer(s)' frame is intended for the
-		           //name of the composer(s).
-		COPYRIGHT=6,//TCOP - The 'Copyright message' frame, which must
-		           //begin with a year and a space character (making 5
-		           //characters), is intended for the copyright holder
-		           //of the original sound, not the audio file itself.
-		           //The absence of this frame means only that the
-		           //copyright information is unavailable or has been
-		           //removed, and must not be interpreted to mean that
-		           //the sound is public domain. Every time this field is
-		           //displayed the field must be preceded with "Copyright © ".
-		DISC=7,    //TPOS - The 'Part of a set' frame is a numeric string
-		           //that describes which part of a set the audio came from.
-		           //This frame is used if the source described in the
-		           //"TALB" frame is divided into several mediums, e.g.
-		           //a double CD. The value may be extended with a "/"
-		           //character and a numeric string containing the total
-		           //number of parts in the set. E.g. "1/2". 
-		GENRE=8,   //TCON - The 'Content type'. ID3v1 genres can be
-		           //added to the beginning wrapped around parenthesis,
-		           //optionally followed by genre text.
-		LYRICIST=9,//TEXT - The 'Lyricist(s)/Text writer(s)' frame is
-		           //intended for the writer(s) of the text or lyrics in
-		           //the recording.
-		TITLE=10,  //TIT2 - The 'Title/Songname/Content description'
-		           //frame is the actual name of the piece
-		           //(e.g. "Adagio", "Hurricane Donna"). 
-		TRACK=11,  //TRCK - The 'Track number/Position in set' frame is a
-		           //numeric string containing the order number of the
-		           //audio-file on its original recording. This may be
-		           //extended with a "/" character and a numeric string
-		           //containing the total numer of tracks/elements on the
-		           //original recording. E.g. "4/9". 
-		YEAR=12    //TYER - The 'Year' frame is a numeric string with a
-		           //year of the recording. This frames is always four
-		           //characters long (until the year 10000). 
+		ALBUM=0,//TALB - The 'Album/Movie/Show title' frame is intended for the
+		        //title of the recording(/source of sound) which the audio in the
+		        //file is taken from. 
+		        //ID3::Tag::album()
+		ALBUMARTIST=1,//TPE2 - The 'Band/Orchestra/Accompaniment' frame is used
+		        //for additional information about the performers in the recording.
+		        //ID3::Tag::albumArtist()
+		ARTIST=2,//TPE1 - The 'Lead artist(s)/Lead performer(s)/Soloist(s)/
+		        //Performing group' is used for the main artist(s)
+		        //ID3::Tag::artist()
+		BPM=3,  //TBPM - The 'BPM' frame contains the number of beats per minute
+		        //in the main part of the audio. The BPM is an integer and
+		        //represented as a numerical string.
+		        //ID3::Tag::bpm(bool)
+		COMMENT=4,//COMM - This frame is indended for any kind of full text
+		        //information that does not fit in any other frame. It consists of
+		        //a frame header followed by encoding, language and content
+		        //descriptors and is ended with the actual comment as a text
+		        //string. Newline characters are allowed in the comment text
+		        //string. There may be more than one comment frame in each tag,
+		        //but only one with the same language and content descriptor.
+		        ///@todo ID3::Tag::comment()
+		COMPOSER=5,//TCOM - The 'Composer(s)' frame is intended for the name of the composer(s).
+		        //ID3::Tag::composer()
+		CONDUCTOR=14,//TPE3 - The 'Conductor' frame is used for the name of the conductor.
+		        ///@todo ID3::Tag::conductor()
+		COPYRIGHT=6,//TCOP - The 'Copyright message' frame, which must begin with
+		        //a year and a space character (making 5 characters), is intended
+		        //for the copyright holder of the original sound, not the audio
+		        //file itself. The absence of this frame means only that the
+		        //copyright information is unavailable or has been removed, and
+		        //must not be interpreted to mean that the sound is public domain.
+		        //Every time this field is displayed the field must be preceded with "Copyright © ".
+		        ///@todo ID3::Tag::copyright()
+		DATE=15,//TDAT - The 'Date' frame is a numeric string in the DDMM format
+		        //containing the date for the recording. This field is always four characters long.
+		        ///@todo ID3::Tag::date(bool)
+		DESCRIPTION=21,//TIT3 - The 'Subtitle/Description refinement' frame is
+		        //used for information directly related to the contents title
+		        //(e.g. "Op. 16" or "Performed live at Wembley").
+		        ///@todo ID3::Tag::description()
+		DISC=7, //TPOS - The 'Part of a set' frame is a numeric string that
+		        //describes which part of a set the audio came from. This frame is
+		        //used if the source described in the "TALB" frame is divided into
+		        //several mediums, e.g. a double CD. The value may be extended with
+		        //a "/" character and a numeric string containing the total number
+		        //of parts in the set. E.g. "1/2".
+		        //ID3::Tag::disc(bool) ID3::Tag::discTotal(bool)
+		ENCODEDBY=16,//TENC - The 'Encoded by' frame contains the name of the
+		        //person or organisation that encoded the audio file. This field
+		        //may contain a copyright message, if the audio file also is copyrighted by the encoder.
+		        ///@todo ID3::Tag::encodedBy()
+		FILETYPE=18,//TFLT - The 'File type' frame indicates which type of audio
+		        //this tag defines. The following type and refinements are defined:
+		        //    MPG       MPEG Audio
+		        //    MPG/1     MPEG 1/2 layer I
+		        //    MPG/2     MPEG 1/2 layer II
+		        //    MPG/2.5   MPEG 2.5
+		        //    MPG/3     MPEG 1/2 layer III
+		        //    MPG/AAC   Advanced Audio Compression
+		        //    VQF       Transform-domain Weighted Interleave Vector Quantization
+		        //    PCM       Pulse Code Modulated audio
+		        //but other types may be used, not for these types though. This is
+		        //used in a similar way to the predefined types in the "TMED" frame,
+		        //but without parentheses. If this frame is not present audio type is assumed to be "MPG".
+		        ///@todo ID3::Tag::fileType()
+		GENRE=8,//TCON - The 'Content type'. ID3v1 genres can be added to the
+		        //beginning wrapped around parenthesis, optionally followed by genre text.
+		        //ID3::Tag::genre(bool)
+		GROUPING=20,//TIT1 - The 'Content group description' frame is used if the
+		        //sound belongs to a larger category of sounds/music. For example,
+		        //classical music is often sorted in different musical sections
+		        //(e.g. "Piano Concerto", "Weather - Hurricane").
+		        ///@todo ID3::Tag::grouping()
+		LYRICIST=9,//TEXT - The 'Lyricist(s)/Text writer(s)' frame is intended for
+		        //the writer(s) of the text or lyrics in the recording.
+		        ///@todo ID3::Tag::lyricist()
+		MUSICALKEY=22,//TKEY - The 'Initial key' frame contains the musical key in
+		        //which the sound starts. It is represented as a string with a
+		        //maximum length of three characters. The ground keys are
+		        //represented with "A","B","C","D","E", "F" and "G" and halfkeys
+		        //represented with "b" and "#". Minor is represented as "m".
+		        //Example "Cbm". Off key is represented with an "o" only.
+		        ///@todo ID3::Tag::musicalKey(bool)
+		PLAYLISTDELAY=17,//TDLY - The 'Playlist delay' defines the numbers of
+		        //milliseconds of silence between every song in a playlist. The
+		        //player should use the "ETC0" frame, if present, to skip initial
+		        //silence and silence at the end of the audio to match the
+		        //'Playlist delay' time. The time is represented as a numeric string.
+		        ///@todo ID3::Tag::playlistDelay()
+		REMIXER=10,//TPE4 - The 'Interpreted, remixed, or otherwise modified by
+		        //frame contains more information about the people behind a remix
+		        //and similar interpretations of another existing piece.
+		        ///@todo ID3::Tag::remixer()
+		TIME=19,//TIME - The 'Time' frame is a numeric string in the HHMM format
+		        //containing the time for the recording. This field is always four characters long.
+		        ///@todo ID3::Tag::time(bool)
+		TITLE=11,//TIT2 - The 'Title/Songname/Content description' frame is the
+		        //actual name of the piece (e.g. "Adagio", "Hurricane Donna").
+		        //ID3::Tag::title()
+		TRACK=12,//TRCK - The 'Track number/Position in set' frame is a numeric
+		        //string containing the order number of the audio-file on its
+		        //original recording. This may be extended with a "/" character
+		        //and a numeric string containing the total numer of
+		        //tracks/elements on the original recording. E.g. "4/9".
+		        //ID3::Tag::track(bool) ID3::Tag::trackTotal(bool)
+		YEAR=13 //TYER - The 'Year' frame is a numeric string with a year of the
+		        //recording. This frames is always four characters long (until the year 10000). 
+		        //ID3::Tag::year()
 	};
 	
 	////////////////////////////////////////////////////////////////////
@@ -317,11 +382,11 @@ namespace ID3 {
 		uint8_t flags2;
 	};
 	
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
-	//////////////////////////  C L A S S E S //////////////////////////
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////// C L A S S E S ///////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
 	
 	/**
 	 * A class that, given a file or filename, will read its ID3 tags.
@@ -355,6 +420,31 @@ namespace ID3 {
 			 * "null" frame.
 			 */
 			Tag();
+			
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			//////////////////////// S T A R T   F R A M E ////////////////////////
+			////////////////// G E T T E R S   &   S E T T E R S //////////////////
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			
+			/**
+			 * Get the text content of a frame.
+			 * 
+			 * NOTE: Not all frames support text content. If the given
+			 *       frame name does not, or the music file does not
+			 *       contain an ID3v2 frame of that type, an empty
+			 *       string will be returned.
+			 * 
+			 * NOTE: No formatting will be done, so if the frame has special
+			 *       formatting then you should call the relevant method instead.
+			 * 
+			 * @param frameName A Frames enum variable that represents
+			 *                  an ID3v2 frame ID.
+			 * @return The text content, or "" if the frame is not found,
+			 *         "null", or not a text frame.
+			 */
+			std::string textContent(Frames frameName) const;
 			
 			/**
 			 * Get the title tag.
@@ -499,6 +589,13 @@ namespace ID3 {
 			 */
 			std::string bpm(bool process=true) const;
 			
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			////////////////////////// E N D   F R A M E //////////////////////////
+			////////////////// G E T T E R S   &   S E T T E R S //////////////////
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			
 			/**
 			 * Returns a string representation of the ID3 versions used in the file.
 			 * 
@@ -553,7 +650,7 @@ namespace ID3 {
 			 *        If using the constructor Tag::Tag(std::ifstream&, const std::string&),
 			 *        then this will be set to false.
 			 */
-			void getFile(std::ifstream& file, bool close=true);
+			void readFile(std::ifstream& file, bool close=true);
 			
 			/**
 			 * A constructor helper method that reads the ID3v1 tags from
@@ -561,7 +658,7 @@ namespace ID3 {
 			 * 
 			 * @param file The file object.
 			 */
-			void getFileV1(std::ifstream& file);
+			void readFileV1(std::ifstream& file);
 			
 			/**
 			 * A constructor helper method that reads the ID3v2 tags from
@@ -569,7 +666,7 @@ namespace ID3 {
 			 * 
 			 * @param file The file object.
 			 */
-			void getFileV2(std::ifstream& file);
+			void readFileV2(std::ifstream& file);
 			
 			/**
 			 * A constructor helper method that gets a v1 tag struct and sets the class'
@@ -599,15 +696,6 @@ namespace ID3 {
 			 * @param tags The ID3v1 Extended tag struct.
 			 */
 			void setTags(const V1::ExtendedTag& tags);
-			
-			/**
-			 * Helper method to get text content from a frame.
-			 * 
-			 * @param frameID The Frame enum member.
-			 * @returns The text content, or "" if the frame does not
-			 *          exist, is null, or is not a TextFrame.
-			 */
-			std::string getFrameText(Frames frameID) const;
 			
 		private:
 			/**

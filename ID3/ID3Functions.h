@@ -40,10 +40,11 @@ namespace ID3 {
 	}
 	
 	/**
-	 * Receives a char array, and calculates the multi-byte integer that
-	 * the char array encodes.
-	 * The size of the array is not checked, segmentation faults will not
-	 * be prevented if given a length beyond the length of the array.
+	 * Receives a char array, and calculates the multi-byte integer that the char
+	 * encodes.
+	 * 
+	 * NOTE: The size of the array is not checked, segmentation faults will
+	 *       not be prevented if given a length beyond the length of the array.
 	 * 
 	 * @param array The char array.
 	 * @param length The length of the char array.
@@ -73,12 +74,33 @@ namespace ID3 {
 	/**
 	 * utf16toutf8() takes a char vector of a string encoded in UTF-16 (with
 	 * or without the BOM) created from ID3::Frame::getTextFrame(), and
-	 * returns an std::string encoded in UTF-8.
+	 * returns the string encoded in UTF-8.
 	 * 
 	 * @param u16s The char vector that contains a UTF-16 encoded string.
+	 * @param start The byte position in the ByteArray to start reading (optional).
+	 *              If given a negative value, it will default to 0.
+	 *              If not given, it will default to 0.
+	 * @param end The byte position + 1 in the ByteArray to end reading (optional).
+	 *            If not given or given a negative value, it will default to the
+	 *            end of the ByteArray.
 	 * @return The UTF-8 encoded string.
 	 */
-	std::string utf16toutf8(const ByteArray& u16s);
+	std::string utf16toutf8(const ByteArray& u16s, long start=-1, long end=-1);
+	
+	/**
+	 * utf16toutf8() takes a char vector of a string encoded in LATIN-1 created
+	 * from ID3::Frame::getTextFrame(), and returns the string encoded in UTF-8.
+	 * 
+	 * @param u16s The char vector that contains a LATIN-1 encoded string.
+	 * @param start The byte position in the ByteArray to start reading (optional).
+	 *              If given a negative value, it will default to 0.
+	 *              If not given, it will default to 0.
+	 * @param end The byte position + 1 in the ByteArray to end reading (optional).
+	 *            If not given or given a negative value, it will default to the
+	 *            end of the ByteArray.
+	 * @return The UTF-8 encoded string.
+	 */
+	std::string latin1toutf8(const ByteArray& ulatin1s, long start=-1, long end=-1);
 	
 	/**
 	 * Convert a Frames enum value to the ID3v2 frame name string.

@@ -18,13 +18,11 @@ ID3-Tagging-Library requires the icu-uc package. Add "\`pkg-config icu-uc --cfla
 - Read ID3v1, ID3v1.1, and ID3v1 Extended tags.
 - Support 148 ID3v1 and ID3v1.1 genres.
 - Iterate over all ID3v2.3 and ID3v2.4 tags.
-- Support reading the ID3 title, genre, artist, album, year, track, disc/cd, composer, and BPM tags.
+- Support reading the ID3 title, genre, artist, album, album artist, year, track, disc/cd, composer, and BPM tags.
 
 ##What ID3-Tagging-Library does not do (yet)
 - Extensive testing.
 - Give documentation.
-- Support non-MP3 files.
-- Support the LATIN-1 encoding beyond the first 128 ASCII characters.
 - Have support for editing/adding new tags.
 - Support non-text frames.
 - Support text frames that are not listed above.

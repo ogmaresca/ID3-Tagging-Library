@@ -12,8 +12,9 @@
 
 #include <iostream>  //For printing
 #include <exception> //For exceptions
-#include <cstring>   //For memcmp
+#include <cstring>   //For memcmp()
 #include <regex>     //For regular expressions
+#include <algorithm> //For std::all_of()
 
 #include "ID3.h"
 #include "ID3Functions.h"
@@ -28,7 +29,7 @@ Tag::Tag(std::ifstream& file) : Tag::Tag() {
 		return;
 	file.seekg(0, std::ifstream::end);
 	filesize = file.tellg();
-	getFile(file, false);
+	readFile(file, false);
 }
 
 ///@pkg ID3.h
@@ -43,7 +44,7 @@ Tag::Tag(const std::string& fileLoc) : Tag::Tag() {
 	try {
 		file.open(fileLoc, std::ios::binary | std::ios::ate);
 		filesize = file.tellg();
-		getFile(file);
+		readFile(file);
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag(const Glib::ustring& fileLoc): " << e.what() << std::endl;
 	}
@@ -53,22 +54,60 @@ Tag::Tag(const std::string& fileLoc) : Tag::Tag() {
 
 ///@pkg ID3.h
 Tag::Tag() : isNull(true) {}
-             
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////  S T A R T   F R A M E ////////////////////////////
+//////////////////////  G E T T E R S   &   S E T T E R S //////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+///@pkg ID3.h
+std::string Tag::textContent(Frames frameName) const {
+	//Get the frame ID
+	const std::string frameIDStr = getFrameName(frameName);
+	
+	//Check if the Frame is in the map
+	const FrameMap::const_iterator result = frames.find(frameIDStr);
+	if(result == frames.end()) return "";
+	
+	//If the frame is in the map, get it
+	FramePtr frameObj = result->second;
+	
+	//If the frame is "null" or not a TextFrame then return an empty string
+	if(frameObj->null())
+		return "";
+	
+	//Get the text frame
+	TextFrame* textFrameObj = dynamic_cast<TextFrame*>(frameObj.get());
+	
+	return textFrameObj == nullptr ? "" : textFrameObj->content();
+}
+
 ///@pkg ID3.h
 std::string Tag::title() const {
-	return getFrameText(Frames::TITLE);
+	return textContent(Frames::TITLE);
 }
 
 ///@pkg ID3.h
 std::string Tag::genre(bool process) const {
-	std::string genreString = getFrameText(Frames::GENRE);
+	std::string genreString = textContent(Frames::GENRE);
 	if(process) {
+		//This regex matches any digit surrounded by a single pair of
+		//parenthesis at the start of a string
 		std::regex findV1Genre("^\\(\\d+\\)");
 		std::smatch v1Genre;
+		
+		//If a ID3v1 genre is found
 		if(std::regex_search(genreString, v1Genre, findV1Genre)) {
+			//Get the match
 			std::string genreIntStr = v1Genre.str();
+			//Get the int value of the ID3v1 genre
 			int genreInt = atoi(genreIntStr.substr(1, genreIntStr.length() - 1).c_str());
+			//Remove the string from the tag string
 			genreString = std::regex_replace(genreString, findV1Genre, "");
+			//If there's nothing else in the tag string, then return
+			//the ID3v1 genre
 			if(genreString.length() <= 0)
 				genreString = V1::getGenreString(genreInt);
 		}
@@ -78,36 +117,36 @@ std::string Tag::genre(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::artist() const {
-	return getFrameText(Frames::ARTIST);
+	return textContent(Frames::ARTIST);
 }
 
 ///@pkg ID3.h
 std::string Tag::albumArtist() const {
-	return getFrameText(Frames::ALBUMARTIST);
+	return textContent(Frames::ALBUMARTIST);
 }
 
 ///@pkg ID3.h
 std::string Tag::album() const {
-	return getFrameText(Frames::ALBUM);
+	return textContent(Frames::ALBUM);
 }
 
 ///@pkg ID3.h
 std::string Tag::year(bool process) const {
-	std::string yearString = getFrameText(Frames::YEAR);
-	if(process && std::to_string(atoi(yearString.c_str())) != yearString)
+	std::string yearString = textContent(Frames::YEAR);
+	if(process && !std::all_of(yearString.begin(), yearString.end(), ::isdigit))
 		return "";
 	return yearString;
 }
 
 ///@pkg ID3.h
 std::string Tag::track(bool process) const {
-	std::string trackString = getFrameText(Frames::TRACK);
+	std::string trackString = textContent(Frames::TRACK);
 	if(process) {
 		size_t slashPos = trackString.find_first_of('/');
 		if(slashPos != std::string::npos) {
 			trackString = trackString.substr(0, slashPos);
 		}
-		if(std::to_string(atoi(trackString.c_str())) != trackString)
+		if(!std::all_of(trackString.begin(), trackString.end(), ::isdigit))
 			return "";
 	}
 	return trackString;
@@ -115,25 +154,25 @@ std::string Tag::track(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::trackTotal(bool process) const {
-	std::string trackString = getFrameText(Frames::TRACK);
+	std::string trackString = textContent(Frames::TRACK);
 	size_t slashPos = trackString.find_first_of('/');
 	if(slashPos == std::string::npos)
 		return "";
 	trackString = trackString.substr(slashPos + 1);
-	if(process && std::to_string(atoi(trackString.c_str())) != trackString)
+	if(process && !std::all_of(trackString.begin(), trackString.end(), ::isdigit))
 			return "";
 	return trackString;
 }
 
 ///@pkg ID3.h
 std::string Tag::disc(bool process) const {
-	std::string discString = getFrameText(Frames::DISC);
+	std::string discString = textContent(Frames::DISC);
 	if(process) {
 		size_t slashPos = discString.find_first_of('/');
 		if(slashPos != std::string::npos) {
 			discString = discString.substr(0, slashPos);
 		}
-		if(std::to_string(atoi(discString.c_str())) != discString)
+		if(!std::all_of(discString.begin(), discString.end(), ::isdigit))
 			return "";
 	}
 	return discString;
@@ -141,28 +180,35 @@ std::string Tag::disc(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::discTotal(bool process) const {
-	std::string discString = getFrameText(Frames::DISC);
+	std::string discString = textContent(Frames::DISC);
 	size_t slashPos = discString.find_first_of('/');
 	if(slashPos == std::string::npos)
 		return "";
 	discString = discString.substr(slashPos + 1);
-	if(process && std::to_string(atoi(discString.c_str())) != discString)
+	if(process && !std::all_of(discString.begin(), discString.end(), ::isdigit))
 			return "";
 	return discString;
 }
 
 ///@pkg ID3.h
 std::string Tag::composer() const {
-	return getFrameText(Frames::COMPOSER);
+	return textContent(Frames::COMPOSER);
 }
 
 ///@pkg ID3.h
 std::string Tag::bpm(bool process) const {
-	std::string bpmString = getFrameText(Frames::BPM);
-	if(process && std::to_string(atoi(bpmString.c_str())) != bpmString)
+	std::string bpmString = textContent(Frames::BPM);
+	if(process && !std::all_of(bpmString.begin(), bpmString.end(), ::isdigit))
 		return "";
 	return bpmString;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////  E N D   F R A M E //////////////////////////////
+//////////////////////  G E T T E R S   &   S E T T E R S //////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3.h
 std::string Tag::getVersionString(bool verbose) const {
@@ -194,14 +240,14 @@ const bool Tag::null() const {
 }
 
 ///@pkg ID3.h
-void Tag::getFile(std::ifstream& file, bool close) {
+void Tag::readFile(std::ifstream& file, bool close) {
 	if(!file.good())
 		return;
 	
 	isNull = false;
 	
-	getFileV2(file);
-	getFileV1(file);
+	readFileV2(file);
+	readFileV1(file);
 	
 	try {
 		if(close) file.close();
@@ -211,7 +257,7 @@ void Tag::getFile(std::ifstream& file, bool close) {
 }
 
 ///@pkg ID3.h
-void Tag::getFileV1(std::ifstream& file) {
+void Tag::readFileV1(std::ifstream& file) {
 	V1::Tag tags;
 	V1::ExtendedTag extTags;
 	bool extTagsSet;
@@ -245,7 +291,7 @@ void Tag::getFileV1(std::ifstream& file) {
 }
 
 ///@pkg ID3.h
-void Tag::getFileV2(std::ifstream& file) {
+void Tag::readFileV2(std::ifstream& file) {
 	Header tagsHeader;
 	
 	if(filesize < HEADER_BYTE_SIZE)
@@ -450,28 +496,6 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(const ID3::v1ExtendedTag& tags): " << e.what() << std::endl;
 	}
-}
-
-///@pkg ID3.h
-std::string Tag::getFrameText(Frames frameID) const {
-	//Get the frame ID
-	const std::string frameIDStr = getFrameName(frameID);
-	
-	//Check if the Frame is in the map
-	const FrameMap::const_iterator result = frames.find(frameIDStr);
-	if(result == frames.end()) return "";
-	
-	//If the frame is in the map, get it
-	FramePtr frameObj = result->second;
-	
-	//If the frame is "null" or not a TextFrame then return an empty string
-	if(frameObj->null())
-		return "";
-	
-	//Get the text frame
-	TextFrame* textFrameObj = dynamic_cast<TextFrame*>(frameObj.get());
-	
-	return textFrameObj == nullptr ? "" : textFrameObj->content();
 }
 
 ///@pkg ID3.h

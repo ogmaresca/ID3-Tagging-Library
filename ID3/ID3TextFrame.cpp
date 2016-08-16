@@ -48,7 +48,7 @@ TextFrame::TextFrame(const std::string& frameName,
 ///@pkg ID3Frame.h
 TextFrame::TextFrame() noexcept : Frame::Frame() {}
 
-ByteArray TextFrame::write(unsigned short version) {
+ByteArray TextFrame::write(unsigned short version, bool minimize) {
 	if(version >= MIN_SUPPORTED_VERSION && version <= MAX_SUPPORTED_VERSION)
 		ID3Ver = version;
 	
@@ -67,7 +67,6 @@ void TextFrame::read(ByteArray& frameBytes) {
 		FrameEncoding encoding(FrameEncoding::LATIN1);
 	
 		//Get the frame's encoding. Default to LATIN-1.
-		//NOTE: LATIN-1 is not currently supported beyond ASCII characters.
 		encodingChar = frameBytes[HEADER_BYTE_SIZE];
 		switch((int)encodingChar) {
 			case FrameEncoding::UTF16BOM: { encoding = FrameEncoding::UTF16BOM;
@@ -81,11 +80,13 @@ void TextFrame::read(ByteArray& frameBytes) {
 	
 		if(encoding == FrameEncoding::UTF16BOM ||
 		   encoding == FrameEncoding::UTF16BE) {
-			//Get a vector of just the text content.
-			ByteArray text = frameBytes;
-			text.erase(text.begin(), text.begin()+HEADER_BYTE_SIZE+1);
-			textContent = utf16toutf8(text);
-		} else { //TODO: Differentiate between UTF-8 and LATIN-1.
+			//Read only the text content
+			textContent = utf16toutf8(frameBytes, HEADER_BYTE_SIZE+1);
+		} else if(encoding == FrameEncoding::LATIN1) {
+			//Read only the text content
+			textContent = latin1toutf8(frameBytes, HEADER_BYTE_SIZE+1);
+		} else {
+			//Read only the text content
 			textContent = std::string(frameBytes.begin()+HEADER_BYTE_SIZE+1,
 			                          frameBytes.end());
 		}

@@ -49,19 +49,17 @@ namespace ID3 {
 			virtual ~Frame();
 			
 			/**
-			 * Use this method to determine if the Frame was
-			 * succesfully created or not.
+			 * Use this method to determine if the Frame was succesfully created
+			 * or not.
 			 * 
-			 * @return true if the frame was read/created succesfully,
-			 *         false if not.
+			 * @return true if the frame was read/created succesfully, false if not.
 			 */
 			bool null() const;
 			
 			/**
-			 * Get the position of the byte at the end of the file
-			 * (the byte after the last byte that makes up the frame).
-			 * Will be 0 if the Frame was created by manually giving it
-			 * content.
+			 * Get the position of the byte at the end of the file (the byte after
+			 * the last byte that makes up the frame). Will be 0 if the Frame was
+			 * created by manually giving it content.
 			 * 
 			 * @return The last byte it read from.
 			 */
@@ -106,14 +104,14 @@ namespace ID3 {
 			/**
 			 * Check how the Frame was created.
 			 * 
-			 * @return true if the constructor with an file object was
-			 *         called, false if not.
+			 * @return true if the constructor with an file object was called,
+			 *         false if not.
 			 */
 			bool createdFromFile() const;
 			
 			/**
-			 * Save any changes made to the frame, and get the updated
-			 * content of the frame in bytes.
+			 * Save any changes made to the frame, and get the updated content of
+			 * the frame in bytes.
 			 * This method is to be implemented in child classes.
 			 * 
 			 * @param version The ID3v2 major version to save the frame
@@ -121,19 +119,23 @@ namespace ID3 {
 			 *                or it is not supported, it will default
 			 *                to using the ID3v2 major version supplied
 			 *                during the object's creation.
+			 * @param minimize By default, the write() method should not shrink the
+			 *                 size of the frame if the modified content is
+			 *                 smaller than the original content. If this is set to
+			 *                 true, no padding will ever be added to the frame.
 			 * @return The new content of the frame, in bytes.
 			 * @abstract
 			 */
-			virtual ByteArray write(unsigned short version=0) = 0;
+			virtual ByteArray write(unsigned short version=0,
+			                        bool minimize=false) = 0;
 		
 		protected:
 			/**
 			 * This constructor initializes the relevant variables with
 			 * the passed-in variables. Calling this constructor will
 			 * set ID3::Frame::isFromFile to true.
-			 * If calling this constructor, you should check that the
-			 * frame is a valid size, then read() the frame bytes and
-			 * set isNull to false.
+			 * If calling this constructor, you should check that the ByteArray is
+			 * a valid size, then read() the frame bytes and set isNull to false.
 			 * 
 			 * NOTE: frameBytes MUST include the frame header.
 			 * 
@@ -143,8 +145,7 @@ namespace ID3 {
 			 * @param frameName The frame ID string.
 			 * @param version The ID3v2 major version.
 			 * @param frameBytes The content of the frame in bytes.
-			 * @param end The byte position in the music file where the
-			 *            frame end.
+			 * @param end The byte position in the music file where the frame ends.
 			 */
 			Frame(const std::string& frameName,
 			      const unsigned short version,
@@ -152,9 +153,8 @@ namespace ID3 {
 			      const unsigned long end);
 			
 			/**
-			 * An empty constructor to initialize variables.
-			 * Creating a Frame with this constructor will result in a
-			 * "null" Frame object.
+			 * An empty constructor to initialize variables. Creating a Frame with
+			 * this constructor will result in a "null" Frame object.
 			 */
 			Frame() noexcept;
 			
@@ -178,8 +178,7 @@ namespace ID3 {
 			bool isNull;
 			
 			/**
-			 * The ending byte position that the frame occupies on the
-			 * file, + 1.
+			 * The ending byte position that the frame occupies on the file, + 1.
 			 * 
 			 * @see ID3::Frame::end()
 			 */
@@ -223,6 +222,19 @@ namespace ID3 {
 	};
 	
 	/**
+	 * MultipleFrame is an interface/abstract class that will eventually
+	 * be used to add support for reading and writing multiple frames
+	 * with the same ID.
+	 */
+	class MultipleFrame {
+		public:
+			/**
+			 * The destructor.
+			 */
+			virtual ~MultipleFrame() = 0;
+	};
+	
+	/**
 	 * UnknownFrame is a child class of Frame. It is to be used when
 	 * a given frame ID is unknown.
 	 * 
@@ -238,7 +250,8 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::write(unsigned short)
 			 */
-			virtual ByteArray write(unsigned short version=0) override;
+			virtual ByteArray write(unsigned short version=0,
+			                        bool minimize=false);
 		
 		protected:
 			/**
@@ -275,7 +288,7 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::read(ByteArray&)
 			 */
-			virtual void read(ByteArray& frameBytes) override;
+			virtual void read(ByteArray& frameBytes);
 	};
 	
 	/**
@@ -295,7 +308,8 @@ namespace ID3 {
 			 * @todo Actually implement the function.
 			 * @see ID3::Frame::write(unsigned short)
 			 */
-			virtual ByteArray write(unsigned short version=0);
+			virtual ByteArray write(unsigned short version=0,
+			                        bool minimize=false);
 			
 			/**
 			 * Get the text content.
@@ -318,8 +332,8 @@ namespace ID3 {
 			 * enough to be valid it then sets isNull to false and calls
 			 * ID3::TextFrame::read(ByteArray&) to process the ByteArray.
 			 * 
-			 * NOTE: frameName is not checked to verify that the frame
-			 * ID is a valid text frame ID.
+			 * NOTE: frameName is not checked to verify that the frame ID is a
+			 *       valid text frame ID.
 			 * 
 			 * NOTE: The ID3v2 version is not checked to verify that it
 			 *       is a supported ID3v2 version.
@@ -359,9 +373,8 @@ namespace ID3 {
 			          const std::string& description="");
 			
 			/**
-			 * An empty constructor to initialize variables.
-			 * Creating a Frame with this constructor will result in a
-			 * "null" TextFrame object.
+			 * An empty constructor to initialize variables. Creating a Frame with
+			 * this constructor will result in a "null" TextFrame object.
 			 * 
 			 * @see ID3::Frame::Frame()
 			 */
@@ -375,15 +388,14 @@ namespace ID3 {
 			std::string textContent;
 			
 			/**
-			 * The read() method for TextFrame first gets the text
-			 * encoding of the frame at the 11th byte, and saves every
-			 * following byte in the ByteArray as its content string.
-			 * If the text is not encoded in UTF-8, it is converted
-			 * to UTF-8 before saving it.
+			 * The read() method for TextFrame first gets the text encoding of the
+			 * frame at the 11th byte, and saves every following byte in the
+			 * ByteArray as its content string. If the text is not encoded in
+			 * UTF-8, it is converted to UTF-8 before saving it.
 			 * 
 			 * @see ID3::Frame::read(ByteArray&)
 			 */
-			virtual void read(ByteArray& frameBytes) override;
+			virtual void read(ByteArray& frameBytes);
 	};
 }
 

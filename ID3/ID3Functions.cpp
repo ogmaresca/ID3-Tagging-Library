@@ -58,16 +58,27 @@ std::string ID3::terminatedstring(const char* str, std::string::size_type maxlen
 }
 
 ///@pkg ID3Functions.h
-std::string ID3::utf16toutf8(const ByteArray& u16s) {
-	const int u16sSize = u16s.size();
+std::string ID3::utf16toutf8(const ByteArray& u16s,
+                             long start,
+                             long end) {	
+	//Set the start
+	if(start < 0)
+		start = 0;
+	
+	//Set the end
+	if(end < 0 || end > u16s.size())
+		end = u16s.size();
 	
 	//UTF-16 uses 2-byte character widths. If there's 0 bytes then
 	//it's an empty string anyways, and if there's 1 byte then it's
 	//not valid UTF-16 so an empty string should be returned.
-	if(u16sSize < 2) return "";
+	if(end - start < 2)
+		return "";
 	
-	//The byte position to start processing the UTF-16 string
-	int startingPos = 0;
+	const int u16sSize = end - start;
+	
+	//The byte offset to start processing the UTF-16 string
+	int offset = 0;
 	
 	//Create an array of 2-byte characters that is encoded in UTF-16
 	uint16_t* utf16CharArr = new uint16_t[u16sSize / 2];
@@ -84,29 +95,27 @@ std::string ID3::utf16toutf8(const ByteArray& u16s) {
 	//so this has to be manually done.
 	//This is automatically checked and processed in utf16toutf8(),
 	//no need to mess with the BOM beforehand.
-	if((short)u16s[0] == -1 && (short)u16s[1] == -2) { //Has LE BOM
-		startingPos = 2; //Don't want to include the BOM in the
-						 //returned string
+	if((uint8_t)u16s[start] == 0xFF && (uint8_t)u16s[start+1] == 0xFE) { //Has Little Endian BOM
+		offset = 2; //Don't want to include the BOM in the returned string
 		
 		//Since this is in the case of little endian-ness, the byte with
 		//the most significant values are in the second byte.
 		for(int i = 0; i < u16sSize; i += 2)
-			utf16CharArr[i/2] = ((short)u16s[i + startingPos + 1] << 8) + (short)u16s[i + startingPos];
-	} else { //May or may not have BE BOM
-		//Checks if the first character is 0xFEFF. If it is, then
-		//increment the starting position by two to remove the BOM
-		//from the returned string
-		if((short)u16s[0] == -2 && (short)u16s[1] == -1)
-			startingPos = 2;
+			utf16CharArr[i/2] = ((uint16_t)u16s[start + offset + i + 1] << 8) + (uint16_t)u16s[start + offset + i];
+	} else { //May or may not have BOM, is Big Endian
+		//Checks if the first character is 0xFEFF. If it is, then increment the
+		//starting position by two to remove the BOM from the returned string
+		if((uint8_t)u16s[start] == 0xFE && (uint8_t)u16s[start+1] == 0xFF)
+			offset = 2;
 		
 		for(int i = 0; i < u16sSize; i += 2)
-			utf16CharArr[i/2] = ((short)u16s[i + startingPos] << 8) + (short)u16s[i + startingPos + 1];
+			utf16CharArr[i/2] = ((uint16_t)u16s[start + offset + i] << 8) + (uint16_t)u16s[start + i + offset + 1];
 	}
 	
 	//Create a UnicodeString from the UTF-16 character array
 	//If there was a BOM, the string will be one character shorter
 	//than the char vector.
-	icu::UnicodeString icuStr(utf16CharArr, (u16sSize - startingPos) / 2);
+	icu::UnicodeString icuStr(utf16CharArr, (u16sSize - offset) / 2);
 	
 	//Have the UnicodeString converted to UTF-8 and store the result
 	//in toReturn.
@@ -115,6 +124,68 @@ std::string ID3::utf16toutf8(const ByteArray& u16s) {
 	//Prevent memory leaks.
 	delete utf16CharArr;
 	
+	return toReturn;
+}
+
+///@pkg ID3Functions.h
+std::string ID3::latin1toutf8(const ByteArray& latin1s, long start, long end) {
+	//0x80 (128) is the first character beyond ASCII
+	static const uint8_t BEYOND_ASCII = 0x80;
+	
+	//In UTF-8, if the first byte starts with "110" then it will be a two byte character
+	static const uint8_t UTF8_TWO_BYTE_MASK = 0b11000000;
+	
+	//In UTF-8, bytes of characters beyond the first byte don't have the first
+	//two bits usable, since these bytes will always be 0b10XXXXXX
+	static const uint8_t VARIABLE_UTF8_CHAR_USABLE_BITS = 6;
+	
+	//A mask to apply on the LATIN-1 character to store its value on the second byte
+	static const uint8_t UTF8_BYTE_TWO_MASK = 0b00111111;
+	
+	//Set the start
+	if(start < 0)
+		start = 0;
+	
+	//Set the end 
+	if(end < 0 || end > latin1s.size())
+		end = latin1s.size();
+	
+	//Empty string base case
+	if(end <= start)
+		return "";
+	
+	const int latin1sSize = end - start;
+	
+	int curPos = 0;
+		
+	//Create a char array to hold the translated UTF-8 string.
+	//In the worst case utf8CharArr's byte size will have to be twice the LATIN-1
+	//string's size, which will happen if the LATIN-1 string contains no ASCII
+	//characters.
+	char* utf8CharArr = new char[latin1sSize * 2];
+	
+	for(size_t i = start; i < end; i++) {
+		uint8_t curChar = latin1s[i];
+		
+		if(curChar < BEYOND_ASCII) {
+			//If curChar <= 127, it is an ASCII character that is identical in UTF-8
+			utf8CharArr[curPos] = curChar;
+			curPos++;
+		} else {
+			//Translate the LATIN-1 character to a UTF-8 character
+			utf8CharArr[curPos] = UTF8_TWO_BYTE_MASK | (curChar >> VARIABLE_UTF8_CHAR_USABLE_BITS);
+			utf8CharArr[curPos+1] = BEYOND_ASCII | (curChar & UTF8_BYTE_TWO_MASK);
+			curPos += 2;
+		}
+	}
+	
+	//Create a string from the array
+	std::string toReturn(utf8CharArr, curPos);
+	
+	//Prevent memory leaks
+	delete utf8CharArr;
+	
+	//Return the string
 	return toReturn;
 }
 
@@ -132,9 +203,19 @@ std::string ID3::getFrameName(const Frames frameID) {
 		"TPOS", //7  - DISC
 		"TCON", //8  - GENRE
 		"TEXT", //9  - LYRICIST
-		"TIT2", //10 - TITLE
-		"TRCK", //11 - TRACK
-		"TYET"  //12 - YEAR
+		"TPE4", //10 - REMIXER
+		"TIT2", //11 - TITLE
+		"TRCK", //12 - TRACK
+		"TYET", //13 - YEAR
+		"TPE3", //14 - CONDUCTOR
+		"TDAT", //15 - DATE
+		"TENC", //16 - ENCODEDBY
+		"TDLY", //17 - PLAYLISTDELAY
+		"TFLT", //18 - FILETYPE
+		"TIME", //19 - TIME
+		"TIT1", //20 - GROUPING
+		"TIT3", //21 - DESCRIPTION
+		"TKEY" //22 - MUSICALKEY
 	};
 	
 	if((unsigned int)frameID > frames.size())
