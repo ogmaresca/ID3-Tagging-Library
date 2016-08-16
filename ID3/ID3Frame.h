@@ -33,6 +33,18 @@ namespace ID3 {
 	typedef std::vector<char> ByteArray;
 	
 	/**
+	 * An enum that  represents a Frame class.
+	 * 
+	 * Values and their respective class:
+	 *     TEXT:    TextFrame
+	 *     UNKNOWN: UnknownFrame
+	 */
+	enum FrameClass {
+		TEXT    = 1, //TextFrame
+		UNKNOWN = 0  //UnknownFrame
+	};
+	
+	/**
 	 * An ID3::Frame stores information from an ID3v2 frame.
 	 * It is an abstract class, use one of its children defined below
 	 * to create a Frame.
@@ -47,6 +59,50 @@ namespace ID3 {
 			 * The destructor.
 			 */
 			virtual ~Frame();
+			
+			/**
+			 * Check if two Frames are equal.
+			 * 
+			 * This method is to be implemented in child classes.
+			 * This method should only return true if the frame ID, class, "null"
+			 * status, and if frame content match (when neither of the Frames
+			 * are "null").
+			 * 
+			 * @param frame The Frame to compare against.
+			 * @returns If the Frame is equal to this object.
+			 * @abstract
+			 */
+			virtual bool operator==(const Frame* const frame) const noexcept = 0;
+			
+			/**
+			 * Check if the Frame is the same type as the given FrameClass.
+			 * 
+			 * @param classID A FrameClass enum value.
+			 * @return true if it's a matching FrameClass, false otherwise.
+			 * @abstract
+			 */
+			virtual bool operator==(const FrameClass classID) const noexcept = 0;
+			
+			/**
+			 * Return a FrameClass enum value that is associated with its class.
+			 * 
+			 * @abstract
+			 */
+			virtual operator FrameClass() const noexcept = 0;
+			
+			/**
+			 * Returns true if the frame was read/created succesfully, false if not.
+			 * 
+			 * @see ID3::Frame::null()
+			 */
+			 bool operator==(bool boolean) const noexcept;
+			
+			/**
+			 * Get the content of the frame as bytes.
+			 * 
+			 * @see ID3::Frame::bytes()
+			 */
+			operator ByteArray() const noexcept;
 			
 			/**
 			 * Use this method to determine if the Frame was succesfully created
@@ -85,7 +141,7 @@ namespace ID3 {
 			 * 
 			 * @return The frame content, including the header.
 			 */
-			ByteArray bytes() const;
+			ByteArray bytes() const noexcept;
 			
 			/**
 			 * Revert any changes made to the frame since it was last
@@ -225,8 +281,11 @@ namespace ID3 {
 	 * MultipleFrame is an interface/abstract class that will eventually
 	 * be used to add support for reading and writing multiple frames
 	 * with the same ID.
+	 * 
+	 * @todo Implement the class
+	 * @see ID3::Frame
 	 */
-	class MultipleFrame {
+	class MultipleFrame : virtual public Frame {
 		public:
 			/**
 			 * The destructor.
@@ -244,6 +303,29 @@ namespace ID3 {
 		friend class FrameFactory;
 		
 		public:
+			/**
+			 * Checks if the given Frame is an UnknownFrame with the same frame ID,
+			 * "null" status, and if frame content match (when neither of the
+			 * Frames are "null").
+			 * 
+			 * @see ID3::Frame::operator==(Frame*)
+			 */
+			virtual bool operator==(const Frame* const frame) const noexcept;
+			
+			/**
+			 * Checks if the FrameClass value is FrameClass::UNKNOWN.
+			 * 
+			 * @see ID3::Frame::operator==(FrameClass)
+			 */
+			virtual bool operator==(const FrameClass classID) const noexcept;
+			
+			/**
+			 * Returns FrameClass::UNKNOWN.
+			 * 
+			 * @see ID3::Frame::operator FrameClass()
+			 */
+			virtual operator FrameClass() const noexcept;
+			
 			/**
 			 * The write() method for UnknownFrame simply returns
 			 * a copy of frameContent.
@@ -302,6 +384,50 @@ namespace ID3 {
 		
 		public:
 			/**
+			 * Checks if the given Frame is a TextFrame with the same frame ID,
+			 * "null" status, and if text content match (when neither of the Frames
+			 * are "null").
+			 * 
+			 * @see ID3::Frame::operator==(Frame*)
+			 */
+			virtual bool operator==(const Frame* const frame) const noexcept;
+			
+			/**
+			 * Checks if the FrameClass value is FrameClass::TEXT.
+			 * 
+			 * @see ID3::Frame::operator==(FrameClass)
+			 */
+			virtual bool operator==(const FrameClass classID) const noexcept;
+			
+			/**
+			 * Returns FrameClass::TEXT.
+			 * 
+			 * @see ID3::Frame::operator FrameClass()
+			 */
+			virtual operator FrameClass() const noexcept;
+			
+			/**
+			 * Checks if the given string is the same as the text content.
+			 * 
+			 * @param str The string to check.
+			 * @return true if the strings are the same, false otherwise.
+			 */
+			virtual bool operator==(const std::string& str) const noexcept;
+			
+			/**
+			 * Get the text content of the frame.
+			 */
+			virtual operator std::string() const noexcept;
+			
+			/**
+			 * Append a string to the frame content.
+			 * 
+			 * @param str The string to append.
+			 * @return The text frame.
+			 */
+			virtual TextFrame& operator+=(std::string str) noexcept;
+			
+			/**
 			 * The write() method for TextFrame re-creates the frame
 			 * header with UTF-8 encoding and its stored text content.
 			 * 
@@ -324,6 +450,32 @@ namespace ID3 {
 			 * @param newContent The new text content.
 			 */
 			virtual void content(std::string newContent);
+			
+			/**
+			 * Get a ByteArray encoded in either LATIN-1, UTF-8, or UTF-16, and
+			 * return the string as a UTF-8 encoded string.
+			 * This function uses utf16toutf8() to encode UTF-16 strings to UTF-8,
+			 * and ID3::latin1toutf8() to encode LATIN-1 strings to UTF-8.
+			 * 
+			 * @param encoding A char whose int values are represented by the
+			 *                 enum ID3::FrameEncoding. If the encoding is unknown
+			 *                 it will default to LATIN-1.
+			 * @param bytes The char vector that contains the string you wish to
+			 *              encode.
+			 * @param start The byte position in the ByteArray to start reading
+			 *              (optional). If not given a value or given a negative
+			 *              value, it will default to 0.
+			 * @param end The byte position + 1 in the ByteArray to end reading
+			 *            (optional). If not given or given a negative value, it
+			 *            will default to the end of the ByteArray. If it is longer
+			 *            than the length of the ByteArray, the function will stop
+			 *            at the end of the ByteArray.
+			 * @return The UTF-8 encoded string.
+			 */
+			static std::string readStringAsUTF8(char encoding,
+			                                    ByteArray bytes,
+			                                    long start=-1,
+			                                    long end=-1);
 		
 		protected:
 			/**

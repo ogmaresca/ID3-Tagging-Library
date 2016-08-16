@@ -47,6 +47,12 @@ Frame::Frame(const std::string& frameName,
 Frame::~Frame() {}
 
 ///@pkg ID3Frame.h
+bool Frame::operator==(bool boolean) const noexcept { return boolean == isNull; }
+
+///@pkg ID3Frame.h
+Frame::operator ByteArray() const noexcept { return frameContent; }
+
+///@pkg ID3Frame.h
 bool Frame::null() const { return isNull; }
 
 ///@pkg ID3Frame.h
@@ -68,7 +74,7 @@ bool Frame::edited() const { return isEdited; }
 bool Frame::createdFromFile() const { return isFromFile; }
 
 ///@pkg ID3Frame.h
-ByteArray Frame::bytes() const { return frameContent; }
+ByteArray Frame::bytes() const noexcept { return frameContent; }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,8 +107,30 @@ UnknownFrame::UnknownFrame(const std::string& frameName) : Frame::Frame() {
 UnknownFrame::UnknownFrame() noexcept : Frame::Frame() {}
 
 ///@pkg ID3Frame.h
+bool UnknownFrame::operator==(const Frame* const frame) const noexcept {
+	//Check if the frame IDs or "null" statuses match
+	if(frame == nullptr || frame->frame() != id || isNull != frame->null())
+		return false;
+	//Check if it's a UnknownFrame, and if it is compare the content
+	const UnknownFrame* const castFrame = dynamic_cast<const UnknownFrame* const>(frame);
+	//If it's not a UnknownFrame return false
+	if(castFrame == nullptr) return false;
+	return isNull ? true : frameContent == castFrame->bytes();
+}
+
+///@pkg ID3Frame.h
+bool UnknownFrame::operator==(const FrameClass classID) const noexcept {
+	return classID == FrameClass::UNKNOWN;
+}
+
+///@pkg ID3Frame.h
 ByteArray UnknownFrame::write(unsigned short version, bool minimize) {
 	return frameContent;
+}
+
+///@pkg ID3Frame.h
+UnknownFrame::operator FrameClass() const noexcept {
+	return FrameClass::UNKNOWN;
 }
 
 ///@pkg ID3Frame.h

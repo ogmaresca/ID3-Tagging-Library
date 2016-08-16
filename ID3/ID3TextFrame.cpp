@@ -62,37 +62,12 @@ ByteArray TextFrame::write(unsigned short version, bool minimize) {
 void TextFrame::read(ByteArray& frameBytes) {
 	//Make sure that there is enough room for text before reading the
 	//frame bytes
-	if(frameBytes.size() > HEADER_BYTE_SIZE + 1) {
-		uint8_t encodingChar;
-		FrameEncoding encoding(FrameEncoding::LATIN1);
-	
-		//Get the frame's encoding. Default to LATIN-1.
-		encodingChar = frameBytes[HEADER_BYTE_SIZE];
-		switch((int)encodingChar) {
-			case FrameEncoding::UTF16BOM: { encoding = FrameEncoding::UTF16BOM;
-				                            break; }
-			case FrameEncoding::UTF16BE: { encoding = FrameEncoding::UTF16BE;
-				                           break; }
-			case FrameEncoding::UTF8: { encoding = FrameEncoding::UTF8;
-				                        break; }
-			case FrameEncoding::LATIN1: default: break;
-		}
-	
-		if(encoding == FrameEncoding::UTF16BOM ||
-		   encoding == FrameEncoding::UTF16BE) {
-			//Read only the text content
-			textContent = utf16toutf8(frameBytes, HEADER_BYTE_SIZE+1);
-		} else if(encoding == FrameEncoding::LATIN1) {
-			//Read only the text content
-			textContent = latin1toutf8(frameBytes, HEADER_BYTE_SIZE+1);
-		} else {
-			//Read only the text content
-			textContent = std::string(frameBytes.begin()+HEADER_BYTE_SIZE+1,
-			                          frameBytes.end());
-		}
-	} else {
+	if(frameBytes.size() > HEADER_BYTE_SIZE + 1)
+		textContent = readStringAsUTF8(frameBytes[HEADER_BYTE_SIZE],
+		                               frameBytes,
+		                               HEADER_BYTE_SIZE+1);
+	else
 		textContent = "";
-	}
 	
 	//std::cout << "Content for TextFrame " << id << ": " << textContent << std::endl;
 	
@@ -106,4 +81,74 @@ std::string TextFrame::content() const { return textContent; }
 void TextFrame::content(std::string newContent) {
 	textContent = newContent;
 	isEdited = true;
+}
+
+///@pkg ID3Frame.h
+///@static
+std::string TextFrame::readStringAsUTF8(char encoding,
+                                        ByteArray bytes,
+                                        long start,
+                                        long end) {
+	//Set the start
+	if(start < 0)
+		start = 0;
+	
+	//Set the end 
+	if(end < 0 || end > bytes.size())
+		end = bytes.size();
+	
+	//Empty string base case
+	if(end <= start)
+		return "";
+	
+	switch((int)encoding) {
+		//UTF-16 case
+		case FrameEncoding::UTF16BOM:
+		case FrameEncoding::UTF16BE: return utf16toutf8(bytes, start, end);
+		//UTF-8 case
+		case FrameEncoding::UTF8: return std::string(bytes.begin()+start,
+		                                             bytes.begin()+end);
+		//LATIN-1 case
+		case FrameEncoding::LATIN1: default: return latin1toutf8(bytes,
+		                                                         start,
+		                                                         end);
+	}
+}
+
+///@pkg ID3Frame.h
+bool TextFrame::operator==(const Frame* const frame) const noexcept {
+	//Check if the frame IDs or "null" statuses match
+	if(frame == nullptr || frame->frame() != id || isNull != frame->null())
+		return false;
+	//Check if it's a TextFrame, and if it is compare the content
+	const TextFrame* const castFrame = dynamic_cast<const TextFrame* const>(frame);
+	//If it's not a TextFrame return false
+	if(castFrame == nullptr) return false;
+	return isNull ? true : textContent == castFrame->content();
+}
+
+///@pkg ID3Frame.h
+bool TextFrame::operator==(const FrameClass classID) const noexcept {
+	return classID == FrameClass::TEXT;
+}
+
+///@pkg ID3Frame.h
+TextFrame::operator FrameClass() const noexcept {
+	return FrameClass::TEXT;
+}
+
+///@pkg ID3Frame.h
+bool TextFrame::operator==(const std::string& str) const noexcept {
+	return textContent == str;
+}
+
+///@pkg ID3Frame.h
+TextFrame::operator std::string() const noexcept {
+	return textContent;
+}
+
+///@pkg ID3Frame.h
+TextFrame& TextFrame::operator+=(std::string str) noexcept {
+	textContent += str;
+	return *this;
 }

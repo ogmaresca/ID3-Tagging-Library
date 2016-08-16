@@ -82,7 +82,8 @@ namespace ID3 {
 	 *              If not given, it will default to 0.
 	 * @param end The byte position + 1 in the ByteArray to end reading (optional).
 	 *            If not given or given a negative value, it will default to the
-	 *            end of the ByteArray.
+	 *            end of the ByteArray. If it is longer than the length of the
+	 *            ByteArray, the function will stop at the end of the ByteArray.
 	 * @return The UTF-8 encoded string.
 	 */
 	std::string utf16toutf8(const ByteArray& u16s, long start=-1, long end=-1);
@@ -97,7 +98,8 @@ namespace ID3 {
 	 *              If not given, it will default to 0.
 	 * @param end The byte position + 1 in the ByteArray to end reading (optional).
 	 *            If not given or given a negative value, it will default to the
-	 *            end of the ByteArray.
+	 *            end of the ByteArray. If it is longer than the length of the
+	 *            ByteArray, the function will stop at the end of the ByteArray.
 	 * @return The UTF-8 encoded string.
 	 */
 	std::string latin1toutf8(const ByteArray& ulatin1s, long start=-1, long end=-1);

@@ -270,15 +270,6 @@ namespace ID3 {
 		
 		protected:
 			/**
-			 * An enum used internally within FrameFactory. Each enum
-			 * value represents a Frame class.
-			 */
-			enum FrameClass {
-				TEXT    = 1, //TextFrame
-				UNKNOWN = 0  //UnknownFrame
-			};
-			
-			/**
 			 * A private constructor used in static create() method calls to create
 			 * frames with content given in the method's parameter.
 			 * 
