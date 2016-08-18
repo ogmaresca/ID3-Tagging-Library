@@ -180,7 +180,7 @@ FrameClass FrameFactory::frameType(const std::string& frameID) {
 	switch(frameID[0]) {
 		case 'T': {
 			//Numerical Text Frames:
-			//Year, BPM, Date, Length, Playlist Delay, Time
+			//Year, BPM, Date, Length, Playlist Delay, Time, and Original Release Year
 			//NOTE: Track and Disc are not numerical values as they may contain
 			//a slash to separate the total number of tracks/discs in the set.
 			if(frameID == "TYER" ||
@@ -188,7 +188,8 @@ FrameClass FrameFactory::frameType(const std::string& frameID) {
 			   frameID == "TDAT" ||
 			   frameID == "TLEN" ||
 			   frameID == "TDLY" ||
-			   frameID == "TIME")
+			   frameID == "TIME" ||
+			   frameID == "TORY")
 				return FrameClass::NUMERICAL;
 			return FrameClass::TEXT;
 		} case 'C': {

@@ -56,6 +56,11 @@ TextFrame::TextFrame(const std::string& frameName,
 TextFrame::TextFrame() noexcept : Frame::Frame() {}
 
 ///@pkg ID3Frame.h
+bool TextFrame::empty() const {
+	return textContent == "";
+}
+
+///@pkg ID3Frame.h
 ByteArray TextFrame::write(unsigned short version, bool minimize) {
 	if(version >= MIN_SUPPORTED_VERSION && version <= MAX_SUPPORTED_VERSION)
 		ID3Ver = version;

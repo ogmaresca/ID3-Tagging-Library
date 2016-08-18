@@ -175,6 +175,15 @@ namespace ID3 {
 			bool createdFromFile() const;
 			
 			/**
+			 * Check if the Frame's content is empty.
+			 * This method is to be implemented in child classes.
+			 * 
+			 * @return true if the content is empty, false otherwise.
+			 * @abstract
+			 */
+			virtual bool empty() const = 0;
+			
+			/**
 			 * Save any changes made to the frame, and get the updated content of
 			 * the frame in bytes.
 			 * This method is to be implemented in child classes.
@@ -350,6 +359,15 @@ namespace ID3 {
 			virtual operator FrameClass() const noexcept;
 			
 			/**
+			 * Check if the Frame's content is empty. An UnknownFrame is empty if
+			 * the size of the frame in bytes is <= HEADER_BYTE_SIZE.
+			 * 
+			 * @return true if the content is empty, false otherwise.
+			 * @see ID3::Frame::empty()
+			 */
+			virtual bool empty() const;
+			
+			/**
 			 * The write() method for UnknownFrame simply returns
 			 * a copy of frameContent.
 			 * 
@@ -457,6 +475,15 @@ namespace ID3 {
 			 * @return The text frame.
 			 */
 			virtual TextFrame& operator+=(const std::string& str) noexcept;
+			
+			/**
+			 * Check if the Frame's content is empty. An UnknownFrame is empty if
+			 * the frame content is an empty string.
+			 * 
+			 * @return true if the content is empty, false otherwise.
+			 * @see ID3::Frame::empty()
+			 */
+			virtual bool empty() const;
 			
 			/**
 			 * The write() method for TextFrame re-creates the frame

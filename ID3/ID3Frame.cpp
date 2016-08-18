@@ -129,6 +129,11 @@ UnknownFrame::operator FrameClass() const noexcept {
 }
 
 ///@pkg ID3Frame.h
+bool UnknownFrame::empty() const {
+	return frameContent.size() <= HEADER_BYTE_SIZE;
+}
+
+///@pkg ID3Frame.h
 ByteArray UnknownFrame::write(unsigned short version, bool minimize) {
 	return frameContent;
 }

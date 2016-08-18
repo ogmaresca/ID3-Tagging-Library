@@ -17,6 +17,7 @@
 #include <vector>        //For std::vector
 #include <unordered_map> //For std::unordered_map and std::pair
 #include <memory>        //For std::shared_ptr
+#include <functional>
 
 #include "ID3Frame.h"
 
@@ -239,6 +240,14 @@ namespace ID3 {
 		        //person or organisation that encoded the audio file. This field
 		        //may contain a copyright message, if the audio file also is copyrighted by the encoder.
 		        ///@todo ID3::Tag::encodedBy()
+		ENCODINGSETTINGS=34,//TSSE - The 'Software/Hardware and settings used for
+		        //encoding' frame includes the used audio encoder and its settings
+		        //when the file was encoded. Hardware refers to hardware encoders,
+		        //not the computer on which a program was run.
+		        ///@todo ID3::Tag::encodingSettings()
+		FILEOWNER=30,//TOWN - The 'File owner/licensee' frame contains the name of
+		        //the owner or licensee of the file and it's contents.
+		        ///@todo ID3::Tag::fileOwner()
 		FILETYPE=18,//TFLT - The 'File type' frame indicates which type of audio
 		        //this tag defines. The following type and refinements are defined:
 		        //    MPG       MPEG Audio
@@ -261,12 +270,29 @@ namespace ID3 {
 		        //classical music is often sorted in different musical sections
 		        //(e.g. "Piano Concerto", "Weather - Hurricane").
 		        ///@todo ID3::Tag::grouping()
+		ISRC=35,//TSRC - The 'ISRC' frame should contain the International
+		        //Standard Recording Code (ISRC) (12 characters).
+		        ///@todo ID3::Tag::isrc()
 		LENGTH=23,//TLEN - The 'Length' frame contains the length of the audiofile
 		        //in milliseconds, represented as a numeric string.
 		        ///@todo ID3::Tag::length(bool)
 		LYRICIST=9,//TEXT - The 'Lyricist(s)/Text writer(s)' frame is intended for
 		        //the writer(s) of the text or lyrics in the recording.
 		        ///@todo ID3::Tag::lyricist()
+		MEDIATYPE=24,//TMED - The 'Media type' frame describes from which media
+		        //the sound originated. This may be a text string or a reference
+		        //to the predefined media types found in the list below. References
+		        //are made within "(" and ")" and are optionally followed by a text
+		        //refinement, e.g. "(MC) with four channels". If a text refinement
+		        //should begin with a "(" character it should be replaced with "(("
+		        //in the same way as in the "TCO" frame. Predefined refinements is
+		        //appended after the media type, e.g. "(CD/A)" or "(VID/PAL/VHS)". 
+		        //See http://id3.org/id3v2.3.0 for the different predefined types.
+		        ///@todo ID3::Tag::mediaType()
+		MODIFIEDBY=10,//TPE4 - The 'Interpreted, remixed, or otherwise modified by
+		        //frame contains more information about the people behind a remix
+		        //and similar interpretations of another existing piece.
+		        ///@todo ID3::Tag::modifiedBy()
 		MUSICALKEY=22,//TKEY - The 'Initial key' frame contains the musical key in
 		        //which the sound starts. It is represented as a string with a
 		        //maximum length of three characters. The ground keys are
@@ -274,16 +300,52 @@ namespace ID3 {
 		        //represented with "b" and "#". Minor is represented as "m".
 		        //Example "Cbm". Off key is represented with an "o" only.
 		        ///@todo ID3::Tag::musicalKey(bool)
+		ORIGINALALBUM=25,//TOAL - The 'Original album/movie/show title' frame is
+		        //intended for the title of the original recording (or source of
+		        //sound), if for example the music in the file should be a cover
+		        //of a previously released song.
+		        ///@todo ID3::Tag::originalAlbum()
+		ORIGINALARTIST=26,//TOPE - The 'Original artist(s)/performer(s)' frame is
+		        //intended for the performer(s) of the original recording, if for
+		        //example the music in the file should be a cover of a previously
+		        //released song. The performers are seperated with the "/" character.
+		        ///@todo ID3::Tag::originalArtist()
+		ORIGINALFILENAME=27,//TOFN - The 'Original filename' frame contains the
+		        //preferred filename for the file, since some media doesn't allow
+		        //the desired length of the filename. The filename is case
+		        //sensitive and includes its suffix.
+		        ///@todo ID3::Tag::originalFilename()
+		ORIGINALLYRICIST=28,//TOLY - The 'Original lyricist(s)/text writer(s)'
+		        //frame is intended for the text writer(s) of the original
+		        //recording, if for example the music in the file should be a
+		        //cover of a previously released song. The text writers are
+		        //seperated with the "/" character.
+		        ///@todo ID3::Tag::originalLyricist()
+		ORIGINALYEAR=29,//TORY - The 'Original release year' frame is intended for
+		        //the year when the original recording, if for example the music
+		        //in the file should be a cover of a previously released song, was
+		        //released. The field is formatted as in the "TYER" frame.
+		        ///@todo ID3::Tag::originalYear()
 		PLAYLISTDELAY=17,//TDLY - The 'Playlist delay' defines the numbers of
 		        //milliseconds of silence between every song in a playlist. The
 		        //player should use the "ETC0" frame, if present, to skip initial
 		        //silence and silence at the end of the audio to match the
 		        //'Playlist delay' time. The time is represented as a numeric string.
 		        ///@todo ID3::Tag::playlistDelay()
-		REMIXER=10,//TPE4 - The 'Interpreted, remixed, or otherwise modified by
-		        //frame contains more information about the people behind a remix
-		        //and similar interpretations of another existing piece.
-		        ///@todo ID3::Tag::remixer()
+		RADIOSTATION=30,//TRSN - The 'Internet radio station name' frame contains
+		        //the name of the internet radio station from which the audio is streamed.
+		        ///@todo ID3::Tag::radioStation()
+		RADIOSTATIONOWNER=31,//TRSO - The 'Internet radio station owner' frame
+		        //contains the name of the owner of the internet radio station
+		        //from which the audio is streamed.
+		        ///@todo ID3::Tag::radioStationOwner()
+		RECORDINGDATES=32,//TRDA - The 'Recording dates' frame is a intended to be
+		        //used as complement to the "TYER", "TDAT" and "TIME" frames. E.g.
+		        //"4th-7th June, 12th June" in combination with the "TYER" frame.
+		        ///@todo ID3::Tag::recordingDates()
+		SIZE=36,//TSIZ - The 'Size' frame contains the size of the audiofile in
+		        //bytes, excluding the ID3v2 tag, represented as a numeric string.
+		        ///@todo ID3::Tag::size()
 		TIME=19,//TIME - The 'Time' frame is a numeric string in the HHMM format
 		        //containing the time for the recording. This field is always four characters long.
 		        ///@todo ID3::Tag::time(bool)
@@ -296,6 +358,13 @@ namespace ID3 {
 		        //and a numeric string containing the total numer of
 		        //tracks/elements on the original recording. E.g. "4/9".
 		        //ID3::Tag::track(bool) ID3::Tag::trackTotal(bool)
+		USERINFO=37,//TXXX - This frame is intended for one-string text
+		        //information concerning the audiofile in a similar way to the
+		        //other "T"-frames. The frame body consists of a description of
+		        //the string, represented as a terminated string, followed by the
+		        //actual string. There may be more than one "TXXX" frame in each
+		        //tag, but only one with the same description.
+		        ///@todo ID3::Tag::userInfo()
 		YEAR=13 //TYER - The 'Year' frame is a numeric string with a year of the
 		        //recording. This frames is always four characters long (until the year 10000). 
 		        //ID3::Tag::year()

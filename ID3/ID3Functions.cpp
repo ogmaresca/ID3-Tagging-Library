@@ -203,7 +203,7 @@ std::string ID3::getFrameName(const Frames frameID) {
 		"TPOS", //7  - DISC
 		"TCON", //8  - GENRE
 		"TEXT", //9  - LYRICIST
-		"TPE4", //10 - REMIXER
+		"TPE4", //10 - MODIFIEDBY
 		"TIT2", //11 - TITLE
 		"TRCK", //12 - TRACK
 		"TYER", //13 - YEAR
@@ -215,7 +215,22 @@ std::string ID3::getFrameName(const Frames frameID) {
 		"TIME", //19 - TIME
 		"TIT1", //20 - GROUPING
 		"TIT3", //21 - DESCRIPTION
-		"TKEY" //22 - MUSICALKEY
+		"TKEY", //22 - MUSICALKEY
+		"TLEN", //23 - LENGTH
+		"TMED", //24 - MEDIATYPE
+		"TOAL", //25 - ORIGINALALBUM
+		"TOPE", //26 - ORIGINALARTIST
+		"TOFN", //27 - ORIGINALFILENAME
+		"TOLY", //28 - ORIGINALLYRICIST
+		"TORY", //29 - ORIGINALYEAR
+		"TOWN", //30 - FILEOWNER
+		"TRSN", //31 - RADIOSTATION
+		"TRSO", //32 - RADIOSTATIONOWNER
+		"TDRA", //33 - RECORDINGDATES
+		"TSSE", //34 - ENCODINGSETTINGS
+		"TSRC", //35 - ISRC
+		"TSIZ", //36 - SIZE
+		"TXXX", //37 - USERINFO
 	};
 	
 	if((unsigned int)frameID > frames.size())
