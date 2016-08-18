@@ -30,8 +30,6 @@ Tag::Tag(std::ifstream& file) : Tag::Tag() {
 	file.seekg(0, std::ifstream::end);
 	filesize = file.tellg();
 	readFile(file, false);
-	
-	const std::function<std::string (Frames)> test = std::bind(&Tag::textContent, this, Frames::TITLE);
 }
 
 ///@pkg ID3.h
