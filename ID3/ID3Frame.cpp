@@ -65,7 +65,7 @@ unsigned long Frame::size() const { return frameContent.size(); }
 std::string Frame::frame() const { return id; }
 
 ///@pkg ID3Frame.h
-void Frame::revert() { read(frameContent); }
+void Frame::revert() { read(frameContent); isEdited = false; }
 
 ///@pkg ID3Frame.h
 bool Frame::edited() const { return isEdited; }
@@ -124,13 +124,13 @@ bool UnknownFrame::operator==(const FrameClass classID) const noexcept {
 }
 
 ///@pkg ID3Frame.h
-ByteArray UnknownFrame::write(unsigned short version, bool minimize) {
-	return frameContent;
+UnknownFrame::operator FrameClass() const noexcept {
+	return FrameClass::UNKNOWN;
 }
 
 ///@pkg ID3Frame.h
-UnknownFrame::operator FrameClass() const noexcept {
-	return FrameClass::UNKNOWN;
+ByteArray UnknownFrame::write(unsigned short version, bool minimize) {
+	return frameContent;
 }
 
 ///@pkg ID3Frame.h

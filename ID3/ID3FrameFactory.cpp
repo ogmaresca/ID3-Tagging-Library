@@ -71,6 +71,7 @@ FramePtr FrameFactory::create(const unsigned long readpos) const {
 	//Return the Frame
 	switch(frameType) {
 		case FrameClass::TEXT: return FramePtr(new TextFrame(id, ID3Ver, frameBytes, endpos));
+		case FrameClass::NUMERICAL: return FramePtr(new NumericalTextFrame(id, ID3Ver, frameBytes, endpos));
 		case FrameClass::UNKNOWN: default: return FramePtr(new UnknownFrame(id, ID3Ver, frameBytes, endpos));
 	}
 }
@@ -173,8 +174,29 @@ FramePair FrameFactory::createPair(const Frames frameName,
 ///@pkg ID3FrameFactory
 ///@static
 FrameClass FrameFactory::frameType(const std::string& frameID) {
-	//Text frames
-	if(frameID[0] == 'T' || frameID == "COMM")
-		return FrameClass::TEXT;
+	if(frameID == "")
+		return FrameClass::UNKNOWN;
+	
+	switch(frameID[0]) {
+		case 'T': {
+			//Numerical Text Frames:
+			//Year, BPM, Date, Length, Playlist Delay, Time
+			//NOTE: Track and Disc are not numerical values as they may contain
+			//a slash to separate the total number of tracks/discs in the set.
+			if(frameID == "TYER" ||
+			   frameID == "TBPM" ||
+			   frameID == "TDAT" ||
+			   frameID == "TLEN" ||
+			   frameID == "TDLY" ||
+			   frameID == "TIME")
+				return FrameClass::NUMERICAL;
+			return FrameClass::TEXT;
+		} case 'C': {
+			if(frameID == "COMM")
+				return FrameClass::TEXT;
+			break;
+		}
+	}
+	
 	return FrameClass::UNKNOWN;
 }

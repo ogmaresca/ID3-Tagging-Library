@@ -40,14 +40,23 @@ namespace ID3 {
 	 *     UNKNOWN: UnknownFrame
 	 */
 	enum FrameClass {
-		TEXT    = 1, //TextFrame
-		UNKNOWN = 0  //UnknownFrame
+		NUMERICAL = 2, //NumericalTextFrame
+		TEXT      = 1, //TextFrame
+		UNKNOWN   = 0  //UnknownFrame
 	};
+	
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////// F R A M E /////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
 	
 	/**
 	 * An ID3::Frame stores information from an ID3v2 frame.
 	 * It is an abstract class, use one of its children defined below
 	 * to create a Frame.
+	 * 
+	 * Implemented in ID3Frame.cpp
 	 * 
 	 * @abstract
 	 */
@@ -277,6 +286,12 @@ namespace ID3 {
 			ByteArray frameContent;
 	};
 	
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	///////////////////////// M U L T I P L E F R A M E /////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	
 	/**
 	 * MultipleFrame is an interface/abstract class that will eventually
 	 * be used to add support for reading and writing multiple frames
@@ -293,9 +308,17 @@ namespace ID3 {
 			virtual ~MultipleFrame() = 0;
 	};
 	
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	///////////////////////// M U L T I P L E F R A M E /////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	
 	/**
 	 * UnknownFrame is a child class of Frame. It is to be used when
 	 * a given frame ID is unknown.
+	 * 
+	 * Implemented in ID3Frame.cpp
 	 * 
 	 * @see ID3::Frame
 	 */
@@ -373,9 +396,17 @@ namespace ID3 {
 			virtual void read(ByteArray& frameBytes);
 	};
 	
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	///////////////////////////// T E X T F R A M E /////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	
 	/**
 	 * TextFrame is a child class of Frame. It is to be used for frames
 	 * with text content.
+	 * 
+	 * Implemented in ID3TextFrame.cpp
 	 * 
 	 * @see ID3::Frame
 	 */
@@ -425,7 +456,7 @@ namespace ID3 {
 			 * @param str The string to append.
 			 * @return The text frame.
 			 */
-			virtual TextFrame& operator+=(std::string str) noexcept;
+			virtual TextFrame& operator+=(const std::string& str) noexcept;
 			
 			/**
 			 * The write() method for TextFrame re-creates the frame
@@ -442,14 +473,14 @@ namespace ID3 {
 			 * 
 			 * @returns The text content of the frame in UTF-8 encoding.
 			 */
-			virtual std::string content() const;
+			virtual std::string content() const final;
 			
 			/**
 			 * Set the text content. Call write() to finalize changes.
 			 * 
 			 * @param newContent The new text content.
 			 */
-			virtual void content(std::string newContent);
+			virtual void content(const std::string& newContent);
 			
 			/**
 			 * Get a ByteArray encoded in either LATIN-1, UTF-8, or UTF-16, and
@@ -497,7 +528,7 @@ namespace ID3 {
 			 */
 			TextFrame(const std::string& frameName,
 			          const unsigned short version,
-					  ByteArray& frameBytes,
+			          ByteArray& frameBytes,
 			          const unsigned long end);
 			
 			/**
@@ -516,12 +547,12 @@ namespace ID3 {
 			 * 
 			 * @param frameName The frame ID.
 			 * @param version The ID3v2 major version.
-			 * @param textContent The text of the frame (optional).
+			 * @param value The text of the frame (optional).
 			 * @param description The frame description (optional).
 			 */
 			TextFrame(const std::string& frameName,
 			          const unsigned short version,
-			          const std::string& textContent="",
+			          const std::string& value="",
 			          const std::string& description="");
 			
 			/**
@@ -545,6 +576,242 @@ namespace ID3 {
 			 * ByteArray as its content string. If the text is not encoded in
 			 * UTF-8, it is converted to UTF-8 before saving it.
 			 * 
+			 * @param frameBytes The byte vector to read.
+			 * @see ID3::Frame::read(ByteArray&)
+			 */
+			virtual void read(ByteArray& frameBytes);
+	};
+	
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	//////////////////// N U M E R I C A L T E X T F R A M E ////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * NumericalTextFrame is a child class of TextFrame. It is to be used for
+	 * frames with numerical content, but the numbers are represented as a
+	 * text encoding instead of its bit values. A NumericalTextFrame will always
+	 * check its content when set to see if it's a valid numerical value, and if
+	 * it isn't then it will set the empty string instead.
+	 * 
+	 * Implemented in ID3TextFrame.cpp
+	 * 
+	 * @see ID3::Frame
+	 * @see ID3::TextFrame
+	 */
+	class NumericalTextFrame : virtual public TextFrame {
+		friend class FrameFactory;
+		
+		public:
+			/**
+			 * Checks if the given Frame is a NumericalTextFrame with the same,
+			 * frame ID, "null" status, and if text content match (when neither of
+			 * the Frames are "null").
+			 * 
+			 * @see ID3::Frame::operator==(Frame*)
+			 */
+			virtual bool operator==(const Frame* const frame) const noexcept override;
+			
+			/**
+			 * Checks if the FrameClass value is FrameClass::NUMERICAL.
+			 * 
+			 * @see ID3::Frame::operator==(FrameClass)
+			 */
+			virtual bool operator==(const FrameClass classID) const noexcept override;
+			
+			/**
+			 * Returns FrameClass::NUMERICAL.
+			 * 
+			 * @see ID3::Frame::operator FrameClass()
+			 */
+			virtual operator FrameClass() const noexcept override;
+			
+			/**
+			 * Checks if the given integer is the same value as the text content.
+			 * 
+			 * @param val The long int to check.
+			 * @return true if the values are the same, false otherwise.
+			 */
+			virtual bool operator==(long val) const noexcept;
+			
+			/**
+			 * Get the text content of the frame casted to a long int.
+			 */
+			virtual operator long() const noexcept;
+			
+			/**
+			 * Adds an int value to the frame content.
+			 * 
+			 * @param val The value to add.
+			 * @return The numerical text frame.
+			 */
+			virtual NumericalTextFrame& operator+=(long val) noexcept;
+			
+			/**
+			 * Subtracts an int value from the frame content.
+			 * 
+			 * @param val The value to subtract.
+			 * @return The numerical text frame.
+			 */
+			virtual NumericalTextFrame& operator-=(long val) noexcept;
+			
+			/**
+			 * Multiplies an the frame content by an int value.
+			 * 
+			 * @param val The value to multiply the frame content by.
+			 * @return The numerical text frame.
+			 */
+			virtual NumericalTextFrame& operator*=(long val) noexcept;
+			
+			/**
+			 * Divides the frame content by an int value.
+			 * 
+			 * @param val The value to divide the frame content by.
+			 * @return The numerical text frame.
+			 */
+			virtual NumericalTextFrame& operator/=(long val) noexcept;
+			
+			/**
+			 * Mods the frame content by an int value.
+			 * 
+			 * @param val The value to mod the frame content by.
+			 * @return The numerical text frame.
+			 */
+			virtual NumericalTextFrame& operator%=(long val) noexcept;
+			
+			/**
+			 * Append a string to the frame content.
+			 * 
+			 * NOTE: If the string is not an int value, nothing will be added and,
+			 * if the NumericalTextFrame object hasn't been edited before, edited()
+			 * will continue to return false.
+			 * 
+			 * NOTE: This method concatenates the frame content with the given
+			 * string. If you wish to perform a mathematical addition to the frame
+			 * content, use ID3::NumericalTextFrame::operator+=(long) instead.
+			 * 
+			 * @param str The value to append.
+			 * @return The text frame.
+			 */
+			virtual NumericalTextFrame& operator+=(const std::string& str) noexcept override;
+			
+			/**
+			 * Set the numerical content. Call write() to finalize changes.
+			 * 
+			 * @param newContent The new numerical content.
+			 */
+			virtual void content(long newContent);
+			
+			/**
+			 * Set the text content. Call write() to finalize changes.
+			 * 
+			 * NOTE: If the string is not an int value, then the NumericalTextFrame
+			 *       object will store an empty string instead.
+			 * 
+			 * @param newContent The new text content.
+			 */
+			virtual void content(const std::string& newContent) override;
+		
+		protected:
+			/**
+			 * This constructor calls the identical constructor in the
+			 * TextFrame class. If the given ByteArray is long
+			 * enough to be valid it then sets isNull to false and calls
+			 * ID3::NumericalTextFrame::read(ByteArray&) to process the ByteArray.
+			 * 
+			 * NOTE: If the content string in the ByteArray is not an int value,
+			 *       then the NumericalTextFrame object will store an empty string
+			 *       instead.
+			 * 
+			 * NOTE: frameName is not checked to verify that the frame ID is a
+			 *       valid numerical text frame ID.
+			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it
+			 *       is a supported ID3v2 version.
+			 * 
+			 * @see ID3::Frame::Frame(std::string&,
+			 *                        unsigned short,
+			 *                        ByteArray&,
+			 *                        unsigned long)
+			 */
+			NumericalTextFrame(const std::string& frameName,
+			                   const unsigned short version,
+			                   ByteArray& frameBytes,
+			                   const unsigned long end);
+			
+			/**
+			 * This constructor manually creates a text frame with
+			 * custom text. A Frame created from this constructor will
+			 * return false when calling createdFromFile().
+			 * 
+			 * NOTE: If the string is not an int value, then the NumericalTextFrame
+			 *       object will store an empty string instead.
+			 * 
+			 * NOTE: The frame ID is not checked to verify that the
+			 *       frame ID is a valid text frame.
+			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it
+			 *       is a supported ID3v2 version.
+			 * 
+			 * NOTE: If the given frame does not support a description,
+			 *       the description will not be set.
+			 * 
+			 * @param frameName The frame ID.
+			 * @param version The ID3v2 major version.
+			 * @param value The text of the frame (optional).
+			 * @param description The frame description (optional).
+			 * @see ID3::TextFrame::TextFrame(std::string&,
+			 *                                unsigned short,
+			 *                                std::string&,
+			 *                                std::string&)
+			 */
+			NumericalTextFrame(const std::string& frameName,
+			                   const unsigned short version,
+			                   const std::string& value="",
+			                   const std::string& description="");
+			
+			/**
+			 * This constructor manually creates a text frame with
+			 * custom text. A Frame created from this constructor will
+			 * return false when calling createdFromFile().
+			 * 
+			 * NOTE: The frame ID is not checked to verify that the
+			 *       frame ID is a valid text frame.
+			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it
+			 *       is a supported ID3v2 version.
+			 * 
+			 * NOTE: If the given frame does not support a description,
+			 *       the description will not be set.
+			 * 
+			 * @param frameName The frame ID.
+			 * @param version The ID3v2 major version.
+			 * @param textContent The numerical text content of the frame.
+			 * @param description The frame description (optional).
+			 */
+			NumericalTextFrame(const std::string& frameName,
+			                   const unsigned short version,
+			                   const long intContent,
+			                   const std::string& description="");
+			
+			/**
+			 * An empty constructor to initialize variables. Creating a Frame with
+			 * this constructor will result in a "null" NumericalTextFrame object.
+			 * 
+			 * @see ID3::Frame::Frame()
+			 */
+			NumericalTextFrame() noexcept;
+			
+			/**
+			 * The read() method for NumericalTextFrame first gets the text
+			 * encoding of the frame at the 11th byte, and saves every following
+			 * byte in the ByteArray as its content string. If the text is not
+			 * encoded in UTF-8, it is converted to UTF-8 before saving it. If the
+			 * text content is not an integer value, then the text content will be
+			 * set to an empty string.
+			 * 
+			 * @param frameBytes The byte vector to read.
 			 * @see ID3::Frame::read(ByteArray&)
 			 */
 			virtual void read(ByteArray& frameBytes);

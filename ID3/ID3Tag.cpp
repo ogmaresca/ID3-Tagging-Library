@@ -131,11 +131,8 @@ std::string Tag::album() const {
 }
 
 ///@pkg ID3.h
-std::string Tag::year(bool process) const {
-	std::string yearString = textContent(Frames::YEAR);
-	if(process && !std::all_of(yearString.begin(), yearString.end(), ::isdigit))
-		return "";
-	return yearString;
+std::string Tag::year() const {
+	return textContent(Frames::YEAR);
 }
 
 ///@pkg ID3.h
@@ -196,11 +193,8 @@ std::string Tag::composer() const {
 }
 
 ///@pkg ID3.h
-std::string Tag::bpm(bool process) const {
-	std::string bpmString = textContent(Frames::BPM);
-	if(process && !std::all_of(bpmString.begin(), bpmString.end(), ::isdigit))
-		return "";
-	return bpmString;
+std::string Tag::bpm() const {
+	return textContent(Frames::BPM);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

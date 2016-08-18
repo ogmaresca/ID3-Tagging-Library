@@ -206,7 +206,7 @@ std::string ID3::getFrameName(const Frames frameID) {
 		"TPE4", //10 - REMIXER
 		"TIT2", //11 - TITLE
 		"TRCK", //12 - TRACK
-		"TYET", //13 - YEAR
+		"TYER", //13 - YEAR
 		"TPE3", //14 - CONDUCTOR
 		"TDAT", //15 - DATE
 		"TENC", //16 - ENCODEDBY

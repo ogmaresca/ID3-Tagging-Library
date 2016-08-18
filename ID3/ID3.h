@@ -200,7 +200,7 @@ namespace ID3 {
 		BPM=3,  //TBPM - The 'BPM' frame contains the number of beats per minute
 		        //in the main part of the audio. The BPM is an integer and
 		        //represented as a numerical string.
-		        //ID3::Tag::bpm(bool)
+		        //ID3::Tag::bpm()
 		COMMENT=4,//COMM - This frame is indended for any kind of full text
 		        //information that does not fit in any other frame. It consists of
 		        //a frame header followed by encoding, language and content
@@ -252,7 +252,7 @@ namespace ID3 {
 		        //but other types may be used, not for these types though. This is
 		        //used in a similar way to the predefined types in the "TMED" frame,
 		        //but without parentheses. If this frame is not present audio type is assumed to be "MPG".
-		        ///@todo ID3::Tag::fileType()
+		        ///@todo ID3::Tag::fileType(bool)
 		GENRE=8,//TCON - The 'Content type'. ID3v1 genres can be added to the
 		        //beginning wrapped around parenthesis, optionally followed by genre text.
 		        //ID3::Tag::genre(bool)
@@ -261,6 +261,9 @@ namespace ID3 {
 		        //classical music is often sorted in different musical sections
 		        //(e.g. "Piano Concerto", "Weather - Hurricane").
 		        ///@todo ID3::Tag::grouping()
+		LENGTH=23,//TLEN - The 'Length' frame contains the length of the audiofile
+		        //in milliseconds, represented as a numeric string.
+		        ///@todo ID3::Tag::length(bool)
 		LYRICIST=9,//TEXT - The 'Lyricist(s)/Text writer(s)' frame is intended for
 		        //the writer(s) of the text or lyrics in the recording.
 		        ///@todo ID3::Tag::lyricist()
@@ -298,11 +301,11 @@ namespace ID3 {
 		        //ID3::Tag::year()
 	};
 	
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
-	//////////////////////////  S T R U C T S //////////////////////////
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////// S T R U C T S ///////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
 	
 	/**
 	 * ID3v1 structs.
@@ -498,14 +501,10 @@ namespace ID3 {
 			/**
 			 * Get the year tag.
 			 * 
-			 * @param process If true, this method will return an empty
-			 *                string if the frame value is not an integer.
-			 *                If false, the raw year string as it
-			 *                appears on file will be returned.
 			 * @return The year of the music file, or "" if there is
 			 *         no year set.
 			 */
-			std::string year(bool process=true) const;
+			std::string year() const;
 			
 			/**
 			 * Get the track tag.
@@ -524,7 +523,7 @@ namespace ID3 {
 			std::string track(bool process=true) const;
 			
 			/**
-			 * Get the total number of tracks of the original recording.
+			 * Get the total number of tracks in the set of the original recording.
 			 * This is taken from the TRCK frame, and consists of text
 			 * located after a slash ('/') in the frame content.
 			 * 
@@ -555,7 +554,7 @@ namespace ID3 {
 			std::string disc(bool process=true) const;
 			
 			/**
-			 * Get the total number of discs of the original recording.
+			 * Get the total number of discs in the set of the original recording.
 			 * This is taken from the TPOS frame, and consists of text
 			 * located after a slash ('/') in the frame content.
 			 * 
@@ -580,14 +579,10 @@ namespace ID3 {
 			/**
 			 * Get the BPM tag.
 			 * 
-			 * @param process If true, this method will return an empty
-			 *                string if the frame value is not an integer.
-			 *                If false, the raw bpm string as it
-			 *                appears on file will be returned.
 			 * @return The bpm of the music file, or "" if there is
 			 *         no bpm set.
 			 */
-			std::string bpm(bool process=true) const;
+			std::string bpm() const;
 			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
