@@ -111,7 +111,7 @@ FramePtr FrameFactory::create(const std::string& frameName,
 		case FrameClass::CLASS_URL:
 			return FramePtr(new URLTextFrame(frameName, ID3Ver, textContent));
 		default:
-			FramePtr(new UnknownFrame(frameName));
+			return FramePtr(new UnknownFrame(frameName));
 	}
 }
 
