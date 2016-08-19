@@ -40,9 +40,11 @@ namespace ID3 {
 	 *     UNKNOWN: UnknownFrame
 	 */
 	enum FrameClass {
-		NUMERICAL = 2, //NumericalTextFrame
-		TEXT      = 1, //TextFrame
-		UNKNOWN   = 0  //UnknownFrame
+		CLASS_DESCRIPTIVE = 3, //DescriptiveTextFrame
+		CLASS_NUMERICAL   = 2, //NumericalTextFrame
+		CLASS_TEXT        = 1, //TextFrame
+		CLASS_UNKNOWN     = 0, //UnknownFrame
+		CLASS_URL         = 4  //URLTextFrame
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -297,29 +299,7 @@ namespace ID3 {
 	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
-	///////////////////////// M U L T I P L E F R A M E /////////////////////////
-	/////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////
-	
-	/**
-	 * MultipleFrame is an interface/abstract class that will eventually
-	 * be used to add support for reading and writing multiple frames
-	 * with the same ID.
-	 * 
-	 * @todo Implement the class
-	 * @see ID3::Frame
-	 */
-	class MultipleFrame : virtual public Frame {
-		public:
-			/**
-			 * The destructor.
-			 */
-			virtual ~MultipleFrame() = 0;
-	};
-	
-	/////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////
-	///////////////////////// M U L T I P L E F R A M E /////////////////////////
+	////////////////////////// U N K N O W N F R A M E //////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
 	
@@ -345,14 +325,14 @@ namespace ID3 {
 			virtual bool operator==(const Frame* const frame) const noexcept;
 			
 			/**
-			 * Checks if the FrameClass value is FrameClass::UNKNOWN.
+			 * Checks if the FrameClass value is FrameClass::CLASS_UNKNOWN.
 			 * 
 			 * @see ID3::Frame::operator==(FrameClass)
 			 */
 			virtual bool operator==(const FrameClass classID) const noexcept;
 			
 			/**
-			 * Returns FrameClass::UNKNOWN.
+			 * Returns FrameClass::CLASS_UNKNOWN.
 			 * 
 			 * @see ID3::Frame::operator FrameClass()
 			 */
@@ -442,14 +422,14 @@ namespace ID3 {
 			virtual bool operator==(const Frame* const frame) const noexcept;
 			
 			/**
-			 * Checks if the FrameClass value is FrameClass::TEXT.
+			 * Checks if the FrameClass value is FrameClass::CLASS_TEXT.
 			 * 
 			 * @see ID3::Frame::operator==(FrameClass)
 			 */
 			virtual bool operator==(const FrameClass classID) const noexcept;
 			
 			/**
-			 * Returns FrameClass::TEXT.
+			 * Returns FrameClass::CLASS_TEXT.
 			 * 
 			 * @see ID3::Frame::operator FrameClass()
 			 */
@@ -500,7 +480,7 @@ namespace ID3 {
 			 * 
 			 * @returns The text content of the frame in UTF-8 encoding.
 			 */
-			virtual std::string content() const final;
+			std::string content() const;
 			
 			/**
 			 * Set the text content. Call write() to finalize changes.
@@ -569,18 +549,13 @@ namespace ID3 {
 			 * NOTE: The ID3v2 version is not checked to verify that it
 			 *       is a supported ID3v2 version.
 			 * 
-			 * NOTE: If the given frame does not support a description,
-			 *       the description will not be set.
-			 * 
 			 * @param frameName The frame ID.
 			 * @param version The ID3v2 major version.
 			 * @param value The text of the frame (optional).
-			 * @param description The frame description (optional).
 			 */
 			TextFrame(const std::string& frameName,
 			          const unsigned short version,
-			          const std::string& value="",
-			          const std::string& description="");
+			          const std::string& value="");
 			
 			/**
 			 * An empty constructor to initialize variables. Creating a Frame with
@@ -593,7 +568,7 @@ namespace ID3 {
 			/**
 			 * The content of the frame.
 			 * 
-			 * @see ID3::Frame::text()
+			 * @see ID3::TextFrame::content()
 			 */
 			std::string textContent;
 			
@@ -638,21 +613,21 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::operator==(Frame*)
 			 */
-			virtual bool operator==(const Frame* const frame) const noexcept override;
+			virtual bool operator==(const Frame* const frame) const noexcept;
 			
 			/**
-			 * Checks if the FrameClass value is FrameClass::NUMERICAL.
+			 * Checks if the FrameClass value is FrameClass::CLASS_NUMERICAL.
 			 * 
 			 * @see ID3::Frame::operator==(FrameClass)
 			 */
-			virtual bool operator==(const FrameClass classID) const noexcept override;
+			virtual bool operator==(const FrameClass classID) const noexcept;
 			
 			/**
-			 * Returns FrameClass::NUMERICAL.
+			 * Returns FrameClass::CLASS_NUMERICAL.
 			 * 
 			 * @see ID3::Frame::operator FrameClass()
 			 */
-			virtual operator FrameClass() const noexcept override;
+			virtual operator FrameClass() const noexcept;
 			
 			/**
 			 * Checks if the given integer is the same value as the text content.
@@ -721,7 +696,7 @@ namespace ID3 {
 			 * @param str The value to append.
 			 * @return The text frame.
 			 */
-			virtual NumericalTextFrame& operator+=(const std::string& str) noexcept override;
+			virtual NumericalTextFrame& operator+=(const std::string& str) noexcept;
 			
 			/**
 			 * Set the numerical content. Call write() to finalize changes.
@@ -738,7 +713,7 @@ namespace ID3 {
 			 * 
 			 * @param newContent The new text content.
 			 */
-			virtual void content(const std::string& newContent) override;
+			virtual void content(const std::string& newContent);
 		
 		protected:
 			/**
@@ -781,22 +756,16 @@ namespace ID3 {
 			 * NOTE: The ID3v2 version is not checked to verify that it
 			 *       is a supported ID3v2 version.
 			 * 
-			 * NOTE: If the given frame does not support a description,
-			 *       the description will not be set.
-			 * 
 			 * @param frameName The frame ID.
 			 * @param version The ID3v2 major version.
 			 * @param value The text of the frame (optional).
-			 * @param description The frame description (optional).
 			 * @see ID3::TextFrame::TextFrame(std::string&,
 			 *                                unsigned short,
-			 *                                std::string&,
 			 *                                std::string&)
 			 */
 			NumericalTextFrame(const std::string& frameName,
 			                   const unsigned short version,
-			                   const std::string& value="",
-			                   const std::string& description="");
+			                   const std::string& value="");
 			
 			/**
 			 * This constructor manually creates a text frame with
@@ -809,9 +778,6 @@ namespace ID3 {
 			 * NOTE: The ID3v2 version is not checked to verify that it
 			 *       is a supported ID3v2 version.
 			 * 
-			 * NOTE: If the given frame does not support a description,
-			 *       the description will not be set.
-			 * 
 			 * @param frameName The frame ID.
 			 * @param version The ID3v2 major version.
 			 * @param textContent The numerical text content of the frame.
@@ -819,8 +785,7 @@ namespace ID3 {
 			 */
 			NumericalTextFrame(const std::string& frameName,
 			                   const unsigned short version,
-			                   const long intContent,
-			                   const std::string& description="");
+			                   const long intContent);
 			
 			/**
 			 * An empty constructor to initialize variables. Creating a Frame with
@@ -837,6 +802,344 @@ namespace ID3 {
 			 * encoded in UTF-8, it is converted to UTF-8 before saving it. If the
 			 * text content is not an integer value, then the text content will be
 			 * set to an empty string.
+			 * 
+			 * @param frameBytes The byte vector to read.
+			 * @see ID3::Frame::read(ByteArray&)
+			 */
+			virtual void read(ByteArray& frameBytes);
+	};
+	
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	////////////////// D E S C R I P T I V E T E X T F R A M E //////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * DescriptiveTextFrame is a child class of TextFrame. It is to be used for
+	 * frames that have a set description. However, descriptions are optional in
+	 * DescriptiveTextFrames. Therefore, the empty() method is not overriden as
+	 * it doesn't matter if the description is empty or not.
+	 * 
+	 * Implemented in ID3TextFrame.cpp
+	 * 
+	 * @see ID3::Frame
+	 * @see ID3::TextFrame
+	 */
+	class DescriptiveTextFrame : virtual public TextFrame {
+		friend class FrameFactory;
+		
+		public:
+			/**
+			 * An option value used when reading USLT and COMM frames, as they have
+			 * a 3-byte language string after the encoding byte.
+			 */
+			static const short OPTION_LANGUAGE = 0b00000001;
+			
+			/**
+			 * An option value used when reading the WXXX frame, as the URL string
+			 * is always encoded in LATIN-1.
+			 */
+			static const short OPTION_LATIN1_TEXT = 0b00000010;
+			
+			/**
+			 * Checks if the given Frame is a DescriptiveTextFrame with the same
+			 * frame ID, "null" status, and if text content, description, and
+			 * language match (when neither of the Frames are "null").
+			 * 
+			 * @see ID3::Frame::operator==(Frame*)
+			 */
+			virtual bool operator==(const Frame* const frame) const noexcept;
+			
+			/**
+			 * Checks if the FrameClass value is FrameClass::CLASS_DESCRIPTIVE.
+			 * 
+			 * @see ID3::Frame::operator==(FrameClass)
+			 */
+			virtual bool operator==(const FrameClass classID) const noexcept;
+			
+			/**
+			 * Returns FrameClass::CLASS_DESCRIPTIVE.
+			 * 
+			 * @see ID3::Frame::operator FrameClass()
+			 */
+			virtual operator FrameClass() const noexcept;
+			
+			/**
+			 * The write() method for DescriptiveTextFrame re-creates the frame
+			 * header with UTF-8 encoding and its stored text content, description,
+			 * and language (if it has one). If the Frame has language enabled,
+			 * and the Frame's language is empty upon the call to write(), the
+			 * language will default to "xxx".
+			 * 
+			 * @todo Actually implement the function.
+			 * @see ID3::Frame::write(unsigned short)
+			 */
+			virtual ByteArray write(unsigned short version=0,
+			                        bool minimize=false);
+			
+			/**
+			 * Set the text content and optionally description.
+			 * Call write() to finalize changes.
+			 * 
+			 * @param newContent The new text content.
+			 * @param newDescription The new description.
+			 */
+			virtual void content(const std::string& newContent,
+			                     const std::string& newDescription="");
+			
+			/**
+			 * Get the description.
+			 * 
+			 * @return The description of the frame in UTF-8 encoding.
+			 */
+			std::string description() const;
+			
+			/**
+			 * Set the description. Call write() to finalize changes.
+			 * 
+			 * @param newDescription The new description.
+			 */
+			virtual void description(const std::string& newDescription);
+			
+			/**
+			 * Get the language. If the language option was not passed in the
+			 * to the constructor, this will always return "".
+			 * 
+			 * @returns The language of the frame in UTF-8 encoding.
+			 */
+			std::string language() const;
+			
+			/**
+			 * Set the language. Call write() to finalize changes.
+			 * 
+			 * NOTE: The language will only be set if the language option was
+			 *       passed to the constructor, and the new language string is
+			 *       either an empty string or 3 characters long.
+			 * 
+			 * NOTE: The language is a ISO 639-2 code.
+			 * 
+			 * @param newLanguage The new language.
+			 */
+			virtual void language(const std::string& newLanguage);
+		
+		protected:
+			/**
+			 * This constructor calls the identical constructor in the
+			 * Frame class. If the given ByteArray is long
+			 * enough to be valid it then sets isNull to false and calls
+			 * ID3::TextFrame::read(ByteArray&) to process the ByteArray.
+			 * 
+			 * NOTE: frameName is not checked to verify that the frame ID is a
+			 *       valid text frame ID.
+			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it
+			 *       is a supported ID3v2 version.			 
+			 * 
+			 * @param options Optional options for decoding the ByteArray, where
+			 *                the option values checked for are
+			 *                ID3::DescriptiveTextFrame::OPTION_LANGUAGE and
+			 *                ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT (optional).
+			 * @see ID3::Frame::Frame(std::string&,
+			 *                        unsigned short,
+			 *                        ByteArray&,
+			 *                        unsigned long)
+			 */
+			DescriptiveTextFrame(const std::string& frameName,
+			                     const unsigned short version,
+			                     ByteArray& frameBytes,
+			                     const unsigned long end,
+			                     const short options=0);
+			
+			/**
+			 * This constructor manually creates a text frame with
+			 * custom text. A Frame created from this constructor will
+			 * return false when calling createdFromFile().
+			 * 
+			 * NOTE: The frame ID is not checked to verify that the
+			 *       frame ID is a valid text frame.
+			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it
+			 *       is a supported ID3v2 version.
+			 * 
+			 * NOTE: The language will only be set if the language option is
+			 *       passed in the parameter values, and the new language string is
+			 *       either an empty string or 3 characters long.
+			 * 
+			 * NOTE: The language is a ISO 639-2 code.
+			 * 
+			 * @param frameName The frame ID.
+			 * @param version The ID3v2 major version.
+			 * @param value The text of the frame (optional).
+			 * @param description The frame description (optional).
+			 * @param language The frame language (optional).
+			 * @param options Optional options for decoding the ByteArray, where
+			 *                the option values checked for are
+			 *                ID3::DescriptiveTextFrame::OPTION_LANGUAGE and
+			 *                ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT (optional).
+			 *                For multiple values, OR (option | option) them together.
+			 */
+			DescriptiveTextFrame(const std::string& frameName,
+			                     const unsigned short version,
+			                     const std::string& value="",
+			                     const std::string& description="",
+			                     const std::string& language="",
+			                     const short options=0);
+			
+			/**
+			 * An empty constructor to initialize variables. Creating a Frame with
+			 * this constructor will result in a "null" TextFrame object.
+			 * 
+			 * @see ID3::Frame::Frame()
+			 */
+			DescriptiveTextFrame() noexcept;
+			
+			/**
+			 * The description of the frame.
+			 * 
+			 * @see ID3::DescriptiveTextFrame::description()
+			 */
+			std::string textDescription;
+			
+			/**
+			 * The language of the frame, if applicable.
+			 * It should be formatted as a 3-character long ISO 639-2 code.
+			 * 
+			 * @see ID3::DescriptiveTextFrame::language()
+			 */
+			std::string textLanguage;
+			
+			/**
+			 * The Frame options. It is set in the constructor and it is constant.
+			 * The possible options are ID3::DescriptiveTextFrame::OPTION_LANGUAGE
+			 * and ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT.
+			 */
+			const short frameOptions;
+			
+			/**
+			 * The read() method for TextFrame first gets the text encoding of the
+			 * frame at the 11th byte, and then reads the description and text, as
+			 * well as the language if the option is set. If text is not encoded in
+			 * UTF-8, it is converted to UTF-8 before saving it. If there is no
+			 * null characters after the encoding byte and (optional) language
+			 * bytes, then it will be assumed that the frame doesn't contain a
+			 * description.
+			 * 
+			 * NOTE: This will use the options that were given in the constructor.
+			 * 
+			 * @param frameBytes The byte vector to read.
+			 * @see ID3::Frame::read(ByteArray&)
+			 */
+			virtual void read(ByteArray& frameBytes);
+	};
+	
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	////////////////////////// U R L T E X T F R A M E //////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * URLTextFrame is a child class of TextFrame. It is to be used for frames
+	 * frames with URL content, aside from the WXXX frame. The URLTextFrame text
+	 * content is assumed to be encoded in LATIN-1 as per the ID3v2 spec.
+	 * 
+	 * Implemented in ID3TextFrame.cpp
+	 * 
+	 * @see ID3::Frame
+	 * @see ID3::TextFrame
+	 */
+	class URLTextFrame : virtual public TextFrame {
+		friend class FrameFactory;
+		
+		public:
+			/**
+			 * Checks if the given Frame is a URLTextFrame with the same frame ID,
+			 * "null" status, and if text content match (when neither of the Frames
+			 * are "null").
+			 * 
+			 * @see ID3::Frame::operator==(Frame*)
+			 */
+			virtual bool operator==(const Frame* const frame) const noexcept;
+			
+			/**
+			 * Checks if the FrameClass value is FrameClass::CLASS_URL.
+			 * 
+			 * @see ID3::Frame::operator==(FrameClass)
+			 */
+			virtual bool operator==(const FrameClass classID) const noexcept;
+			
+			/**
+			 * Returns FrameClass::CLASS_URL.
+			 * 
+			 * @see ID3::Frame::operator FrameClass()
+			 */
+			virtual operator FrameClass() const noexcept;
+			
+			/**
+			 * The write() method for URLTextFrame re-creates the frame
+			 * header with LATIN-1 encoding and its stored text content.
+			 * 
+			 * @todo Actually implement the function.
+			 * @see ID3::Frame::write(unsigned short)
+			 */
+			virtual ByteArray write(unsigned short version=0,
+			                        bool minimize=false);
+		
+		protected:
+			/**
+			 * This constructor calls the identical constructor in the
+			 * Frame class. If the given ByteArray is long
+			 * enough to be valid it then sets isNull to false and calls
+			 * ID3::TextFrame::read(ByteArray&) to process the ByteArray.
+			 * 
+			 * NOTE: frameName is not checked to verify that the frame ID is a
+			 *       valid URL frame ID.
+			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it
+			 *       is a supported ID3v2 version.
+			 * 
+			 * @see ID3::Frame::Frame(std::string&,
+			 *                        unsigned short,
+			 *                        ByteArray&,
+			 *                        unsigned long)
+			 */
+			URLTextFrame(const std::string& frameName,
+			             const unsigned short version,
+			             ByteArray& frameBytes,
+			             const unsigned long end);
+			
+			/**
+			 * This constructor manually creates a text frame with custom text.
+			 * A Frame created from this constructor will return false
+			 * when calling createdFromFile().
+			 * 
+			 * NOTE: The frame ID is not checked to verify that the
+			 *       frame ID is a valid URL frame ID.
+			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it
+			 *       is a supported ID3v2 version.
+			 * 
+			 * @param frameName The frame ID.
+			 * @param version The ID3v2 major version.
+			 * @param value The text of the frame (optional).
+			 */
+			URLTextFrame(const std::string& frameName,
+			             const unsigned short version,
+			             const std::string& value="");
+			
+			/**
+			 * An empty constructor to initialize variables. Creating a Frame with
+			 * this constructor will result in a "null" URLTextFrame object.
+			 * 
+			 * @see ID3::Frame::Frame()
+			 */
+			URLTextFrame() noexcept;
+			
+			/**
+			 * The read() method for URLTextFrame saves every byte following the
+			 * frame header as its text content. The text is first converted from
+			 * LATIN-1 to UTF-8 before storing the string.
 			 * 
 			 * @param frameBytes The byte vector to read.
 			 * @see ID3::Frame::read(ByteArray&)

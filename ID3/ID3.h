@@ -157,10 +157,10 @@ namespace ID3 {
 	 * An enum of text encodings used in ID3v2 frames.
 	 */
 	enum FrameEncoding {
-		LATIN1   = 0, //AKA ISO-8859-1
-		UTF16BOM = 1, //AKA UCS-2
-		UTF16BE  = 2, //ID3v2.4+ only, ID3-Tagging-Library will read in ID3v2.3
-		UTF8     = 3  //ID3v2.4+ only, ID3-Tagging-Library will read in ID3v2.3
+		ENCODING_LATIN1   = 0, //AKA ISO-8859-1
+		ENCODING_UTF16BOM = 1, //AKA UCS-2
+		ENCODING_UTF16    = 2, //ID3v2.4+ only, ID3-Tagging-Library will read in ID3v2.3
+		ENCODING_UTF8     = 3  //ID3v2.4+ only, ID3-Tagging-Library will read in ID3v2.3
 	};
 	
 	/**
@@ -270,6 +270,15 @@ namespace ID3 {
 		        //classical music is often sorted in different musical sections
 		        //(e.g. "Piano Concerto", "Weather - Hurricane").
 		        ///@todo ID3::Tag::grouping()
+		INVOLVEDPEOPLE=38,//IPLS - Since there might be a lot of people
+		        //contributing to an audio file in various ways, such as musicians
+		        //and technicians, the 'Text information frames' are often
+		        //insufficient to list everyone involved in a project. The
+		        //'Involved people list' is a frame containing the names of those
+		        //involved, and how they were involved. The body simply contains a
+		        //terminated string with the involvement directly followed by a
+		        //terminated string with the involvee followed by a new involvement
+		        //and so on. There may only be one "IPLS" frame in each tag.
 		ISRC=35,//TSRC - The 'ISRC' frame should contain the International
 		        //Standard Recording Code (ISRC) (12 characters).
 		        ///@todo ID3::Tag::isrc()

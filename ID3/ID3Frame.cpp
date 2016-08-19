@@ -10,7 +10,7 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-//#include <iostream> //For printing
+#include <iostream> //For printing
 
 #include "ID3.h"
 #include "ID3Frame.h"
@@ -120,12 +120,12 @@ bool UnknownFrame::operator==(const Frame* const frame) const noexcept {
 
 ///@pkg ID3Frame.h
 bool UnknownFrame::operator==(const FrameClass classID) const noexcept {
-	return classID == FrameClass::UNKNOWN;
+	return classID == FrameClass::CLASS_UNKNOWN;
 }
 
 ///@pkg ID3Frame.h
 UnknownFrame::operator FrameClass() const noexcept {
-	return FrameClass::UNKNOWN;
+	return FrameClass::CLASS_UNKNOWN;
 }
 
 ///@pkg ID3Frame.h
@@ -143,6 +143,10 @@ void UnknownFrame::read(ByteArray& frameBytes) {
 	frameContent = frameBytes;
 	
 	//Pictures are huge, don't want to print that
-	//if(id != "APIC")
+	//if(id != "APIC") {
 	//	std::cout << "Content for UnknownFrame " << id << ": " << std::string(frameBytes.begin()+HEADER_BYTE_SIZE, frameBytes.end()) << std::endl;
+	//	for(int i = 0; i < frameBytes.size(); i++)
+	//		std::cout << (unsigned short)((uint8_t)frameBytes[i]) << " " << frameBytes[i] << " | ";
+	//	std::cout << std::endl;
+	//}
 }

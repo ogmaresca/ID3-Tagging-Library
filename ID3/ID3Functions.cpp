@@ -231,9 +231,14 @@ std::string ID3::getFrameName(const Frames frameID) {
 		"TSRC", //35 - ISRC
 		"TSIZ", //36 - SIZE
 		"TXXX", //37 - USERINFO
+		"IPLS", //38 - INVOLVEDPEOPLE
 	};
 	
 	if((unsigned int)frameID > frames.size())
 		return "";
 	return frames[(unsigned int)frameID];
 }
+
+//bool ID3::allowsMultipleFrames(const Frames frameID) {
+//		return true if the ID3v2 spec allows multiple of the same frame type, false otherwise
+//}

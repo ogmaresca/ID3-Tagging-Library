@@ -48,8 +48,6 @@ Tag::Tag(const std::string& fileLoc) : Tag::Tag() {
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag(const Glib::ustring& fileLoc): " << e.what() << std::endl;
 	}
-	
-	std::cout << "ID3 version: " << getVersionString(true) << std::endl;
 }
 
 ///@pkg ID3.h
