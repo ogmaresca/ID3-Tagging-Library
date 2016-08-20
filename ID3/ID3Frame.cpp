@@ -26,25 +26,31 @@ using namespace ID3;
 
 ///@pkg ID3Frame.h
 Frame::Frame() noexcept : ID3Ver(MAX_SUPPORTED_VERSION),
-                          endPosition(0),
                           isNull(true),
                           isEdited(false),
                           isFromFile(false) {}
 
 ///@pkg ID3Frame.h
 Frame::Frame(const std::string& frameName,
-		     const unsigned short version,
-		     ByteArray& frameBytes,
-		     const unsigned long end) : id(frameName),
-		                                ID3Ver(version),
-		                                frameContent(frameBytes),
-		                                endPosition(end),
-		                                isNull(true),
-		                                isEdited(false),
-		                                isFromFile(true) {}
+             const unsigned short version,
+             ByteArray& frameBytes) : id(frameName),
+                                      ID3Ver(version),
+                                      frameContent(frameBytes),
+                                      isNull(frameBytes.size() <= HEADER_BYTE_SIZE),
+                                      isEdited(false),
+                                      isFromFile(true) {
+	if(!isNull && (compressed() || encrypted()))
+		isNull = true;
+}
 
 ///@pkg ID3Frame.h
 Frame::~Frame() {}
+
+///@pkg ID3Frame.h
+bool Frame::operator==(const FrameClass classID) const noexcept { return type() == classID; }
+
+///@pkg ID3Frame.h
+Frame::operator FrameClass() const noexcept { return type(); }
 
 ///@pkg ID3Frame.h
 bool Frame::operator==(bool boolean) const noexcept { return boolean == isNull; }
@@ -56,22 +62,71 @@ Frame::operator ByteArray() const noexcept { return frameContent; }
 bool Frame::null() const { return isNull; }
 
 ///@pkg ID3Frame.h
-unsigned long Frame::end() const { return endPosition; }
-
-///@pkg ID3Frame.h
 unsigned long Frame::size() const { return frameContent.size(); }
 
 ///@pkg ID3Frame.h
 std::string Frame::frame() const { return id; }
 
 ///@pkg ID3Frame.h
-void Frame::revert() { read(frameContent); isEdited = false; }
+void Frame::revert() { read(); isEdited = false; }
 
 ///@pkg ID3Frame.h
 bool Frame::edited() const { return isEdited; }
 
 ///@pkg ID3Frame.h
 bool Frame::createdFromFile() const { return isFromFile; }
+
+///@pkg ID3Frame.h
+bool Frame::discardUponTagAlterIfUnknown() const {
+	if(frameContent.size() < HEADER_BYTE_SIZE)
+		return false;
+	return frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN;
+}
+
+///@pkg ID3Frame.h
+bool Frame::discardUponAudioAlter() const {
+	if(frameContent.size() < HEADER_BYTE_SIZE)
+		return false;
+	return frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER == FLAG1_DISCARD_UPON_AUDIO_ALTER;
+}
+
+///@pkg ID3Frame.h
+bool Frame::readOnly() const {
+	if(frameContent.size() < HEADER_BYTE_SIZE)
+		return false;
+	return frameContent[8] & FLAG1_READ_ONLY == FLAG1_READ_ONLY;
+}
+
+///@pkg ID3Frame.h
+bool Frame::compressed() const {
+	if(frameContent.size() < HEADER_BYTE_SIZE)
+		return false;
+	return frameContent[9] & FLAG2_COMPRESSED == FLAG2_COMPRESSED;
+}
+
+///@pkg ID3Frame.h
+bool Frame::encrypted() const {
+	if(frameContent.size() < HEADER_BYTE_SIZE)
+		return false;
+	return frameContent[9] & FLAG2_ENCRYPTED == FLAG2_ENCRYPTED;
+}
+
+///@pkg ID3Frame.h
+bool Frame::groupingIdentity() const {
+	if(frameContent.size() < HEADER_BYTE_SIZE)
+		return false;
+	return frameContent[9] & FLAG2_GROUPING_IDENTITY == FLAG2_GROUPING_IDENTITY;
+}
+
+///@pkg ID3Frame.h
+uint8_t Frame::groupIdentity() const {
+	if(frameContent.size() < HEADER_BYTE_SIZE + 1 || !groupingIdentity())
+		return 0;
+	return frameContent[HEADER_BYTE_SIZE];
+}
+
+///@pkg ID3Frame.h
+short Frame::headerSize() const { return HEADER_BYTE_SIZE + (groupingIdentity() ? 1 : 0); }
 
 ///@pkg ID3Frame.h
 ByteArray Frame::bytes() const noexcept { return frameContent; }
@@ -85,16 +140,15 @@ ByteArray Frame::bytes() const noexcept { return frameContent; }
 ///@pkg ID3Frame.h
 UnknownFrame::UnknownFrame(const std::string& frameName,
                            const unsigned short version,
-			               ByteArray& frameBytes,
-			               const unsigned long end) : Frame::Frame(frameName,
-			                                                       version,
-			                                                       frameBytes,
-			                                                       end) {
-	//If the frame is only its header, or not even that, then it's
-	//invalid and thus null
-	if(frameContent.size() > HEADER_BYTE_SIZE) {
-		read(frameBytes);
-		isNull = false;
+                           ByteArray& frameBytes) : Frame::Frame(frameName,
+                                                                 version,
+                                                                 frameBytes) {
+	//Pictures are huge, don't want to print that
+	if(!isNull) {
+		if(id == "APIC")
+			std::cout << "Content for UnknownFrame " << id << ": <frame content too large to print>" << std::endl;
+		else
+			std::cout << "Content for UnknownFrame " << id << ": " << std::string(frameBytes.begin()+HEADER_BYTE_SIZE, frameBytes.end()) << std::endl;
 	}
 }
 
@@ -119,12 +173,7 @@ bool UnknownFrame::operator==(const Frame* const frame) const noexcept {
 }
 
 ///@pkg ID3Frame.h
-bool UnknownFrame::operator==(const FrameClass classID) const noexcept {
-	return classID == FrameClass::CLASS_UNKNOWN;
-}
-
-///@pkg ID3Frame.h
-UnknownFrame::operator FrameClass() const noexcept {
+FrameClass UnknownFrame::type() const noexcept {
 	return FrameClass::CLASS_UNKNOWN;
 }
 
@@ -135,18 +184,19 @@ bool UnknownFrame::empty() const {
 
 ///@pkg ID3Frame.h
 ByteArray UnknownFrame::write(unsigned short version, bool minimize) {
+	if(discardUponTagAlterIfUnknown()) {
+		frameContent = ByteArray();
+	} else if(frameContent.size() >= HEADER_BYTE_SIZE &&
+	          version != ID3Ver && version >= MIN_SUPPORTED_VERSION &&
+	          version <= MAX_SUPPORTED_VERSION) {
+		//Whether a frame size is synchsafe has been changed in different ID3
+		//versions, so it must be updated to report the correct frame size
+		ByteArray frameSize = intToByteArray(frameContent.size() - HEADER_BYTE_SIZE, 4, ID3Ver >= 4);
+		for(short i = 0; i < 4; i++)
+			frameContent[i+4] = frameSize[i];
+	}
 	return frameContent;
 }
 
 ///@pkg ID3Frame.h
-void UnknownFrame::read(ByteArray& frameBytes) {
-	frameContent = frameBytes;
-	
-	//Pictures are huge, don't want to print that
-	//if(id != "APIC") {
-	//	std::cout << "Content for UnknownFrame " << id << ": " << std::string(frameBytes.begin()+HEADER_BYTE_SIZE, frameBytes.end()) << std::endl;
-	//	for(int i = 0; i < frameBytes.size(); i++)
-	//		std::cout << (unsigned short)((uint8_t)frameBytes[i]) << " " << frameBytes[i] << " | ";
-	//	std::cout << std::endl;
-	//}
-}
+void UnknownFrame::read() {}

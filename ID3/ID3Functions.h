@@ -40,11 +40,11 @@ namespace ID3 {
 	}
 	
 	/**
-	 * Receives a char array, and calculates the multi-byte integer that the char
-	 * encodes.
+	 * Receives a char array, and calculates the multi-byte unsigned integer that
+	 * the char array encodes.
 	 * 
 	 * NOTE: The size of the array is not checked, segmentation faults will
-	 *       not be prevented if given a length beyond the length of the array.
+	 *       not be prevented if given a length longer the length of the array.
 	 * 
 	 * @param array The char array.
 	 * @param length The length of the char array.
@@ -52,12 +52,23 @@ namespace ID3 {
 	 *        where the first bit of each byte is always zeroed.
 	 * @return The summed value of the char array's bits.
 	 */
-	long char_arr_binary_num(char array[], int length, bool synchsafe=false);
+	unsigned long byteIntVal(uint8_t* array, int length, bool synchsafe=false);
 	
 	/**
-	 * @see char_arr_binary_num()
+	 * Given an unsigned integer value, receive a ByteArray that encodes the
+	 * integer value as its bit value.
+	 * 
+	 * @param val The integer value to encode.
+	 * @param length The length of the ByteArray to return. If the given value
+	 *        does not fit in the length of the ByteArray, then the maximum
+	 *        possible value that fits in the bytes is supported. The maximum
+	 *        value is ((1 << (length * x)) - 1), where x is 7 if synchsafe is
+	 *        true and 8 if it is false.
+	 * @param synchsafe If the ByteArray should contain a "synchsafe" number,
+	 *        where the first bit of each byte is always zeroed.
+	 * @return The integer value encoded as a ByteArray.
 	 */
-	long uchar_arr_binary_num(unsigned char array[], int length, bool synchsafe=false);
+	ByteArray intToByteArray(unsigned long val, int length=0, bool synchsafe=false);
 	
 	/**
 	 * Create a std::string object with the call std::string(const char* s, size_type n).

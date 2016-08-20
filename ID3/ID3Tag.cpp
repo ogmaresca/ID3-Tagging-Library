@@ -308,7 +308,8 @@ void Tag::readFileV2(std::ifstream& file) {
 		   v2TagInfo.minorVer != SUPPORTED_MINOR_VERSION)
 			return;
 		
-		v2TagInfo.size = uchar_arr_binary_num(tagsHeader.size, 4, true);
+		//Get the tag flags
+		v2TagInfo.size = byteIntVal(tagsHeader.size, 4, true);
 		if((unsigned int)tagsHeader.flags & FLAG_UNSYNCHRONISATION == FLAG_UNSYNCHRONISATION)
 			v2TagInfo.flagUnsynchronisation = true;
 		if((unsigned int)tagsHeader.flags & FLAG_EXT_HEADER == FLAG_EXT_HEADER)
@@ -324,7 +325,7 @@ void Tag::readFileV2(std::ifstream& file) {
 		tagsSet.v2 = true;
 		
 		//The position to start reading from the file
-		int frameStartPos = HEADER_BYTE_SIZE;
+		unsigned long frameStartPos = HEADER_BYTE_SIZE;
 		
 		//Skip over the extended header
 		if(v2TagInfo.flagExtHeader) {
@@ -338,7 +339,7 @@ void Tag::readFileV2(std::ifstream& file) {
 				file.read(reinterpret_cast<char *>(&extHeader), HEADER_BYTE_SIZE);
 				//Only the ID3v2.4.0 standard page says that the extended header's size is synchsafe.
 				//I do not know if that is accurate or not, but I will take their word for it.
-				frameStartPos += HEADER_BYTE_SIZE + uchar_arr_binary_num(extHeader.size, 4, v2TagInfo.majorVer >= 4);
+				frameStartPos += HEADER_BYTE_SIZE + byteIntVal(extHeader.size, 4, v2TagInfo.majorVer >= 4);
 			}
 		}
 		
@@ -357,12 +358,15 @@ void Tag::readFileV2(std::ifstream& file) {
 		while(frameStartPos + HEADER_BYTE_SIZE < ID3EndPos) {
 			//Create a new Frame at this position
 			FramePtr frame = factory.create(frameStartPos);
-			//Get the byte that it ends at
-			frameStartPos = frame->end();
-			//Break at a null Frame
-			if(frame->null()) break;
-			//Add the Frame to the map
-			frames.emplace(frame->frame(), frame);
+			//Add the Frame to the map if it's not null
+			if(!frame->null())
+				frames.emplace(frame->frame(), frame);
+			//If the frame content is a valid size (bigger than an ID3v2 header)
+			//then continue on to the next frame. If not, then stop the loop.
+			if(frame->size() > HEADER_BYTE_SIZE)
+				frameStartPos += frame->size();
+			else
+				break;
 		}
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::getFileV2(const std::ifstream& file): " << e.what() << std::endl;
@@ -397,9 +401,9 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 		frames.emplace(FrameFactory::createPair(Frames::YEAR,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.year, 4)));
-		/*frames.emplace(FrameFactory::createPair(Frames::COMMENT,
+		frames.emplace(FrameFactory::createPair(Frames::COMMENT,
 		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.comment, 30)));*/
+		                                        terminatedstring(tags.comment, 30)));
 		frames.emplace(FrameFactory::createPair(Frames::GENRE,
 		                                        v2TagInfo.majorVer,
 		                                        V1::getGenreString(tags.genre)));
@@ -436,9 +440,9 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 		frames.emplace(FrameFactory::createPair(Frames::YEAR,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.year, 4)));
-		/*frames.emplace(FrameFactory::createPair(Frames::COMMENT,
+		frames.emplace(FrameFactory::createPair(Frames::COMMENT,
 		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.comment, 28)));*/
+		                                        terminatedstring(tags.comment, 28)));
 		frames.emplace(FrameFactory::createPair(Frames::TRACK,
 		                                        v2TagInfo.majorVer,
 		                                        std::to_string(tags.trackNum)));

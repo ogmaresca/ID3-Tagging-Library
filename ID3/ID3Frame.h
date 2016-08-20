@@ -67,6 +67,62 @@ namespace ID3 {
 		
 		public:
 			/**
+			 * This flag tells the software what to do with this frame if it is
+			 * unknown and the tag is altered in any way. This applies to all kinds
+			 * of alterations, including adding more padding and reordering the frames.
+			 * This flag is found on the first frame flag byte.
+			 */
+			static const uint8_t FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN = 0b10000000;
+			
+			/**
+			 * This flag tells the software what to do with this frame if it is
+			 * unknown and the file, excluding the tag, is altered. This does not
+			 * apply when the audio is completely replaced with other audio data.
+			 * This flag is found on the first frame flag byte.
+			 */
+			static const uint8_t FLAG1_DISCARD_UPON_AUDIO_ALTER = 0b01000000;
+			
+			/**
+			 * This flag, if set, tells the software that the contents of this
+			 * frame is intended to be read only. Changing the contents might break
+			 * something, e.g. a signature. If the contents are changed, without
+			 * knowledge in why the frame was flagged read only and without taking
+			 * the proper means to compensate, e.g. recalculating the signature,
+			 * the bit should be cleared.
+			 * This flag is found on the first frame flag byte.
+			 */
+			static const uint8_t FLAG1_READ_ONLY = 0b00100000;
+			
+			/**
+			 * This flag indicates whether or not the frame is compressed using zlib.
+			 * If true, 4 bytes are added to the frame header.
+			 * The 4 bytes are included in the frame's size in the header.
+			 * This flag is found on the second frame flag byte.
+			 */
+			static const uint8_t FLAG2_COMPRESSED = 0b10000000;
+			
+			/**
+			 * This flag indicates wether or not the frame is enrypted. If set one
+			 * byte indicating with which method it was encrypted will be appended
+			 * to the frame header. The byte follows the compressed flag bytes,
+			 * if the compressed flag is set.
+			 * The encryption byte is included in the frame's size in the header.
+			 * This flag is found on the second frame flag byte.
+			 */
+			static const uint8_t FLAG2_ENCRYPTED = 0b01000000;
+			
+			/**
+			 * This flag indicates whether or not this frame belongs in a group
+			 * with other frames. If set a group identifier byte is added to the
+			 * frame header. Every frame with the same group identifier belongs to
+			 * the same group. If the compressed and/or encrypted flags are set,
+			 * the group identifier byte follows the compressed and encrypted bytes.
+			 * The grouping identity byte is included in the frame's size in the header.
+			 * This flag is found on the second frame flag byte.
+			 */
+			static const uint8_t FLAG2_GROUPING_IDENTITY = 0b00100000;
+			
+			/**
 			 * The destructor.
 			 */
 			virtual ~Frame();
@@ -90,23 +146,32 @@ namespace ID3 {
 			 * 
 			 * @param classID A FrameClass enum value.
 			 * @return true if it's a matching FrameClass, false otherwise.
-			 * @abstract
+			 * @see ID3::Frame::type()
 			 */
-			virtual bool operator==(const FrameClass classID) const noexcept = 0;
+			bool operator==(const FrameClass classID) const noexcept;
 			
 			/**
 			 * Return a FrameClass enum value that is associated with its class.
 			 * 
-			 * @abstract
+			 * @see ID3::Frame::type()
 			 */
-			virtual operator FrameClass() const noexcept = 0;
+			operator FrameClass() const noexcept;
 			
 			/**
 			 * Returns true if the frame was read/created succesfully, false if not.
 			 * 
 			 * @see ID3::Frame::null()
 			 */
-			 bool operator==(bool boolean) const noexcept;
+			bool operator==(bool boolean) const noexcept;
+			 
+			/**
+			 * Get the FrameClass enum value that is associated with its class.
+			 * This method is to be implemented in child classes.
+			 * 
+			 * @return The FrameClass that is associated with the Frame class.
+			 * @abstract
+			 */
+			virtual FrameClass type() const noexcept = 0;
 			
 			/**
 			 * Get the content of the frame as bytes.
@@ -122,15 +187,6 @@ namespace ID3 {
 			 * @return true if the frame was read/created succesfully, false if not.
 			 */
 			bool null() const;
-			
-			/**
-			 * Get the position of the byte at the end of the file (the byte after
-			 * the last byte that makes up the frame). Will be 0 if the Frame was
-			 * created by manually giving it content.
-			 * 
-			 * @return The last byte it read from.
-			 */
-			unsigned long end() const;
 			
 			/**
 			 * Get the size of the frame.
@@ -186,6 +242,59 @@ namespace ID3 {
 			virtual bool empty() const = 0;
 			
 			/**
+			 * @return If the "Tag alter preservation" flag is set.
+			 * @see ID3::Frame::FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN
+			 */
+			bool discardUponTagAlterIfUnknown() const;
+			
+			/**
+			 * @return If the "File alter preservation" flag is set.
+			 * @see ID3::Frame::FLAG1_DISCARD_UPON_AUDIO_ALTER
+			 */
+			bool discardUponAudioAlter() const;
+			
+			/**
+			 * @return If the "File alter preservation" flag is set.
+			 * @see ID3::Frame::FLAG1_READ_ONLY
+			 */
+			bool readOnly() const;
+			
+			/**
+			 * @return If the Read-only flag is set.
+			 * @see ID3::Frame::FLAG2_COMPRESSED
+			 */
+			bool compressed() const;
+			
+			/**
+			 * @return If the Encryption flag is set.
+			 * @see ID3::Frame::FLAG2_ENCRYPTED
+			 */
+			bool encrypted() const;
+			
+			/**
+			 * @return If the Grouping Identity flag is set.
+			 * @see ID3::Frame::FLAG2_GROUPING_IDENTIY
+			 */
+			bool groupingIdentity() const;
+			
+			/**
+			 * Get the grouping identity. If the grouping identity flag is not set,
+			 * this will always return 0.
+			 * 
+			 * @return The group identity.
+			 */
+			uint8_t groupIdentity() const;
+			
+			/**
+			 * Get the size of the frame header. This will be HEADER_BYTE_SIZE if
+			 * the grouping identity flag is not set, and HEADER_BYTE_SIZE+1
+			 * if it is.
+			 * 
+			 * @return The size of the frame header.
+			 */
+			short headerSize() const;
+			
+			/**
 			 * Save any changes made to the frame, and get the updated content of
 			 * the frame in bytes.
 			 * This method is to be implemented in child classes.
@@ -210,8 +319,11 @@ namespace ID3 {
 			 * This constructor initializes the relevant variables with
 			 * the passed-in variables. Calling this constructor will
 			 * set ID3::Frame::isFromFile to true.
-			 * If calling this constructor, you should check that the ByteArray is
-			 * a valid size, then read() the frame bytes and set isNull to false.
+			 * isNull will be set to true if the number of bytes in frameBytes is
+			 * fewer than or equal to the amount of bytes as HEADER_BYTE_SIZE.
+			 * It will also be set true if the frame is compressed or encrypted.
+			 * Call read() in children after calling this constructor to get the
+			 * frame contents.
 			 * 
 			 * NOTE: frameBytes MUST include the frame header.
 			 * 
@@ -221,12 +333,10 @@ namespace ID3 {
 			 * @param frameName The frame ID string.
 			 * @param version The ID3v2 major version.
 			 * @param frameBytes The content of the frame in bytes.
-			 * @param end The byte position in the music file where the frame ends.
 			 */
 			Frame(const std::string& frameName,
 			      const unsigned short version,
-			      ByteArray& frameBytes,
-			      const unsigned long end);
+			      ByteArray& frameBytes);
 			
 			/**
 			 * An empty constructor to initialize variables. Creating a Frame with
@@ -235,16 +345,15 @@ namespace ID3 {
 			Frame() noexcept;
 			
 			/**
-			 * Read and process the bytes of an ID3v2 frame.
-			 * The frame header must be included in the ByteArray.
-			 * The ID3v2 major version used will be the value saved
-			 * in ID3::Frame::ID3ver.
+			 * Read and process the bytes of an ID3v2 frame. This method should
+			 * read from the frameContents variable. The frame header must be
+			 * included in frameContents. The ID3v2 major version used will be the
+			 * value saved in the ID3Ver variable.
 			 * This method is to be implemented in child classes.
 			 * 
-			 * @param frameBytes The bytes of the frame.
 			 * @abstract
 			 */
-			virtual void read(ByteArray& frameBytes) = 0;
+			virtual void read() = 0;
 			
 			/**
 			 * This variable records if the Frame is null.
@@ -252,13 +361,6 @@ namespace ID3 {
 			 * @see ID3::Frame::null()
 			 */
 			bool isNull;
-			
-			/**
-			 * The ending byte position that the frame occupies on the file, + 1.
-			 * 
-			 * @see ID3::Frame::end()
-			 */
-			unsigned long endPosition;
 			
 			/**
 			 * The ID3v2 frame ID.
@@ -325,18 +427,12 @@ namespace ID3 {
 			virtual bool operator==(const Frame* const frame) const noexcept;
 			
 			/**
-			 * Checks if the FrameClass value is FrameClass::CLASS_UNKNOWN.
-			 * 
-			 * @see ID3::Frame::operator==(FrameClass)
-			 */
-			virtual bool operator==(const FrameClass classID) const noexcept;
-			
-			/**
 			 * Returns FrameClass::CLASS_UNKNOWN.
 			 * 
-			 * @see ID3::Frame::operator FrameClass()
+			 * @return The FrameClass that is associated with the Frame class.
+			 * @see ID3::Frame::type()
 			 */
-			virtual operator FrameClass() const noexcept;
+			virtual FrameClass type() const noexcept;
 			
 			/**
 			 * Check if the Frame's content is empty. An UnknownFrame is empty if
@@ -348,8 +444,14 @@ namespace ID3 {
 			virtual bool empty() const;
 			
 			/**
-			 * The write() method for UnknownFrame simply returns
-			 * a copy of frameContent.
+			 * The write() method for UnknownFrame will only do two things to the
+			 * frame. If the flag to discard unknown frames when the tag is altered
+			 * is set, then the Frame contents will be cleared. Additionally, if
+			 * the version is a supported version and different from the version
+			 * given in the constructor, the Frame's version will be updated to the
+			 * given version and the frame size in the Frame's bytes will be
+			 * modified to support the changes between ID3v2 that were made about
+			 * whether the frame size is a synchsafe value or nnot.
 			 * 
 			 * @see ID3::Frame::write(unsigned short)
 			 */
@@ -369,8 +471,7 @@ namespace ID3 {
 			 */
 			UnknownFrame(const std::string& frameName,
 			             const unsigned short version,
-			             ByteArray& frameBytes,
-			             const unsigned long end);
+			             ByteArray& frameBytes);
 			
 			/**
 			 * This constructor creates calls ID3::Frame::Frame() and
@@ -386,12 +487,11 @@ namespace ID3 {
 			UnknownFrame() noexcept;
 			
 			/**
-			 * The read() method for UnknownFrame just saves the given
-			 * ByteArray to the frameContents variable.
+			 * The read() method for UnknownFrame is an empty method.
 			 * 
-			 * @see ID3::Frame::read(ByteArray&)
+			 * @see ID3::Frame::read()
 			 */
-			virtual void read(ByteArray& frameBytes);
+			virtual void read();
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -422,20 +522,6 @@ namespace ID3 {
 			virtual bool operator==(const Frame* const frame) const noexcept;
 			
 			/**
-			 * Checks if the FrameClass value is FrameClass::CLASS_TEXT.
-			 * 
-			 * @see ID3::Frame::operator==(FrameClass)
-			 */
-			virtual bool operator==(const FrameClass classID) const noexcept;
-			
-			/**
-			 * Returns FrameClass::CLASS_TEXT.
-			 * 
-			 * @see ID3::Frame::operator FrameClass()
-			 */
-			virtual operator FrameClass() const noexcept;
-			
-			/**
 			 * Checks if the given string is the same as the text content.
 			 * 
 			 * @param str The string to check.
@@ -455,6 +541,14 @@ namespace ID3 {
 			 * @return The text frame.
 			 */
 			virtual TextFrame& operator+=(const std::string& str) noexcept;
+			
+			/**
+			 * Returns FrameClass::CLASS_TEXT.
+			 * 
+			 * @return The FrameClass that is associated with the Frame class.
+			 * @see ID3::Frame::type()
+			 */
+			virtual FrameClass type() const noexcept;
 			
 			/**
 			 * Check if the Frame's content is empty. An UnknownFrame is empty if
@@ -485,6 +579,8 @@ namespace ID3 {
 			/**
 			 * Set the text content. Call write() to finalize changes.
 			 * 
+			 * NOTE: The content will not be modified if the Frame is read-only.
+			 * 
 			 * @param newContent The new text content.
 			 */
 			virtual void content(const std::string& newContent);
@@ -511,7 +607,7 @@ namespace ID3 {
 			 * @return The UTF-8 encoded string.
 			 */
 			static std::string readStringAsUTF8(char encoding,
-			                                    ByteArray bytes,
+			                                    const ByteArray& bytes,
 			                                    long start=-1,
 			                                    long end=-1);
 		
@@ -535,8 +631,7 @@ namespace ID3 {
 			 */
 			TextFrame(const std::string& frameName,
 			          const unsigned short version,
-			          ByteArray& frameBytes,
-			          const unsigned long end);
+			          ByteArray& frameBytes);
 			
 			/**
 			 * This constructor manually creates a text frame with
@@ -578,10 +673,9 @@ namespace ID3 {
 			 * ByteArray as its content string. If the text is not encoded in
 			 * UTF-8, it is converted to UTF-8 before saving it.
 			 * 
-			 * @param frameBytes The byte vector to read.
-			 * @see ID3::Frame::read(ByteArray&)
+			 * @see ID3::Frame::read()
 			 */
-			virtual void read(ByteArray& frameBytes);
+			virtual void read();
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -614,20 +708,6 @@ namespace ID3 {
 			 * @see ID3::Frame::operator==(Frame*)
 			 */
 			virtual bool operator==(const Frame* const frame) const noexcept;
-			
-			/**
-			 * Checks if the FrameClass value is FrameClass::CLASS_NUMERICAL.
-			 * 
-			 * @see ID3::Frame::operator==(FrameClass)
-			 */
-			virtual bool operator==(const FrameClass classID) const noexcept;
-			
-			/**
-			 * Returns FrameClass::CLASS_NUMERICAL.
-			 * 
-			 * @see ID3::Frame::operator FrameClass()
-			 */
-			virtual operator FrameClass() const noexcept;
 			
 			/**
 			 * Checks if the given integer is the same value as the text content.
@@ -699,7 +779,17 @@ namespace ID3 {
 			virtual NumericalTextFrame& operator+=(const std::string& str) noexcept;
 			
 			/**
+			 * Returns FrameClass::CLASS_NUMERICAL.
+			 * 
+			 * @return The FrameClass that is associated with the Frame class.
+			 * @see ID3::Frame::type()
+			 */
+			virtual FrameClass type() const noexcept;
+			
+			/**
 			 * Set the numerical content. Call write() to finalize changes.
+			 * 
+			 * NOTE: The content will not be modified if the Frame is read-only.
 			 * 
 			 * @param newContent The new numerical content.
 			 */
@@ -710,6 +800,8 @@ namespace ID3 {
 			 * 
 			 * NOTE: If the string is not an int value, then the NumericalTextFrame
 			 *       object will store an empty string instead.
+			 * 
+			 * NOTE: The content will not be modified if the Frame is read-only.
 			 * 
 			 * @param newContent The new text content.
 			 */
@@ -739,8 +831,7 @@ namespace ID3 {
 			 */
 			NumericalTextFrame(const std::string& frameName,
 			                   const unsigned short version,
-			                   ByteArray& frameBytes,
-			                   const unsigned long end);
+			                   ByteArray& frameBytes);
 			
 			/**
 			 * This constructor manually creates a text frame with
@@ -803,10 +894,9 @@ namespace ID3 {
 			 * text content is not an integer value, then the text content will be
 			 * set to an empty string.
 			 * 
-			 * @param frameBytes The byte vector to read.
-			 * @see ID3::Frame::read(ByteArray&)
+			 * @see ID3::Frame::read()
 			 */
-			virtual void read(ByteArray& frameBytes);
+			virtual void read();
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -852,18 +942,12 @@ namespace ID3 {
 			virtual bool operator==(const Frame* const frame) const noexcept;
 			
 			/**
-			 * Checks if the FrameClass value is FrameClass::CLASS_DESCRIPTIVE.
-			 * 
-			 * @see ID3::Frame::operator==(FrameClass)
-			 */
-			virtual bool operator==(const FrameClass classID) const noexcept;
-			
-			/**
 			 * Returns FrameClass::CLASS_DESCRIPTIVE.
 			 * 
-			 * @see ID3::Frame::operator FrameClass()
+			 * @return The FrameClass that is associated with the Frame class.
+			 * @see ID3::Frame::type()
 			 */
-			virtual operator FrameClass() const noexcept;
+			virtual FrameClass type() const noexcept;
 			
 			/**
 			 * The write() method for DescriptiveTextFrame re-creates the frame
@@ -882,6 +966,9 @@ namespace ID3 {
 			 * Set the text content and optionally description.
 			 * Call write() to finalize changes.
 			 * 
+			 * NOTE: The content and description will not be modified if the Frame 
+			 *       is read-only.
+			 * 
 			 * @param newContent The new text content.
 			 * @param newDescription The new description.
 			 */
@@ -897,6 +984,8 @@ namespace ID3 {
 			
 			/**
 			 * Set the description. Call write() to finalize changes.
+			 * 
+			 * NOTE: The description will not be modified if the Frame is read-only.
 			 * 
 			 * @param newDescription The new description.
 			 */
@@ -918,6 +1007,8 @@ namespace ID3 {
 			 *       either an empty string or 3 characters long.
 			 * 
 			 * NOTE: The language is a ISO 639-2 code.
+			 * 
+			 * NOTE: The language will not be modified if the Frame is read-only.
 			 * 
 			 * @param newLanguage The new language.
 			 */
@@ -948,7 +1039,6 @@ namespace ID3 {
 			DescriptiveTextFrame(const std::string& frameName,
 			                     const unsigned short version,
 			                     ByteArray& frameBytes,
-			                     const unsigned long end,
 			                     const short options=0);
 			
 			/**
@@ -1027,10 +1117,9 @@ namespace ID3 {
 			 * 
 			 * NOTE: This will use the options that were given in the constructor.
 			 * 
-			 * @param frameBytes The byte vector to read.
-			 * @see ID3::Frame::read(ByteArray&)
+			 * @see ID3::Frame::read()
 			 */
-			virtual void read(ByteArray& frameBytes);
+			virtual void read();
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -1063,18 +1152,12 @@ namespace ID3 {
 			virtual bool operator==(const Frame* const frame) const noexcept;
 			
 			/**
-			 * Checks if the FrameClass value is FrameClass::CLASS_URL.
-			 * 
-			 * @see ID3::Frame::operator==(FrameClass)
-			 */
-			virtual bool operator==(const FrameClass classID) const noexcept;
-			
-			/**
 			 * Returns FrameClass::CLASS_URL.
 			 * 
-			 * @see ID3::Frame::operator FrameClass()
+			 * @return The FrameClass that is associated with the Frame class.
+			 * @see ID3::Frame::type()
 			 */
-			virtual operator FrameClass() const noexcept;
+			virtual FrameClass type() const noexcept;
 			
 			/**
 			 * The write() method for URLTextFrame re-creates the frame
@@ -1106,8 +1189,7 @@ namespace ID3 {
 			 */
 			URLTextFrame(const std::string& frameName,
 			             const unsigned short version,
-			             ByteArray& frameBytes,
-			             const unsigned long end);
+			             ByteArray& frameBytes);
 			
 			/**
 			 * This constructor manually creates a text frame with custom text.
@@ -1141,10 +1223,9 @@ namespace ID3 {
 			 * frame header as its text content. The text is first converted from
 			 * LATIN-1 to UTF-8 before storing the string.
 			 * 
-			 * @param frameBytes The byte vector to read.
-			 * @see ID3::Frame::read(ByteArray&)
+			 * @see ID3::Frame::read()
 			 */
-			virtual void read(ByteArray& frameBytes);
+			virtual void read();
 	};
 }
 

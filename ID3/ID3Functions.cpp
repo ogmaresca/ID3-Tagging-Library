@@ -12,6 +12,7 @@
 
 #include <cstring>          //For ::strlen()
 #include <unicode/unistr.h> //For icu::UnicodeString
+#include <algorithm>        //For std::reverse()
 
 #include "ID3.h"
 #include "ID3Functions.h"
@@ -26,29 +27,46 @@ std::string ID3::V1::getGenreString(int genre) {
 }
 
 ///@pkg ID3Functions.h
-long ID3::char_arr_binary_num(char array[], int size, bool synchsafe) {
+unsigned long ID3::byteIntVal(uint8_t* array, int size, bool synchsafe) {
 	if(array == nullptr || size < 1) return 0;
 	
-	short shiftSize = synchsafe ? 7 : 8;
-	long value = (int)array[0];
+	const short shiftSize = synchsafe ? 7 : 8;
 	
-	for(int i = 1; i < size; i++) {
-		value = (value << shiftSize) + (int)array[i];
-	}
+	unsigned long value = *array++;
+	
+	for(int i = 1; i < size; i++)
+		value = (value << shiftSize) + *array++;
+	
 	return value;
 }
 
 ///@pkg ID3Functions.h
-long ID3::uchar_arr_binary_num(unsigned char array[], int size, bool synchsafe) {
-	if(array == nullptr || size < 1) return 0;
+ByteArray ID3::intToByteArray(unsigned long val, int length, bool synchsafe) {
+	const short shiftSize = synchsafe ? 7 : 8;
+	const short modVal = synchsafe ? 0x80 : 0x100;
 	
-	short shiftSize = synchsafe ? 7 : 8;
-	long value = (int)array[0];
-	
-	for(int i = 1; i < size; i++) {
-		value = (value << shiftSize) + (int)array[i];
+	//No length given
+	if(length == 0) {
+		ByteArray byteVector;
+		while(val > 0) {
+			byteVector.push_back(val % modVal);
+			val >>= shiftSize;
+		}
+		//Reverse the vector, as it's currently little-endian
+		std::reverse(byteVector.begin(), byteVector.end());
+		return byteVector;
+	} else {
+		ByteArray byteVector(length);
+		//If val is too big to fit in the given size, then make it the maximum
+		//possible value that will fit
+		if(val > (unsigned long)(1 << (length * shiftSize)) - 1)
+			val = (unsigned long)(1 << (length * shiftSize)) - 1;
+		for(int i = length - 1; i >= 0; i--) {
+			byteVector[i] = val % modVal;
+			val >>= shiftSize;
+		}
+		return byteVector;
 	}
-	return value;
 }
 
 ///@pkg ID3Functions.h

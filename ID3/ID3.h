@@ -45,12 +45,8 @@
  * 
  * @todo Add write support.
  * @todo Test it on a greater variety of ID3 files, and unit tests.
- * @todo Properly process the TXXX (User-Defined Text) frame with its
- *       description and content.
  * @todo Add support for multiple values.
  * @todo Add support for non-text frames.
- * @todo Add support for comment (COMM) frames.
- * @todo Support frame flags.
  * @todo Read the ID3v2 Extended Header.
  * @todo Read the ID3v2 Footer.
  */
@@ -707,7 +703,7 @@ namespace ID3 {
 				bool flagExtHeader;
 				bool flagExperimental;
 				bool flagFooter;
-				long size;
+				unsigned long size;
 			};
 			
 			/**

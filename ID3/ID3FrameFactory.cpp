@@ -30,8 +30,6 @@ FrameFactory::FrameFactory(const unsigned int version) : musicFile(nullptr),
 
 ///@pkg ID3FrameFactory.h
 FramePtr FrameFactory::create(const unsigned long readpos) const {
-	//TODO: Process frame flags
-	
 	//Validate the file
 	if(readpos + HEADER_BYTE_SIZE > ID3Size ||
 	   musicFile == nullptr ||
@@ -39,7 +37,7 @@ FramePtr FrameFactory::create(const unsigned long readpos) const {
 		return FramePtr(new UnknownFrame());
 	
 	FrameHeader header;
-	long frameSize, endpos;
+	long frameSize;
 	std::string id;
 	
 	//Seek to the read position
@@ -50,11 +48,10 @@ FramePtr FrameFactory::create(const unsigned long readpos) const {
 	musicFile->read(reinterpret_cast<char*>(&header), HEADER_BYTE_SIZE);
 	
 	//Get the size of the frame
-	frameSize = uchar_arr_binary_num(header.size, 4, ID3Ver >= 4);
-	endpos = readpos + frameSize + HEADER_BYTE_SIZE;
+	frameSize = byteIntVal(header.size, 4, ID3Ver >= 4);
 	
 	//Validate the frame size
-	if(frameSize == 0 || endpos > ID3Size)
+	if(frameSize == 0 || frameSize + HEADER_BYTE_SIZE > ID3Size)
 		return FramePtr(new UnknownFrame());
 	
 	//Get the frame ID
@@ -66,20 +63,22 @@ FramePtr FrameFactory::create(const unsigned long readpos) const {
 	//Create a ByteArray with the entire frame contents
 	ByteArray frameBytes(frameSize + HEADER_BYTE_SIZE);
 	musicFile->seekg(readpos, std::ifstream::beg);
+	if(musicFile->fail())
+		return FramePtr(new UnknownFrame(id));
 	musicFile->read(&frameBytes.front(), frameSize + HEADER_BYTE_SIZE);
 	
 	//Return the Frame
 	switch(frameType) {
 		case FrameClass::CLASS_TEXT:
-			return FramePtr(new TextFrame(id, ID3Ver, frameBytes, endpos));
+			return FramePtr(new TextFrame(id, ID3Ver, frameBytes));
 		case FrameClass::CLASS_NUMERICAL:
-			return FramePtr(new NumericalTextFrame(id, ID3Ver, frameBytes, endpos));
+			return FramePtr(new NumericalTextFrame(id, ID3Ver, frameBytes));
 		case FrameClass::CLASS_DESCRIPTIVE:
-			return FramePtr(new DescriptiveTextFrame(id, ID3Ver, frameBytes, endpos, frameOptions(id)));
+			return FramePtr(new DescriptiveTextFrame(id, ID3Ver, frameBytes, frameOptions(id)));
 		case FrameClass::CLASS_URL:
-			return FramePtr(new URLTextFrame(id, ID3Ver, frameBytes, endpos));
+			return FramePtr(new URLTextFrame(id, ID3Ver, frameBytes));
 		case FrameClass::CLASS_UNKNOWN: default:
-			return FramePtr(new UnknownFrame(id, ID3Ver, frameBytes, endpos));
+			return FramePtr(new UnknownFrame(id, ID3Ver, frameBytes));
 	}
 }
 
