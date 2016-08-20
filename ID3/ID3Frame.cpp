@@ -148,7 +148,10 @@ bool Frame::dataLengthIndicator() const {
 uint8_t Frame::groupIdentity() const {
 	if(frameContent.size() < headerSize() || !groupingIdentity())
 		return 0;
-	return ID3Ver <= 3 ? frameContent[headerSize()] : frameContent[HEADER_BYTE_SIZE + 1];
+	//In ID3v2.3, the group identity is the last flag that adds bytes to the
+	//header, so it's at the very end. In ID3v2.4 it's the first, so get the byte
+	//right after the regular frame header.
+	return ID3Ver <= 3 ? frameContent[headerSize() - 1] : frameContent[HEADER_BYTE_SIZE + 1];
 }
 
 ///@pkg ID3Frame.h
