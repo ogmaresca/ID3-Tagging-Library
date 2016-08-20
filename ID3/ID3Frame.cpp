@@ -39,7 +39,7 @@ Frame::Frame(const std::string& frameName,
                                       isNull(frameBytes.size() <= HEADER_BYTE_SIZE),
                                       isEdited(false),
                                       isFromFile(true) {
-	if(!isNull && (compressed() || encrypted()))
+	if(!isNull && (compressed() || encrypted() || unsynchronized()))
 		isNull = true;
 }
 
@@ -80,53 +80,85 @@ bool Frame::createdFromFile() const { return isFromFile; }
 bool Frame::discardUponTagAlterIfUnknown() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
-	return frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN;
+	return ID3Ver <= 3 ?
+	       (frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN    == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN) :
+	       (frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4 == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4);
 }
 
 ///@pkg ID3Frame.h
 bool Frame::discardUponAudioAlter() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
-	return frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER == FLAG1_DISCARD_UPON_AUDIO_ALTER;
+	return ID3Ver <= 3 ?
+	       (frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER    == FLAG1_DISCARD_UPON_AUDIO_ALTER) :
+	       (frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER_V4 == FLAG1_DISCARD_UPON_AUDIO_ALTER_V4);
 }
 
 ///@pkg ID3Frame.h
 bool Frame::readOnly() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
-	return frameContent[8] & FLAG1_READ_ONLY == FLAG1_READ_ONLY;
+	return ID3Ver <= 3 ?
+	       (frameContent[8] & FLAG1_READ_ONLY    == FLAG1_READ_ONLY) :
+	       (frameContent[8] & FLAG1_READ_ONLY_V4 == FLAG1_READ_ONLY_V4);
 }
 
 ///@pkg ID3Frame.h
 bool Frame::compressed() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
-	return frameContent[9] & FLAG2_COMPRESSED == FLAG2_COMPRESSED;
+	return ID3Ver <= 3 ?
+	       (frameContent[8] & FLAG2_COMPRESSED    == FLAG2_COMPRESSED) :
+	       (frameContent[8] & FLAG2_COMPRESSED_V4 == FLAG2_COMPRESSED_V4);
 }
 
 ///@pkg ID3Frame.h
 bool Frame::encrypted() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
-	return frameContent[9] & FLAG2_ENCRYPTED == FLAG2_ENCRYPTED;
+	return ID3Ver <= 3 ?
+	       (frameContent[8] & FLAG2_ENCRYPTED    == FLAG2_ENCRYPTED) :
+	       (frameContent[8] & FLAG2_ENCRYPTED_V4 == FLAG2_ENCRYPTED_V4);
 }
 
 ///@pkg ID3Frame.h
 bool Frame::groupingIdentity() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
-	return frameContent[9] & FLAG2_GROUPING_IDENTITY == FLAG2_GROUPING_IDENTITY;
+	return ID3Ver <= 3 ?
+	       (frameContent[8] & FLAG2_GROUPING_IDENTITY    == FLAG2_GROUPING_IDENTITY) :
+	       (frameContent[8] & FLAG2_GROUPING_IDENTITY_V4 == FLAG2_GROUPING_IDENTITY_V4);
+}
+
+///@pkg ID3Frame.h
+bool Frame::unsynchronized() const {
+	if(ID3Ver < 4 || frameContent.size() < HEADER_BYTE_SIZE)
+		return false;
+	return frameContent[9] & FLAG2_UNSYNCHRONIZED_V4 == FLAG2_UNSYNCHRONIZED_V4;
+}
+
+///@pkg ID3Frame.h
+bool Frame::dataLengthIndicator() const {
+	if(ID3Ver < 4 || frameContent.size() < HEADER_BYTE_SIZE)
+		return false;
+	return frameContent[9] & FLAG2_DATA_LENGTH_INDICATOR_V4 == FLAG2_DATA_LENGTH_INDICATOR_V4;
 }
 
 ///@pkg ID3Frame.h
 uint8_t Frame::groupIdentity() const {
-	if(frameContent.size() < HEADER_BYTE_SIZE + 1 || !groupingIdentity())
+	if(frameContent.size() < headerSize() || !groupingIdentity())
 		return 0;
-	return frameContent[HEADER_BYTE_SIZE];
+	return ID3Ver <= 3 ? frameContent[headerSize()] : frameContent[HEADER_BYTE_SIZE + 1];
 }
 
 ///@pkg ID3Frame.h
-short Frame::headerSize() const { return HEADER_BYTE_SIZE + (groupingIdentity() ? 1 : 0); }
+short Frame::headerSize() const {
+	return HEADER_BYTE_SIZE +
+	       (compressed() ? 4 : 0) +
+	       (encrypted() ? 1 : 0) +
+	       (groupingIdentity() ? 1 : 0) +
+	       (dataLengthIndicator() ? 4 : 0);
+}
 
 ///@pkg ID3Frame.h
 ByteArray Frame::bytes() const noexcept { return frameContent; }

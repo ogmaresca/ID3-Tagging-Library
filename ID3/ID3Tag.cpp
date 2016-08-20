@@ -37,7 +37,7 @@ Tag::Tag(const std::string& fileLoc) : Tag::Tag() {
 	std::ifstream file;
 	
 	//Check if the file is an MP3 file
-	if(!std::regex_search(fileLoc, std::regex("\\.mp3$", std::regex::icase |
+	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag)$", std::regex::icase |
 	                                                     std::regex::ECMAScript)))
 		return;
 	
@@ -90,24 +90,28 @@ std::string Tag::title() const {
 ///@pkg ID3.h
 std::string Tag::genre(bool process) const {
 	std::string genreString = textContent(Frames::GENRE);
-	if(process) {
-		//This regex matches any digit surrounded by a single pair of
-		//parenthesis at the start of a string
-		std::regex findV1Genre("^\\(\\d+\\)");
-		std::smatch v1Genre;
-		
-		//If a ID3v1 genre is found
-		if(std::regex_search(genreString, v1Genre, findV1Genre)) {
-			//Get the match
-			std::string genreIntStr = v1Genre.str();
-			//Get the int value of the ID3v1 genre
-			int genreInt = atoi(genreIntStr.substr(1, genreIntStr.length() - 1).c_str());
-			//Remove the string from the tag string
-			genreString = std::regex_replace(genreString, findV1Genre, "");
-			//If there's nothing else in the tag string, then return
-			//the ID3v1 genre
-			if(genreString.length() <= 0)
-				genreString = V1::getGenreString(genreInt);
+	if(process && genreString != "") {
+		if(std::all_of(genreString.begin(), genreString.end(), ::isdigit)) {
+			genreString = V1::getGenreString(atoi(genreString.c_str()));
+		} else {
+			//This regex matches any digit surrounded by a single pair of
+			//parenthesis at the start of a string
+			std::regex findV1Genre("^\\(\\d+\\)");
+			std::smatch v1Genre;
+			
+			//If a ID3v1 genre is found
+			if(std::regex_search(genreString, v1Genre, findV1Genre)) {
+				//Get the match
+				std::string genreIntStr = v1Genre.str();
+				//Get the int value of the ID3v1 genre
+				int genreInt = atoi(genreIntStr.substr(1, genreIntStr.length() - 1).c_str());
+				//Remove the string from the tag string
+				genreString = std::regex_replace(genreString, findV1Genre, "");
+				//If there's nothing else in the tag string, then return
+				//the ID3v1 genre
+				if(genreString.length() <= 0)
+					genreString = V1::getGenreString(genreInt);
+			}
 		}
 	}
 	return genreString;
@@ -319,7 +323,7 @@ void Tag::readFileV2(std::ifstream& file) {
 		if((unsigned int)tagsHeader.flags & FLAG_FOOTER == FLAG_FOOTER)
 			v2TagInfo.flagFooter = true;
 			
-		if(v2TagInfo.size > filesize)
+		if(v2TagInfo.size > filesize || v2TagInfo.flagUnsynchronisation)
 			return;
 			
 		tagsSet.v2 = true;

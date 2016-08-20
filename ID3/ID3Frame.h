@@ -72,7 +72,8 @@ namespace ID3 {
 			 * of alterations, including adding more padding and reordering the frames.
 			 * This flag is found on the first frame flag byte.
 			 */
-			static const uint8_t FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN = 0b10000000;
+			static const uint8_t FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN    = 0b10000000;
+			static const uint8_t FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4 = 0b01000000;
 			
 			/**
 			 * This flag tells the software what to do with this frame if it is
@@ -80,7 +81,8 @@ namespace ID3 {
 			 * apply when the audio is completely replaced with other audio data.
 			 * This flag is found on the first frame flag byte.
 			 */
-			static const uint8_t FLAG1_DISCARD_UPON_AUDIO_ALTER = 0b01000000;
+			static const uint8_t FLAG1_DISCARD_UPON_AUDIO_ALTER    = 0b01000000;
+			static const uint8_t FLAG1_DISCARD_UPON_AUDIO_ALTER_V4 = 0b00100000;
 			
 			/**
 			 * This flag, if set, tells the software that the contents of this
@@ -91,7 +93,8 @@ namespace ID3 {
 			 * the bit should be cleared.
 			 * This flag is found on the first frame flag byte.
 			 */
-			static const uint8_t FLAG1_READ_ONLY = 0b00100000;
+			static const uint8_t FLAG1_READ_ONLY    = 0b00100000;
+			static const uint8_t FLAG1_READ_ONLY_V4 = 0b00010000;
 			
 			/**
 			 * This flag indicates whether or not the frame is compressed using zlib.
@@ -99,7 +102,8 @@ namespace ID3 {
 			 * The 4 bytes are included in the frame's size in the header.
 			 * This flag is found on the second frame flag byte.
 			 */
-			static const uint8_t FLAG2_COMPRESSED = 0b10000000;
+			static const uint8_t FLAG2_COMPRESSED    = 0b10000000;
+			static const uint8_t FLAG2_COMPRESSED_V4 = 0b00001000;
 			
 			/**
 			 * This flag indicates wether or not the frame is enrypted. If set one
@@ -109,7 +113,8 @@ namespace ID3 {
 			 * The encryption byte is included in the frame's size in the header.
 			 * This flag is found on the second frame flag byte.
 			 */
-			static const uint8_t FLAG2_ENCRYPTED = 0b01000000;
+			static const uint8_t FLAG2_ENCRYPTED    = 0b01000000;
+			static const uint8_t FLAG2_ENCRYPTED_V4 = 0b00000100;
 			
 			/**
 			 * This flag indicates whether or not this frame belongs in a group
@@ -120,7 +125,27 @@ namespace ID3 {
 			 * The grouping identity byte is included in the frame's size in the header.
 			 * This flag is found on the second frame flag byte.
 			 */
-			static const uint8_t FLAG2_GROUPING_IDENTITY = 0b00100000;
+			static const uint8_t FLAG2_GROUPING_IDENTITY    = 0b00100000;
+			static const uint8_t FLAG2_GROUPING_IDENTITY_V4 = 0b01000000;
+			
+			/**
+			 * This flag indicates whether or not unsynchronisation was applied to
+			 * this frame. If this flag is set all data from the end of this header
+			 * to the end of this frame has been unsynchronised. Although
+			 * desirable, the presence of a 'Data Length Indicator' is not made
+			 * mandatory by unsynchronisation.
+			 * ID3v2.4 only.
+			 */
+			static const uint8_t FLAG2_UNSYNCHRONIZED_V4 = 0b00000010;
+			
+			/**
+			 * This flag indicates that a data length indicator has been added to
+			 * the frame. The data length indicator is the value one would write as
+			 * the 'Frame length' if all of the frame format flags were zeroed,
+			 * represented as a 32 bit synchsafe integer.
+			 * ID3v2.4 only.
+			 */
+			static const uint8_t FLAG2_DATA_LENGTH_INDICATOR_V4 = 0b00000001;
 			
 			/**
 			 * The destructor.
@@ -278,6 +303,18 @@ namespace ID3 {
 			bool groupingIdentity() const;
 			
 			/**
+			 * @return If the Unsynchronization flag is set.
+			 * @see ID3::Frame::FLAG2_UNSYNCHRONIZED_V4
+			 */
+			bool unsynchronized() const;
+			
+			/**
+			 * @return If the Data Length Indicator flag is set.
+			 * @see ID3::Frame::FLAG2_DATA_LENGTH_INDICATOR_V4
+			 */
+			bool dataLengthIndicator() const;
+			
+			/**
 			 * Get the grouping identity. If the grouping identity flag is not set,
 			 * this will always return 0.
 			 * 
@@ -321,9 +358,9 @@ namespace ID3 {
 			 * set ID3::Frame::isFromFile to true.
 			 * isNull will be set to true if the number of bytes in frameBytes is
 			 * fewer than or equal to the amount of bytes as HEADER_BYTE_SIZE.
-			 * It will also be set true if the frame is compressed or encrypted.
-			 * Call read() in children after calling this constructor to get the
-			 * frame contents.
+			 * It will also be set true if the frame is compressed, encrypted, or.
+			 * unsynchronized. Call read() in children after calling this
+			 * constructor to get the frame contents.
 			 * 
 			 * NOTE: frameBytes MUST include the frame header.
 			 * 

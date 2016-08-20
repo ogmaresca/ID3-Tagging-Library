@@ -45,6 +45,7 @@
  * 
  * @todo Add write support.
  * @todo Test it on a greater variety of ID3 files, and unit tests.
+ * @todo Add support for saving multiple Frames on the same file.
  * @todo Add support for multiple values.
  * @todo Add support for non-text frames.
  * @todo Read the ID3v2 Extended Header.
