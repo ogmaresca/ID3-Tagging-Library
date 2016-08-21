@@ -36,7 +36,7 @@ namespace ID3 {
 		 * @param genre The integer ID for the ID3v1 genre.
 		 * @returns The genre if the genre was found, and a blank string otherwise.
 		 */
-		std::string getGenreString(int genre);
+		std::string getGenreString(unsigned short genre);
 	}
 	
 	/**

@@ -73,7 +73,7 @@ ByteArray TextFrame::write(unsigned short version, bool minimize) {
 
 ///@pkg ID3Frame.h
 void TextFrame::read() {
-	const short HEADER_SIZE = headerSize();
+	const unsigned short HEADER_SIZE = headerSize();
 	
 	//Make sure that there is enough room for text before reading the frame bytes
 	if(frameContent.size() > HEADER_SIZE) {
@@ -110,7 +110,7 @@ std::string TextFrame::readStringAsUTF8(char encoding,
 		start = 0;
 	
 	//Set the end 
-	if(end < 0 || end > bytes.size())
+	if(end < 0 || static_cast<unsigned long>(end) > bytes.size())
 		end = bytes.size();
 	
 	//Empty string base case
@@ -383,21 +383,21 @@ void DescriptiveTextFrame::language(const std::string& newLanguage) {
 ///@pkg ID3Frame.h
 void DescriptiveTextFrame::read() {
 	const bool hasLanguage = (frameOptions & OPTION_LANGUAGE) == OPTION_LANGUAGE;
-	const short HEADER_SIZE = headerSize();
+	const unsigned short HEADER_SIZE = headerSize();
 	
 	//Make sure that there is enough room for text and language (if set)
 	//before reading the frame bytes
-	if(frameContent.size() <= HEADER_SIZE + (hasLanguage ? 4 : 1)) {
+	if(frameContent.size() <= static_cast<unsigned short>(HEADER_SIZE + (hasLanguage ? 4 : 1))) {
 		textContent = "";
 		textDescription = "";
 		textLanguage = "";
 		isNull = true;
 	} else {		
-		long descriptionStart = HEADER_SIZE + 1, //The start of the description
-		     descriptionEnd   = 0,               //The end of the description
-		     descriptionGap   = 1;               //The number of bytes in the
-		                                         //gap between the description
-		                                         //and the text content
+		unsigned long descriptionStart = HEADER_SIZE + 1, //The start of the description
+		              descriptionEnd   = 0,               //The end of the description
+		              descriptionGap   = 1;               //The number of bytes in the
+		                                                  //gap between the description
+		                                                  //and the text content
 		//The encoding
 		char encoding = frameContent[HEADER_SIZE];
 		//If the encoding uses 16-byte or 8-byte characters
@@ -414,7 +414,7 @@ void DescriptiveTextFrame::read() {
 			textLanguage = "";
 		}
 		//Find the description end
-		for(long i = descriptionStart; i + descriptionGap < frameContent.size(); i+= descriptionGap) {
+		for(unsigned long i = descriptionStart; i + descriptionGap < frameContent.size(); i+= descriptionGap) {
 			if(frameContent[i] == '\0') {
 				if(wideChars && frameContent[i+1] != '\0')
 					continue;
@@ -501,10 +501,10 @@ ByteArray URLTextFrame::write(unsigned short version, bool minimize) {
 
 ///@pkg ID3Frame.h
 void URLTextFrame::read() {
-	const short HEADER_SIZE = headerSize();
+	const unsigned short HEADER_SIZE = headerSize();
 	
 	//Make sure that there is enough room for text before reading the frame bytes
-	if(frameContent.size() > HEADER_SIZE + 1)
+	if(frameContent.size() - 1 > HEADER_SIZE)
 		textContent = readStringAsUTF8(ENCODING_LATIN1, //URL frames are in LATIN-1, no encoding byte
 		                               frameContent,
 		                               HEADER_SIZE);

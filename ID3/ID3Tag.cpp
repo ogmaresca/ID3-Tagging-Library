@@ -37,7 +37,7 @@ Tag::Tag(const std::string& fileLoc) : Tag::Tag() {
 	std::ifstream file;
 	
 	//Check if the file is an MP3 file
-	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag)$", std::regex::icase |
+	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase |
 	                                                     std::regex::ECMAScript)))
 		return;
 	
@@ -314,13 +314,13 @@ void Tag::readFileV2(std::ifstream& file) {
 		
 		//Get the tag flags
 		v2TagInfo.size = byteIntVal(tagsHeader.size, 4, true);
-		if((unsigned int)tagsHeader.flags & FLAG_UNSYNCHRONISATION == FLAG_UNSYNCHRONISATION)
+		if((tagsHeader.flags & FLAG_UNSYNCHRONISATION) == FLAG_UNSYNCHRONISATION)
 			v2TagInfo.flagUnsynchronisation = true;
-		if((unsigned int)tagsHeader.flags & FLAG_EXT_HEADER == FLAG_EXT_HEADER)
+		if((tagsHeader.flags & FLAG_EXT_HEADER) == FLAG_EXT_HEADER)
 			v2TagInfo.flagExtHeader = true;
-		if((unsigned int)tagsHeader.flags & FLAG_EXPERIMENTAL == FLAG_EXPERIMENTAL)
+		if((tagsHeader.flags & FLAG_EXPERIMENTAL) == FLAG_EXPERIMENTAL)
 			v2TagInfo.flagExperimental = true;
-		if((unsigned int)tagsHeader.flags & FLAG_FOOTER == FLAG_FOOTER)
+		if((tagsHeader.flags & FLAG_FOOTER) == FLAG_FOOTER)
 			v2TagInfo.flagFooter = true;
 			
 		if(v2TagInfo.size > filesize || v2TagInfo.flagUnsynchronisation)
@@ -348,18 +348,18 @@ void Tag::readFileV2(std::ifstream& file) {
 		}
 		
 		//The byte position on the file when the ID3v2 tags end
-		const long ID3EndPos = frameStartPos + v2TagInfo.size;
+		const unsigned long ID3_END_POS = frameStartPos + v2TagInfo.size;
 		
 		//Validate the size of the ID3v2 tag
-		if(ID3EndPos > filesize)
+		if(ID3_END_POS > filesize)
 			return;
 			
 		//A FrameFactory to read the frames off the file
-		FrameFactory factory(file, v2TagInfo.majorVer, ID3EndPos);
+		FrameFactory factory(file, v2TagInfo.majorVer, ID3_END_POS);
 		
 		//Loop over the ID3 tags, and stop once all ID3 frames have been
 		//reached or a frame is null. Add every frame to the frames map.
-		while(frameStartPos + HEADER_BYTE_SIZE < ID3EndPos) {
+		while(frameStartPos + HEADER_BYTE_SIZE < ID3_END_POS) {
 			//Create a new Frame at this position
 			FramePtr frame = factory.create(frameStartPos);
 			//Add the Frame to the map if it's not null

@@ -233,9 +233,11 @@ namespace ID3 {
 			/**
 			 * Get the content of the frame as bytes.
 			 * 
-			 * @return The frame content, including the header.
+			 * @param header If true, the frame header will be included in the
+			 *               returned ByteArray as well.
+			 * @return The frame content.
 			 */
-			ByteArray bytes() const noexcept;
+			ByteArray bytes(bool header=false) const noexcept;
 			
 			/**
 			 * Revert any changes made to the frame since it was last
@@ -331,7 +333,7 @@ namespace ID3 {
 			 * 
 			 * @return The size of the frame header.
 			 */
-			short headerSize() const;
+			unsigned short headerSize() const;
 			
 			/**
 			 * Save any changes made to the frame, and get the updated content of
@@ -395,18 +397,31 @@ namespace ID3 {
 			virtual void read() = 0;
 			
 			/**
-			 * This variable records if the Frame is null.
-			 * 
-			 * @see ID3::Frame::null()
-			 */
-			bool isNull;
-			
-			/**
 			 * The ID3v2 frame ID.
 			 * 
 			 * @see ID3::Frame::frame()
 			 */
 			std::string id;
+			
+			/**
+			 * This variable records the ID3 version used for reading
+			 * and writing. It can be updated through ID3::Frame::write().
+			 */
+			unsigned short ID3Ver;
+			
+			/**
+			 * This ByteArray records the bytes of the frame on file,
+			 * including the frame header. This value will be updated
+			 * after calling ID3::Frame::write().
+			 */
+			ByteArray frameContent;
+			
+			/**
+			 * This variable records if the Frame is null.
+			 * 
+			 * @see ID3::Frame::null()
+			 */
+			bool isNull;
 			
 			/**
 			 * A variable that records whether the Frame object has been
@@ -423,19 +438,6 @@ namespace ID3 {
 			 * @see ID3::Frame::createdFromFile()
 			 */
 			bool isFromFile;
-			
-			/**
-			 * This variable records the ID3 version used for reading
-			 * and writing. It can be updated through ID3::Frame::write().
-			 */
-			unsigned short ID3Ver;
-			
-			/**
-			 * This ByteArray records the bytes of the frame on file,
-			 * including the frame header. This value will be updated
-			 * after calling ID3::Frame::write().
-			 */
-			ByteArray frameContent;
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////

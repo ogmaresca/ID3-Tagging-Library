@@ -20,8 +20,8 @@
 using namespace ID3;
 
 ///@pkg ID3Functions.h
-std::string ID3::V1::getGenreString(int genre) {
-	if(genre >= 0 && genre < V1::GENRES.size())
+std::string ID3::V1::getGenreString(unsigned short genre) {
+	if(genre < V1::GENRES.size())
 		return V1::GENRES[genre];
 	return "";
 }
@@ -84,7 +84,7 @@ std::string ID3::utf16toutf8(const ByteArray& u16s,
 		start = 0;
 	
 	//Set the end
-	if(end < 0 || end > u16s.size())
+	if(end < 0 || static_cast<unsigned long>(end) > u16s.size())
 		end = u16s.size();
 	
 	//UTF-16 uses 2-byte character widths. If there's 0 bytes then
@@ -165,7 +165,7 @@ std::string ID3::latin1toutf8(const ByteArray& latin1s, long start, long end) {
 		start = 0;
 	
 	//Set the end 
-	if(end < 0 || end > latin1s.size())
+	if(end < 0 || static_cast<unsigned long>(end) > latin1s.size())
 		end = latin1s.size();
 	
 	//Empty string base case
@@ -182,7 +182,7 @@ std::string ID3::latin1toutf8(const ByteArray& latin1s, long start, long end) {
 	//characters.
 	char* utf8CharArr = new char[latin1sSize * 2];
 	
-	for(size_t i = start; i < end; i++) {
+	for(long i = start; i < end; i++) {
 		uint8_t curChar = latin1s[i];
 		
 		if(curChar < BEYOND_ASCII) {
@@ -306,9 +306,9 @@ std::string ID3::getFrameName(const Frames frameID) {
 		"WXXX"  //92
 	};
 	
-	if(static_cast<int>(frameID) > frames.size())
+	if(static_cast<unsigned short>(frameID) > frames.size())
 		return "";
-	return frames[static_cast<int>(frameID)];
+	return frames[static_cast<unsigned short>(frameID)];
 }
 
 //bool ID3::allowsMultipleFrames(const Frames frameID) {

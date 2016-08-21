@@ -68,6 +68,16 @@ unsigned long Frame::size() const { return frameContent.size(); }
 std::string Frame::frame() const { return id; }
 
 ///@pkg ID3Frame.h
+ByteArray Frame::bytes(bool header) const noexcept {
+	if(!header)
+		return frameContent;
+	const unsigned short HEADER_SIZE = headerSize();
+	if(frameContent.size() < HEADER_SIZE)
+		return ByteArray();
+	return ByteArray(frameContent.begin() + HEADER_SIZE, frameContent.end());
+}
+
+///@pkg ID3Frame.h
 void Frame::revert() { read(); isEdited = false; }
 
 ///@pkg ID3Frame.h
@@ -81,8 +91,8 @@ bool Frame::discardUponTagAlterIfUnknown() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
 	return ID3Ver <= 3 ?
-	       (frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN    == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN) :
-	       (frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4 == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4);
+	       ((frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN)    == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN) :
+	       ((frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4) == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4);
 }
 
 ///@pkg ID3Frame.h
@@ -90,8 +100,8 @@ bool Frame::discardUponAudioAlter() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
 	return ID3Ver <= 3 ?
-	       (frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER    == FLAG1_DISCARD_UPON_AUDIO_ALTER) :
-	       (frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER_V4 == FLAG1_DISCARD_UPON_AUDIO_ALTER_V4);
+	       ((frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER)    == FLAG1_DISCARD_UPON_AUDIO_ALTER) :
+	       ((frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER_V4) == FLAG1_DISCARD_UPON_AUDIO_ALTER_V4);
 }
 
 ///@pkg ID3Frame.h
@@ -99,8 +109,8 @@ bool Frame::readOnly() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
 	return ID3Ver <= 3 ?
-	       (frameContent[8] & FLAG1_READ_ONLY    == FLAG1_READ_ONLY) :
-	       (frameContent[8] & FLAG1_READ_ONLY_V4 == FLAG1_READ_ONLY_V4);
+	       ((frameContent[8] & FLAG1_READ_ONLY)    == FLAG1_READ_ONLY) :
+	       ((frameContent[8] & FLAG1_READ_ONLY_V4) == FLAG1_READ_ONLY_V4);
 }
 
 ///@pkg ID3Frame.h
@@ -108,8 +118,8 @@ bool Frame::compressed() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
 	return ID3Ver <= 3 ?
-	       (frameContent[8] & FLAG2_COMPRESSED    == FLAG2_COMPRESSED) :
-	       (frameContent[8] & FLAG2_COMPRESSED_V4 == FLAG2_COMPRESSED_V4);
+	       ((frameContent[8] & FLAG2_COMPRESSED)    == FLAG2_COMPRESSED) :
+	       ((frameContent[8] & FLAG2_COMPRESSED_V4) == FLAG2_COMPRESSED_V4);
 }
 
 ///@pkg ID3Frame.h
@@ -117,8 +127,8 @@ bool Frame::encrypted() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
 	return ID3Ver <= 3 ?
-	       (frameContent[8] & FLAG2_ENCRYPTED    == FLAG2_ENCRYPTED) :
-	       (frameContent[8] & FLAG2_ENCRYPTED_V4 == FLAG2_ENCRYPTED_V4);
+	       ((frameContent[8] & FLAG2_ENCRYPTED)    == FLAG2_ENCRYPTED) :
+	       ((frameContent[8] & FLAG2_ENCRYPTED_V4) == FLAG2_ENCRYPTED_V4);
 }
 
 ///@pkg ID3Frame.h
@@ -126,22 +136,22 @@ bool Frame::groupingIdentity() const {
 	if(frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
 	return ID3Ver <= 3 ?
-	       (frameContent[8] & FLAG2_GROUPING_IDENTITY    == FLAG2_GROUPING_IDENTITY) :
-	       (frameContent[8] & FLAG2_GROUPING_IDENTITY_V4 == FLAG2_GROUPING_IDENTITY_V4);
+	       ((frameContent[8] & FLAG2_GROUPING_IDENTITY)    == FLAG2_GROUPING_IDENTITY) :
+	       ((frameContent[8] & FLAG2_GROUPING_IDENTITY_V4) == FLAG2_GROUPING_IDENTITY_V4);
 }
 
 ///@pkg ID3Frame.h
 bool Frame::unsynchronized() const {
 	if(ID3Ver < 4 || frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
-	return frameContent[9] & FLAG2_UNSYNCHRONIZED_V4 == FLAG2_UNSYNCHRONIZED_V4;
+	return (frameContent[9] & FLAG2_UNSYNCHRONIZED_V4) == FLAG2_UNSYNCHRONIZED_V4;
 }
 
 ///@pkg ID3Frame.h
 bool Frame::dataLengthIndicator() const {
 	if(ID3Ver < 4 || frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
-	return frameContent[9] & FLAG2_DATA_LENGTH_INDICATOR_V4 == FLAG2_DATA_LENGTH_INDICATOR_V4;
+	return (frameContent[9] & FLAG2_DATA_LENGTH_INDICATOR_V4) == FLAG2_DATA_LENGTH_INDICATOR_V4;
 }
 
 ///@pkg ID3Frame.h
@@ -155,16 +165,13 @@ uint8_t Frame::groupIdentity() const {
 }
 
 ///@pkg ID3Frame.h
-short Frame::headerSize() const {
+unsigned short Frame::headerSize() const {
 	return HEADER_BYTE_SIZE +
 	       (compressed() ? 4 : 0) +
 	       (encrypted() ? 1 : 0) +
 	       (groupingIdentity() ? 1 : 0) +
 	       (dataLengthIndicator() ? 4 : 0);
 }
-
-///@pkg ID3Frame.h
-ByteArray Frame::bytes() const noexcept { return frameContent; }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

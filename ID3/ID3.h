@@ -80,12 +80,12 @@ namespace ID3 {
 		/**
 		 * The number of bytes used in ID3v1 tags.
 		 */
-		extern const int BYTE_SIZE;
+		extern const unsigned short BYTE_SIZE;
 		
 		/**
 		 * The number of bytes used in ID3v1 Extended tags.
 		 */
-		extern const int EXTENDED_BYTE_SIZE;
+		extern const unsigned short EXTENDED_BYTE_SIZE;
 		
 		/**
 		 * A string vector of the 148 defined genres for ID3v1.
@@ -96,35 +96,35 @@ namespace ID3 {
 	/**
 	 * The number of bytes used in the ID3v2 headers and the ID3v2 frame header.
 	 */
-	extern const short HEADER_BYTE_SIZE;
+	extern const unsigned short HEADER_BYTE_SIZE;
 	
 	/**
 	 * The minimum ID3v2 supported major version. Any music file with a
 	 * smaller version will not be read.
 	 */
-	extern const short MIN_SUPPORTED_VERSION;
+	extern const unsigned short MIN_SUPPORTED_VERSION;
 	
 	/**
 	 * The maximum ID3v2 supported major version. Any music file with a
 	 * greater version will not be read.
 	 */
-	extern const short MAX_SUPPORTED_VERSION;
+	extern const unsigned short MAX_SUPPORTED_VERSION;
 	
 	/**
 	 * The ID3v2 supported minor version. Any music with an ID3v2 version
 	 * that does not use this minor version will not be read. This is
 	 * also the minor version that will be used for writing.
 	 */
-	extern const short SUPPORTED_MINOR_VERSION;
+	extern const unsigned short SUPPORTED_MINOR_VERSION;
 	
 	/**
 	 * The flag values in found in the ID3v2 header.
 	 * Check if the flag is used with flag & ID3::V2_FLAG_XXXX == ID3::V2_FLAG_XXXX.
 	 */
-	extern const short FLAG_UNSYNCHRONISATION;
-	extern const short FLAG_EXT_HEADER;
-	extern const short FLAG_EXPERIMENTAL;
-	extern const short FLAG_FOOTER;
+	extern const uint8_t FLAG_UNSYNCHRONISATION;
+	extern const uint8_t FLAG_EXT_HEADER;
+	extern const uint8_t FLAG_EXPERIMENTAL;
+	extern const uint8_t FLAG_FOOTER;
 	
 	/**
 	 * The maximum size allowed for ID3v2 tags.
@@ -132,7 +132,7 @@ namespace ID3 {
 	 * and synchsafe (the most significant bit is always 0).
 	 * The value is therefore 2^28 - 1, ~268MB, or ~256MiB.
 	 */
-	extern const long MAX_TAG_SIZE;
+	extern const unsigned long MAX_TAG_SIZE;
 	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
@@ -144,7 +144,7 @@ namespace ID3 {
 	 * ID3v1 enums.
 	 */
 	/*namespace V1 {
-		/**
+		**
 		 * An enum of speeds defined in ID3v1 Extended.
 		 */
 		/*enum ExtendedSpeeds {
@@ -602,6 +602,41 @@ namespace ID3 {
 		FRAME_USER_DEFINED_URL = 92,
 		FRAME_URL_USER_DEFINED = 92,
 		FRAMEID_WXXX           = 92
+	};
+	
+	/**
+	 * An enum of the different picture types defined in the ID3v2 Attached
+	 * Picture frame.
+	 */
+	enum class PictureType : short {
+		OTHER              = 0,
+		FIlE_ICON          = 1,
+		OTHER_FILE_ICON    = 2,
+		FRONT_COVER        = 3,
+		BACK_COVER         = 4,
+		LEAFLET_PAGE       = 5,
+		MEDIA              = 6,
+		LEAD_ARTIST        = 7,
+		LEAD_PERFORMER     = 7,
+		SOLOIST            = 7,
+		ARTIST             = 8,
+		PERFORMER          = 8,
+		CONDUCTOR          = 9,
+		BAND               = 10,
+		ORCHESTRA          = 10,
+		COMPOSER           = 11,
+		LYRICIST           = 12,
+		TEXT_WRITER        = 12,
+		RECORDING_LOCATION = 13,
+		DURING_RECORDING   = 14,
+		DURING_PERFORMANCE = 15,
+		MOVIE_CAPTURE      = 16,
+		BRIGHT_FISH        = 17,
+		ILLUSTRATION       = 18,
+		BAND_LOGOTYPE      = 19,
+		ARTIST_LOGOTYPE    = 19,
+		PUBLISHER_LOGOTYPE = 20,
+		STUDIO_LOGOTYPE    = 20
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////

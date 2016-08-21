@@ -36,26 +36,23 @@ FramePtr FrameFactory::create(const unsigned long readpos) const {
 	   !musicFile->is_open())
 		return FramePtr(new UnknownFrame());
 	
-	FrameHeader header;
-	long frameSize;
-	std::string id;
-	
 	//Seek to the read position
 	musicFile->seekg(readpos, std::ifstream::beg);
 	if(musicFile->fail()) return FramePtr(new UnknownFrame());
 	
 	//Read the frame header
+	FrameHeader header;
 	musicFile->read(reinterpret_cast<char*>(&header), HEADER_BYTE_SIZE);
 	
 	//Get the size of the frame
-	frameSize = byteIntVal(header.size, 4, ID3Ver >= 4);
+	unsigned long frameSize = byteIntVal(header.size, 4, ID3Ver >= 4);
 	
 	//Validate the frame size
 	if(frameSize == 0 || frameSize + HEADER_BYTE_SIZE > ID3Size)
 		return FramePtr(new UnknownFrame());
 	
 	//Get the frame ID
-	id = terminatedstring(header.id, 4);
+	std::string id = terminatedstring(header.id, 4);
 	
 	//Get the class the Frame should be
 	FrameClass frameType = FrameFactory::frameType(id);
