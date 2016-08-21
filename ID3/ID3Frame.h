@@ -39,7 +39,7 @@ namespace ID3 {
 	 *     TEXT:    TextFrame
 	 *     UNKNOWN: UnknownFrame
 	 */
-	enum FrameClass {
+	enum FrameClass : short {
 		CLASS_DESCRIPTIVE = 3, //DescriptiveTextFrame
 		CLASS_NUMERICAL   = 2, //NumericalTextFrame
 		CLASS_TEXT        = 1, //TextFrame
@@ -59,6 +59,8 @@ namespace ID3 {
 	 * to create a Frame.
 	 * 
 	 * Implemented in ID3Frame.cpp
+	 * 
+	 * Frame flag descriptions taken from http://id3.org/id3v2.4.0-structure.
 	 * 
 	 * @abstract
 	 */

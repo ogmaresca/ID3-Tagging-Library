@@ -40,6 +40,12 @@
  *     The ID3::Frame class' children know how to parse and store the bytes of
  *     their frame(s), but not if the data is invalid or not.
  * 
+ * ID3-Tagging-Library places a focus on compatibility when reading. As long as
+ * there aren't any fundamental differences between ID3v2 versions (such as
+ * whether the frame size is synchsafe or not), it will read the information
+ * regardless of version. For example, ID3v2.4 tags will be read on ID3v2.3
+ * files and vice versa, and ID3v2.4 text encodings are supported in ID3v2.3 frames.
+ * 
  * ID3v2.3.0 standard: @link http://id3.org/id3v2.3.0
  * ID3v2.4.0 standard: @link http://id3.org/id3v2.4.0-structure
  * 
@@ -166,7 +172,7 @@ namespace ID3 {
 	 * 
 	 * @todo Properly implement this into a POPM Frame class.
 	 */
-	/*enum POPMRatingCutoff {
+	/*enum class POPMRatingCutoff {
 		ZERO  = 0,   //0-0
 		ONE   = 31,  //1-31
 		TWO   = 95,  //32-95
@@ -177,203 +183,425 @@ namespace ID3 {
 	
 	/**
 	 * An enum of different frames used in ID3v2. Use
-	 * ID3::getFrameName(ID3::Frames) to get the frame name used in the
-	 * standard.
+	 * ID3::getFrameName(ID3::Frames) to get the frame name used in the standard.
+	 * 
+	 * The enum values are grouped by each frame, and each frame has the same int
+	 * value. Each group has at least one value with the name "FRAME_XXXX", where
+	 * XXXX is a descriptive title for the frame's function. The last enum value
+	 * of the group is "FRAMEID_XXXX", where XXXX is the ID3v2 frame ID. If the
+	 * frame is new in ID3v2.4 there will also be a value with the name
+	 * "V4FRAMEID_XXXX". If the frame has been deprecated in ID3v2.4, then there
+	 * will be "V3FRAMEID_XXXX_SEE_YYYY", where YYYY is the ID3v2.4 frame ID that
+	 * the ID3v2.3 frame has been deprecated in favor of, or there will be
+	 * "V3FRAMEID_XXXX_DEPRECATED" if there is no replacement frame in ID3v2.4.
+	 * The frame groups are sorted by their frame ID values.
 	 * 
 	 * @see http://id3.org/id3v2.3.0
 	 * @see http://id3.org/id3v2.4.0-frames
 	 * @todo Add values for each frame ID.
 	 */
-	enum Frames {
-		ALBUM=0,//TALB - The 'Album/Movie/Show title' frame is intended for the
-		        //title of the recording(/source of sound) which the audio in the
-		        //file is taken from. 
-		        //ID3::Tag::album()
-		ALBUMARTIST=1,//TPE2 - The 'Band/Orchestra/Accompaniment' frame is used
-		        //for additional information about the performers in the recording.
-		        //ID3::Tag::albumArtist()
-		ARTIST=2,//TPE1 - The 'Lead artist(s)/Lead performer(s)/Soloist(s)/
-		        //Performing group' is used for the main artist(s)
-		        //ID3::Tag::artist()
-		BPM=3,  //TBPM - The 'BPM' frame contains the number of beats per minute
-		        //in the main part of the audio. The BPM is an integer and
-		        //represented as a numerical string.
-		        //ID3::Tag::bpm()
-		COMMENT=4,//COMM - This frame is indended for any kind of full text
-		        //information that does not fit in any other frame. It consists of
-		        //a frame header followed by encoding, language and content
-		        //descriptors and is ended with the actual comment as a text
-		        //string. Newline characters are allowed in the comment text
-		        //string. There may be more than one comment frame in each tag,
-		        //but only one with the same language and content descriptor.
-		        ///@todo ID3::Tag::comment()
-		COMPOSER=5,//TCOM - The 'Composer(s)' frame is intended for the name of the composer(s).
-		        //ID3::Tag::composer()
-		CONDUCTOR=14,//TPE3 - The 'Conductor' frame is used for the name of the conductor.
-		        ///@todo ID3::Tag::conductor()
-		COPYRIGHT=6,//TCOP - The 'Copyright message' frame, which must begin with
-		        //a year and a space character (making 5 characters), is intended
-		        //for the copyright holder of the original sound, not the audio
-		        //file itself. The absence of this frame means only that the
-		        //copyright information is unavailable or has been removed, and
-		        //must not be interpreted to mean that the sound is public domain.
-		        //Every time this field is displayed the field must be preceded with "Copyright © ".
-		        ///@todo ID3::Tag::copyright()
-		DATE=15,//TDAT - The 'Date' frame is a numeric string in the DDMM format
-		        //containing the date for the recording. This field is always four characters long.
-		        ///@todo ID3::Tag::date(bool)
-		DESCRIPTION=21,//TIT3 - The 'Subtitle/Description refinement' frame is
-		        //used for information directly related to the contents title
-		        //(e.g. "Op. 16" or "Performed live at Wembley").
-		        ///@todo ID3::Tag::description()
-		DISC=7, //TPOS - The 'Part of a set' frame is a numeric string that
-		        //describes which part of a set the audio came from. This frame is
-		        //used if the source described in the "TALB" frame is divided into
-		        //several mediums, e.g. a double CD. The value may be extended with
-		        //a "/" character and a numeric string containing the total number
-		        //of parts in the set. E.g. "1/2".
-		        //ID3::Tag::disc(bool) ID3::Tag::discTotal(bool)
-		ENCODEDBY=16,//TENC - The 'Encoded by' frame contains the name of the
-		        //person or organisation that encoded the audio file. This field
-		        //may contain a copyright message, if the audio file also is copyrighted by the encoder.
-		        ///@todo ID3::Tag::encodedBy()
-		ENCODINGSETTINGS=34,//TSSE - The 'Software/Hardware and settings used for
-		        //encoding' frame includes the used audio encoder and its settings
-		        //when the file was encoded. Hardware refers to hardware encoders,
-		        //not the computer on which a program was run.
-		        ///@todo ID3::Tag::encodingSettings()
-		FILEOWNER=30,//TOWN - The 'File owner/licensee' frame contains the name of
-		        //the owner or licensee of the file and it's contents.
-		        ///@todo ID3::Tag::fileOwner()
-		FILETYPE=18,//TFLT - The 'File type' frame indicates which type of audio
-		        //this tag defines. The following type and refinements are defined:
-		        //    MPG       MPEG Audio
-		        //    MPG/1     MPEG 1/2 layer I
-		        //    MPG/2     MPEG 1/2 layer II
-		        //    MPG/2.5   MPEG 2.5
-		        //    MPG/3     MPEG 1/2 layer III
-		        //    MPG/AAC   Advanced Audio Compression
-		        //    VQF       Transform-domain Weighted Interleave Vector Quantization
-		        //    PCM       Pulse Code Modulated audio
-		        //but other types may be used, not for these types though. This is
-		        //used in a similar way to the predefined types in the "TMED" frame,
-		        //but without parentheses. If this frame is not present audio type is assumed to be "MPG".
-		        ///@todo ID3::Tag::fileType(bool)
-		GENRE=8,//TCON - The 'Content type'. ID3v1 genres can be added to the
-		        //beginning wrapped around parenthesis, optionally followed by genre text.
-		        //ID3::Tag::genre(bool)
-		GROUPING=20,//TIT1 - The 'Content group description' frame is used if the
-		        //sound belongs to a larger category of sounds/music. For example,
-		        //classical music is often sorted in different musical sections
-		        //(e.g. "Piano Concerto", "Weather - Hurricane").
-		        ///@todo ID3::Tag::grouping()
-		INVOLVEDPEOPLE=38,//IPLS - Since there might be a lot of people
-		        //contributing to an audio file in various ways, such as musicians
-		        //and technicians, the 'Text information frames' are often
-		        //insufficient to list everyone involved in a project. The
-		        //'Involved people list' is a frame containing the names of those
-		        //involved, and how they were involved. The body simply contains a
-		        //terminated string with the involvement directly followed by a
-		        //terminated string with the involvee followed by a new involvement
-		        //and so on. There may only be one "IPLS" frame in each tag.
-		ISRC=35,//TSRC - The 'ISRC' frame should contain the International
-		        //Standard Recording Code (ISRC) (12 characters).
-		        ///@todo ID3::Tag::isrc()
-		LENGTH=23,//TLEN - The 'Length' frame contains the length of the audiofile
-		        //in milliseconds, represented as a numeric string.
-		        ///@todo ID3::Tag::length(bool)
-		LYRICIST=9,//TEXT - The 'Lyricist(s)/Text writer(s)' frame is intended for
-		        //the writer(s) of the text or lyrics in the recording.
-		        ///@todo ID3::Tag::lyricist()
-		MEDIATYPE=24,//TMED - The 'Media type' frame describes from which media
-		        //the sound originated. This may be a text string or a reference
-		        //to the predefined media types found in the list below. References
-		        //are made within "(" and ")" and are optionally followed by a text
-		        //refinement, e.g. "(MC) with four channels". If a text refinement
-		        //should begin with a "(" character it should be replaced with "(("
-		        //in the same way as in the "TCO" frame. Predefined refinements is
-		        //appended after the media type, e.g. "(CD/A)" or "(VID/PAL/VHS)". 
-		        //See http://id3.org/id3v2.3.0 for the different predefined types.
-		        ///@todo ID3::Tag::mediaType()
-		MODIFIEDBY=10,//TPE4 - The 'Interpreted, remixed, or otherwise modified by
-		        //frame contains more information about the people behind a remix
-		        //and similar interpretations of another existing piece.
-		        ///@todo ID3::Tag::modifiedBy()
-		MUSICALKEY=22,//TKEY - The 'Initial key' frame contains the musical key in
-		        //which the sound starts. It is represented as a string with a
-		        //maximum length of three characters. The ground keys are
-		        //represented with "A","B","C","D","E", "F" and "G" and halfkeys
-		        //represented with "b" and "#". Minor is represented as "m".
-		        //Example "Cbm". Off key is represented with an "o" only.
-		        ///@todo ID3::Tag::musicalKey(bool)
-		ORIGINALALBUM=25,//TOAL - The 'Original album/movie/show title' frame is
-		        //intended for the title of the original recording (or source of
-		        //sound), if for example the music in the file should be a cover
-		        //of a previously released song.
-		        ///@todo ID3::Tag::originalAlbum()
-		ORIGINALARTIST=26,//TOPE - The 'Original artist(s)/performer(s)' frame is
-		        //intended for the performer(s) of the original recording, if for
-		        //example the music in the file should be a cover of a previously
-		        //released song. The performers are seperated with the "/" character.
-		        ///@todo ID3::Tag::originalArtist()
-		ORIGINALFILENAME=27,//TOFN - The 'Original filename' frame contains the
-		        //preferred filename for the file, since some media doesn't allow
-		        //the desired length of the filename. The filename is case
-		        //sensitive and includes its suffix.
-		        ///@todo ID3::Tag::originalFilename()
-		ORIGINALLYRICIST=28,//TOLY - The 'Original lyricist(s)/text writer(s)'
-		        //frame is intended for the text writer(s) of the original
-		        //recording, if for example the music in the file should be a
-		        //cover of a previously released song. The text writers are
-		        //seperated with the "/" character.
-		        ///@todo ID3::Tag::originalLyricist()
-		ORIGINALYEAR=29,//TORY - The 'Original release year' frame is intended for
-		        //the year when the original recording, if for example the music
-		        //in the file should be a cover of a previously released song, was
-		        //released. The field is formatted as in the "TYER" frame.
-		        ///@todo ID3::Tag::originalYear()
-		PLAYLISTDELAY=17,//TDLY - The 'Playlist delay' defines the numbers of
-		        //milliseconds of silence between every song in a playlist. The
-		        //player should use the "ETC0" frame, if present, to skip initial
-		        //silence and silence at the end of the audio to match the
-		        //'Playlist delay' time. The time is represented as a numeric string.
-		        ///@todo ID3::Tag::playlistDelay()
-		RADIOSTATION=30,//TRSN - The 'Internet radio station name' frame contains
-		        //the name of the internet radio station from which the audio is streamed.
-		        ///@todo ID3::Tag::radioStation()
-		RADIOSTATIONOWNER=31,//TRSO - The 'Internet radio station owner' frame
-		        //contains the name of the owner of the internet radio station
-		        //from which the audio is streamed.
-		        ///@todo ID3::Tag::radioStationOwner()
-		RECORDINGDATES=32,//TRDA - The 'Recording dates' frame is a intended to be
-		        //used as complement to the "TYER", "TDAT" and "TIME" frames. E.g.
-		        //"4th-7th June, 12th June" in combination with the "TYER" frame.
-		        ///@todo ID3::Tag::recordingDates()
-		SIZE=36,//TSIZ - The 'Size' frame contains the size of the audiofile in
-		        //bytes, excluding the ID3v2 tag, represented as a numeric string.
-		        ///@todo ID3::Tag::size()
-		TIME=19,//TIME - The 'Time' frame is a numeric string in the HHMM format
-		        //containing the time for the recording. This field is always four characters long.
-		        ///@todo ID3::Tag::time(bool)
-		TITLE=11,//TIT2 - The 'Title/Songname/Content description' frame is the
-		        //actual name of the piece (e.g. "Adagio", "Hurricane Donna").
-		        //ID3::Tag::title()
-		TRACK=12,//TRCK - The 'Track number/Position in set' frame is a numeric
-		        //string containing the order number of the audio-file on its
-		        //original recording. This may be extended with a "/" character
-		        //and a numeric string containing the total numer of
-		        //tracks/elements on the original recording. E.g. "4/9".
-		        //ID3::Tag::track(bool) ID3::Tag::trackTotal(bool)
-		USERINFO=37,//TXXX - This frame is intended for one-string text
-		        //information concerning the audiofile in a similar way to the
-		        //other "T"-frames. The frame body consists of a description of
-		        //the string, represented as a terminated string, followed by the
-		        //actual string. There may be more than one "TXXX" frame in each
-		        //tag, but only one with the same description.
-		        ///@todo ID3::Tag::userInfo()
-		YEAR=13 //TYER - The 'Year' frame is a numeric string with a year of the
-		        //recording. This frames is always four characters long (until the year 10000). 
-		        //ID3::Tag::year()
+	enum Frames : short {
+		FRAME_AUDIO_ENCRYPTION = 0,
+		FRAMEID_AENC           = 0,
+		
+		FRAME_ATTACHED_PICTURE = 1,
+		FRAME_PICTURE          = 1,
+		FRAMEID_APIC           = 1,
+		
+		FRAME_AUDIO_SEEK_POINT_INDEX = 2,
+		FRAME_SEEK_POINT_INDEX       = 2,
+		V4FRAMEID_ASPI               = 2,
+		FRAMEID_ASPI                 = 2,
+		
+		FRAME_COMMENT = 3,
+		FRAMEID_COMM  = 3,
+		
+		FRAME_COMMERCIAL = 4,
+		FRAMEID_COMR     = 4,
+		
+		FRAME_ENCRYPTION_METHOD_REGISTRATION = 5,
+		FRAMEID_ENCR                         = 5,
+		
+		FRAME_EQUALISATION_2 = 6,
+		FRAME_EQUALIZATION_2 = 6,
+		V4FRAMEID_EQU2       = 6,
+		FRAMEID_EQU2         = 6,
+		
+		FRAME_EQUALISATION      = 7,
+		FRAME_EQUALIZATION      = 7,
+		V3FRAMEID_EQUA_SEE_EQU2 = 7,
+		FRAMEID_EQUA            = 7,
+		
+		FRAME_EVENT_TIMINGS      = 8,
+		FRAME_EVENT_TIMING_CODES = 8,
+		FRAME_TIMINGS            = 8,
+		FRAMEID_ETCO             = 8,
+		
+		FRAME_ENCAPSULATED_OBJECT         = 9,
+		FRAME_GENERAL_ENCAPSULATED_OBJECT = 9,
+		FRAMEID_GEOB                      = 9,
+		
+		FRAME_GROUP_ID                          = 10,
+		FRAME_GROUP_ID_REGISTRATION             = 10,
+		FRAME_GROUP_IDENTIFICATION_REGISTRATION = 10,
+		FRAMEID_GRID                            = 10,
+		
+		FRAME_INVOLVED_PEOPLE   = 11,
+		V3FRAMEID_IPLS_SEE_TIPL = 11,
+		V3FRAMEID_IPLS_SEE_TMCL = 11,
+		FRAMEID_IPLS            = 11,
+		
+		FRAME_LINKED_INFO        = 12,
+		FRAME_LINKED_INFORMATION = 12,
+		FRAMEID_LINK             = 12,
+		
+		FRAME_MUSIC_CD_IDENTIFIER = 13,
+		FRAMEID_MCDI              = 13,
+		
+		FRAME_LOCATION_LOOKUO            = 14,
+		FRAME_LOCATION_LOOKUP_TABLE      = 14,
+		FRAME_MPEG_LOCATION_LOOKUP       = 14,
+		FRAME_MPEG_LOCATION_LOOKUP_TABLE = 14,
+		FRAMEID_MLLT                     = 14,
+		
+		FRAME_OWNERSHIP = 15,
+		FRAMEID_OWNE    = 15,
+		
+		FRAME_PLAY_COUNTER = 16,
+		FRAMEID_PCNT       = 16,
+		
+		FRAME_POPULARIMETER = 17,
+		FRAMEID_POPM        = 17,
+		
+		FRAME_POSITION_SYNCHRONISATION = 18,
+		FRAME_POSITION_SYNCHRONIZATION = 18,
+		FRAMEID_POSS                   = 18,
+		
+		FRAME_PRIVATE = 19,
+		FRAMEID_PRIV  = 19,
+		
+		FRAME_RECOMMENDED_BUFFER_SIZE = 20,
+		FRAMEID_RBUF                  = 20,
+		
+		FRAME_RELATIVE_VOLUME_ADJUSTMENT_2 = 21,
+		V4FRAMEID_RVA2                     = 21,
+		FRAMEID_RVA2                       = 21,
+		
+		FRAME_RELATIVE_VOLUME_ADJUSTMENT = 22,
+		V3FRAMEID_RVAD_SEE_RVA2          = 22,
+		FRAMEID_RVAD                     = 22,
+		
+		FRAME_REVERB = 23,
+		FRAMEID_RVRB = 23,
+		
+		FRAME_SEEK     = 24,
+		V4FRAMEID_SEEK = 24,
+		FRAMEID_SEEK   = 24,
+		
+		FRAME_SIGNATURE = 25,
+		V4FRAMEID_SIGN  = 25,
+		FRAMEID_SIGN    = 25,
+		
+		FRAME_SYNCHED_LYRICS      = 26,
+		FRAME_SYNCHED_TEXT        = 26,
+		FRAME_SYNCHRONISED_LYRICS = 26,
+		FRAME_SYNCHRONIZED_LYRICS = 26,
+		FRAME_SYNCHRONISED_TEXT   = 26,
+		FRAME_SYNCHRONIZED_TEXT   = 26,
+		FRAMEID_SYLT              = 26,
+		
+		FRAME_SYNCHED_TEMPO_CODES      = 27,
+		FRAME_SYNCHRONISED_TEMPO_CODES = 27,
+		FRAME_SYNCHRONIZED_TEMPO_CODES = 27,
+		FRAMEID_SYTC                   = 27,
+		
+		FRAME_ALBUM       = 28,
+		FRAME_MOVIE_TITLE = 28,
+		FRAME_SHOW_TITLE  = 28,
+		FRAMEID_TALB      = 28, //ID3::Tag::album()
+		
+		FRAME_BPM    = 29,
+		FRAMEID_TBPM = 29, //ID3::Tag::bpm()
+		
+		FRAME_COMPOSER = 30,
+		FRAMEID_TCOM   = 30, //ID3::Tag::composer()
+		
+		FRAME_CONTENT_TYPE = 31,
+		FRAME_GENRE        = 31,
+		FRAMEID_TCON       = 31, //ID3::Tag::genre()
+		
+		FRAME_COPYRIGHT = 32,
+		FRAMEID_TCOP    = 32,
+		
+		FRAME_DATE                = 33,
+		FRAME_RECORDING_TIME_DATE = 33,
+		V3FRAMEID_TDAT_SEE_TDRC   = 33,
+		FRAMEID_TDAT              = 33,
+		
+		FRAME_ENCODING_TIME = 34,
+		V4FRAMEID_TDEN      = 34,
+		FRAMEID_TDEN        = 34,
+		
+		FRAME_PLAYLIST_DELAY = 35,
+		FRAMEID_TDLY         = 35,
+		
+		FRAME_ORIGINAL_RELEASE_TIME = 36,
+		V4FRAMEID_TDOR              = 36,
+		FRAMEID_TDOR                = 36,
+		
+		FRAME_RECORDING_TIME = 37,
+		V4FRAMEID_TDRC       = 37,
+		FRAMEID_TDRC         = 37,
+		
+		FRAME_RELEASE_TIME = 38,
+		V4FRAMEID_TDRL     = 38,
+		FRAMEID_TDRL       = 38,
+		
+		FRAME_TAGGING_TIME = 39,
+		V4FRAMEID_TDTG     = 39,
+		FRAMEID_TDTG       = 39,
+		
+		FRAME_ENCODED_BY = 40,
+		FRAMEID_TENC     = 40,
+		
+		FRAME_LYRICIST    = 41,
+		FRAME_TEXT_WRITER = 41,
+		FRAMEID_TEXT      = 41,
+		
+		FRAME_FILETYPE = 42,
+		FRAMEID_TFLT   = 42,
+		
+		FRAME_INVOLVED_PEOPLE_LIST = 43,
+		V4FRAMEID_TIPL             = 43,
+		FRAMEID_TIPL               = 43,
+		
+		FRAME_TIME                = 44,
+		FRAME_RECORDING_TIME_TIME = 44,
+		V3FRAMEID_TIME_SEE_TDRC   = 44,
+		FRAMEID_TIME              = 44,
+		
+		FRAME_CONTENT_GROUP = 45,
+		FRAMEID_TIT1        = 45,
+		
+		FRAME_CONTENT_DESCRIPTION = 46,
+		FRAME_NAME                = 46,
+		FRAME_TITLE               = 46,
+		FRAME_SONG_NAME           = 46,
+		FRAMEID_TIT2              = 46, //ID3::Tag::title()
+		
+		FRAME_DESCRIPTION = 47,
+		FRAME_SUBTITLE    = 47,
+		FRAMEID_TIT3      = 47,
+		
+		FRAME_INITIAL_KEY         = 48,
+		FRAME_INITIAL_MUSICAL_KEY = 48,
+		FRAME_MUSICAL_KEY         = 48,
+		FRAMEID_TKEY              = 48,
+		
+		FRAME_LENGTH = 49,
+		FRAMEID_TLEN = 49,
+		
+		FRAME_MUSICIAN_CREDIT_LIST = 50,
+		V4FRAMEID_TMCL             = 50,
+		FRAMEID_TMCL               = 50,
+		
+		FRAME_MEDIA_TYPE = 51,
+		FRAMEID_TMED     = 51,
+		
+		FRAME_MOOD     = 52,
+		V4FRAMEID_TMOO = 52,
+		FRAMEID_TMOO   = 52,
+		
+		FRAME_ORIGINAL_ALBUM       = 53,
+		FRAME_ORIGINAL_MOVIE_TITLE = 53,
+		FRAME_ORIGINAL_SHOW_TITLE  = 53,
+		FRAME_ORIGINAL_TALB        = 53,
+		FRAMEID_TOAL               = 53,
+		
+		FRAME_ORIGINAL_FILENAME = 54,
+		FRAMEID_TOFN            = 54,
+		
+		FRAME_ORIGINAL_LYRICIST    = 55,
+		FRAME_ORIGINAL_TEXT_WRITER = 55,
+		FRAME_ORIGINAL_TEXT        = 55,
+		FRAMEID_TOLY               = 55,
+		
+		FRAME_ORIGINAL_ARTIST    = 56,
+		FRAME_ORIGINAL_PERFORMER = 56,
+		FRAME_ORIGINAL_TPE1      = 56,
+		FRAMEID_TOPE             = 56,
+		
+		FRAME_ORIGINAL_RELEASE_YEAR = 57,
+		FRAME_ORIGINAL_YEAR         = 57,
+		FRAME_ORIGINAL_TYER         = 57,
+		V3FRAMEID_TORY_SEE_TDOR     = 57,
+		FRAMEID_TORY                = 57,
+		
+		FRAME_FILEOWNER = 58,
+		FRAME_LICENSEE  = 58,
+		FRAMEID_TOWN    = 58,
+		
+		FRAME_ARTIST         = 59,
+		FRAME_LEAD_PERFORMER = 59,
+		FRAME_SOLOIST        = 59,
+		FRAMEID_TPE1         = 59, //ID3::Tag::artist()
+		
+		FRAME_ACCOMPANIEMENT = 60,
+		FRAME_ALBUM_ARTIST   = 60,
+		FRAME_BAND           = 60,
+		FRAME_ORCHESTRA      = 60,
+		FRAMEID_TPE2         = 60, //ID3::Tag::albumArtist()
+		
+		FRAME_CONDUCTOR = 61,
+		FRAMEID_TPE3    = 61,
+		
+		FRAME_INTERPRETED_BY = 62,
+		FRAME_MODIFIED_BY    = 62,
+		FRAME_REMIXED_BY     = 62,
+		FRAMEID_TPE4         = 62,
+		
+		FRAME_DISC     = 63,
+		FRAME_SET_PART = 63,
+		FRAMEID_TPOS   = 63, //ID3::Tag::disc(bool), ID3::Tag::discTotal(bool)
+		
+		FRAME_PRODUCED_NOTICE = 64,
+		V4FRAMEID_TPRO        = 64,
+		FRAMEID_TPRO          = 64,
+		
+		FRAME_PUBLISHER = 65,
+		FRAMEID_TPUB    = 65,
+		
+		FRAME_SET_POSITION = 66,
+		FRAME_TRACK        = 66,
+		FRAME_TRACK_NUMBER = 66,
+		FRAMEID_TRCK       = 66, //ID3::Tag::track(bool), ID3::Tag::trackTotal(bool)
+		
+		FRAME_RECORDING_DATES      = 67,
+		FRAME_RECORDING_TIME_DATES = 67,
+		V3FRAMEID_TRDA_SEE_TDRC    = 67,
+		FRAMEID_TRDA               = 67,
+		
+		FRAME_RADIO_STATION               = 68,
+		FRAME_INTERNET_RADIO_STATION      = 68,
+		FRAME_INTERNET_RADIO_STATION_NAME = 68,
+		FRAMEID_TRSN                      = 68,
+		
+		FRAME_RADIO_STATION_OWNER          = 69,
+		FRAME_INTERNET_RADIO_STATION_OWNER = 69,
+		FRAMEID_TRSO                       = 69,
+		
+		FRAME_ACCOMPANIEMENT_SORT_ORDER = 70,
+		FRAME_ALBUM_ARTIST_SORT_ORDER   = 70,
+		FRAME_BAND_SORT_ORDER           = 70,
+		FRAME_ORCHESTRA_SORT_ORDER      = 70,
+		UNOFFICIAL_FRAMEID_TSO2         = 70,
+		FRAMEID_TSO2                    = 70,
+		
+		FRAME_ALBUM_SORT_ORDER       = 71,
+		FRAME_MOVIE_TITLE_SORT_ORDER = 71,
+		FRAME_SHOW_TITLE_SORT_ORDER  = 71,
+		V4FRAMEID_TSOA               = 71,
+		FRAMEID_TSOA                 = 71,
+		
+		FRAME_COMPOSER_SORT_ORDER = 72,
+		UNOFFICIAL_FRAMEID_TSOC   = 72,
+		FRAMEID_TSOC              = 72,
+		
+		FRAME_ARTIST_SORT_ORDER    = 73,
+		FRAME_PERFORMER_SORT_ORDER = 73,
+		FRAME_SOLOIST_SORT_ORDER   = 73,
+		V4FRAMEID_TSOP             = 73,
+		FRAMEID_TSOP               = 73,
+		
+		FRAME_CONTENT_DESCRIPTION_SORT_ORDER = 74,
+		FRAME_NAME_SORT_ORDER                = 74,
+		FRAME_TITLE_SORT_ORDER               = 74,
+		FRAME_SONG_NAME_SORT_ORDER           = 74,
+		V4FRAMEID_TSOT                       = 74,
+		FRAMEID_TSOT                         = 74,
+		
+		FRAME_SIZE                = 75,
+		V3FRAMEID_TSIZ_DEPRECATED = 75,
+		FRAMEID_TSIZ              = 75,
+		
+		FRAME_ISRC   = 76,
+		FRAMEID_TSRC = 76,
+		
+		FRAME_ENCODING_SETTINGS = 77,
+		FRAMEID_TSSE            = 77,
+		
+		FRAME_SET_SUBTITLE = 78,
+		V4FRAMEID_TSST     = 78,
+		FRAMEID_TSST       = 78,
+		
+		FRAME_CUSTOM_USER_INFO = 79,
+		FRAME_USER_INFO        = 79,
+		FRAMEID_TXXX           = 79,
+		
+		FRAME_YEAR                = 80,
+		FRAME_RECORDING_TIME_YEAR = 80,
+		V3FRAMEID_TYER_SEE_TDRC   = 80,
+		FRAMEID_TYER              = 80, //ID3::Tag::year()
+		
+		FRAME_UNIQUE_FILE_IDENTIFIER = 81,
+		FRAMEID_UFID                 = 81,
+		
+		FRAME_TERMS_OF_USE = 82,
+		FRAME_TOU          = 82,
+		FRAMEID_USER       = 82,
+		
+		FRAME_LYRICS                = 83,
+		FRAME_TEXT_TRANSCRIPTION    = 83,
+		FRAME_TRANSCRIPTION         = 83,
+		FRAME_UNSYNCHED_LYRICS      = 83,
+		FRAME_UNSYNCHRONISED_LYRICS = 83,
+		FRAME_UNSYNCHRONIZED_LYRICS = 83,
+		FRAMEID_USLT                = 83,
+		
+		FRAME_COMMERCIAL_INFO_URL        = 84,
+		FRAME_COMMERCIAL_INFORMATION_URL = 84,
+		FRAME_URL_COMMERCIAL_INFO        = 84,
+		FRAME_URL_COMMERCIAL_INFORMATION = 84,
+		FRAMEID_WCOM                     = 84,
+		
+		FRAME_COPYRIGHT_URL         = 85,
+		FRAME_LEGAL_INFO_URL        = 85,
+		FRAME_LEGAL_INFORMATION_URL = 85,
+		FRAME_URL_COPYRIGHT         = 85,
+		FRAME_URL_LEGAL_INFO        = 85,
+		FRAME_URL_LEGAL_INFORMATION = 85,
+		FRAMEID_WCOP                = 85,
+		
+		FRAME_OFFICIAL_FILE_URL             = 86,
+		FRAME_URL_OFFICIAL_FILE_INFO        = 86, 
+		FRAME_URL_OFFICIAL_FILE_INFORMATION = 86,
+		FRAMEID_WOAF                        = 86,
+		
+		FRAME_OFFICIAL_ARTIST_URL    = 87,
+		FRAME_OFFICIAL_PERFORMER_URL = 87,
+		FRAME_URL_OFFICIAL_ARTIST    = 87,
+		FRAME_URL_OFFICIAL_PERFORMER = 87,
+		FRAMEID_WOAR                 = 87,
+		
+		FRAME_OFFICIAL_AUDIO_SOURCE_URL = 88,
+		FRAME_URL_OFFICIAL_AUDIO_SOURCE = 88,
+		FRAMEID_WOAS                    = 88,
+		
+		FRAME_OFFICIAL_INTERNET_RADIO_STATION_URL = 89,
+		FRAME_URL_OFFICIAL_INTERNET_RADIO_STATION = 89,
+		FRAMEID_WORS                              = 89,
+		
+		FRAME_PAYMENT_URL = 90,
+		FRAME_URL_PAYMENT = 90,
+		FRAMEID_WPAY      = 90,
+		
+		FRAME_OFFICIAL_PUBLISHER_URL = 91,
+		FRAME_URL_OFFICIAL_PUBLISHER = 91,
+		FRAMEID_WPUB                 = 91,
+		
+		FRAME_USER_DEFINED_URL = 92,
+		FRAME_URL_USER_DEFINED = 92,
+		FRAMEID_WXXX           = 92
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////

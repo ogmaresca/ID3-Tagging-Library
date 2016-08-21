@@ -84,12 +84,12 @@ std::string Tag::textContent(Frames frameName) const {
 
 ///@pkg ID3.h
 std::string Tag::title() const {
-	return textContent(Frames::TITLE);
+	return textContent(Frames::FRAME_TITLE);
 }
 
 ///@pkg ID3.h
 std::string Tag::genre(bool process) const {
-	std::string genreString = textContent(Frames::GENRE);
+	std::string genreString = textContent(Frames::FRAME_GENRE);
 	if(process && genreString != "") {
 		if(std::all_of(genreString.begin(), genreString.end(), ::isdigit)) {
 			genreString = V1::getGenreString(atoi(genreString.c_str()));
@@ -119,27 +119,27 @@ std::string Tag::genre(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::artist() const {
-	return textContent(Frames::ARTIST);
+	return textContent(Frames::FRAME_ARTIST);
 }
 
 ///@pkg ID3.h
 std::string Tag::albumArtist() const {
-	return textContent(Frames::ALBUMARTIST);
+	return textContent(Frames::FRAME_ALBUM_ARTIST);
 }
 
 ///@pkg ID3.h
 std::string Tag::album() const {
-	return textContent(Frames::ALBUM);
+	return textContent(Frames::FRAME_ALBUM);
 }
 
 ///@pkg ID3.h
 std::string Tag::year() const {
-	return textContent(Frames::YEAR);
+	return textContent(Frames::FRAME_YEAR);
 }
 
 ///@pkg ID3.h
 std::string Tag::track(bool process) const {
-	std::string trackString = textContent(Frames::TRACK);
+	std::string trackString = textContent(Frames::FRAME_TRACK);
 	if(process) {
 		size_t slashPos = trackString.find_first_of('/');
 		if(slashPos != std::string::npos) {
@@ -153,7 +153,7 @@ std::string Tag::track(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::trackTotal(bool process) const {
-	std::string trackString = textContent(Frames::TRACK);
+	std::string trackString = textContent(Frames::FRAME_TRACK);
 	size_t slashPos = trackString.find_first_of('/');
 	if(slashPos == std::string::npos)
 		return "";
@@ -165,7 +165,7 @@ std::string Tag::trackTotal(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::disc(bool process) const {
-	std::string discString = textContent(Frames::DISC);
+	std::string discString = textContent(Frames::FRAME_DISC);
 	if(process) {
 		size_t slashPos = discString.find_first_of('/');
 		if(slashPos != std::string::npos) {
@@ -179,7 +179,7 @@ std::string Tag::disc(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::discTotal(bool process) const {
-	std::string discString = textContent(Frames::DISC);
+	std::string discString = textContent(Frames::FRAME_DISC);
 	size_t slashPos = discString.find_first_of('/');
 	if(slashPos == std::string::npos)
 		return "";
@@ -191,12 +191,12 @@ std::string Tag::discTotal(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::composer() const {
-	return textContent(Frames::COMPOSER);
+	return textContent(Frames::FRAME_COMPOSER);
 }
 
 ///@pkg ID3.h
 std::string Tag::bpm() const {
-	return textContent(Frames::BPM);
+	return textContent(Frames::FRAME_BPM);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -393,22 +393,22 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 	//Since I'm using std::unordered_map.emplace(), these will not
 	//overwrite any V2 tags.
 	try {
-		frames.emplace(FrameFactory::createPair(Frames::TITLE,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_TITLE,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.title, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::ARTIST,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_ARTIST,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.artist, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::ALBUM,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_ALBUM,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.album, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::YEAR,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_YEAR,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.year, 4)));
-		frames.emplace(FrameFactory::createPair(Frames::COMMENT,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_COMMENT,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.comment, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::GENRE,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_GENRE,
 		                                        v2TagInfo.majorVer,
 		                                        V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
@@ -432,25 +432,25 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 	//Since I'm using std::unordered_map.emplace(), these will not
 	//overwrite any V2 tags.
 	try {
-		frames.emplace(FrameFactory::createPair(Frames::TITLE,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_TITLE,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.title, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::ARTIST,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_ARTIST,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.artist, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::ALBUM,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_ALBUM,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.album, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::YEAR,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_YEAR,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.year, 4)));
-		frames.emplace(FrameFactory::createPair(Frames::COMMENT,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_COMMENT,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.comment, 28)));
-		frames.emplace(FrameFactory::createPair(Frames::TRACK,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_TRACK,
 		                                        v2TagInfo.majorVer,
 		                                        std::to_string(tags.trackNum)));
-		frames.emplace(FrameFactory::createPair(Frames::GENRE,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_GENRE,
 		                                        v2TagInfo.majorVer,
 		                                        V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
@@ -466,16 +466,16 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 	try {
 		tagsSet.v1Extended = true;
 		
-		frames.emplace(FrameFactory::createPair(Frames::TITLE,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_TITLE,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.title, 60)));
-		frames.emplace(FrameFactory::createPair(Frames::ARTIST,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_ARTIST,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.artist, 60)));
-		frames.emplace(FrameFactory::createPair(Frames::ALBUM,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_ALBUM,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.album, 60)));
-		frames.emplace(FrameFactory::createPair(Frames::GENRE,
+		frames.emplace(FrameFactory::createPair(Frames::FRAME_GENRE,
 		                                        v2TagInfo.majorVer,
 		                                        terminatedstring(tags.genre, 30)));
 		/*

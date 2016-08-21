@@ -211,50 +211,104 @@ std::string ID3::latin1toutf8(const ByteArray& latin1s, long start, long end) {
 std::string ID3::getFrameName(const Frames frameID) {
 	//A vector that has a 1:1 correspondence with the Frames enum.
 	static std::vector<std::string> frames = {
-		"TALB", //0  - ALBUM
-		"TPE2", //2  - ALBUMARTIST
-		"TPE1", //1  - ARTIST
-		"TBPM", //3  - BPM
-		"COMM", //4  - COMMENT
-		"TCOM", //5  - COMPOSER
-		"TCOP", //6  - COPYRIGHT
-		"TPOS", //7  - DISC
-		"TCON", //8  - GENRE
-		"TEXT", //9  - LYRICIST
-		"TPE4", //10 - MODIFIEDBY
-		"TIT2", //11 - TITLE
-		"TRCK", //12 - TRACK
-		"TYER", //13 - YEAR
-		"TPE3", //14 - CONDUCTOR
-		"TDAT", //15 - DATE
-		"TENC", //16 - ENCODEDBY
-		"TDLY", //17 - PLAYLISTDELAY
-		"TFLT", //18 - FILETYPE
-		"TIME", //19 - TIME
-		"TIT1", //20 - GROUPING
-		"TIT3", //21 - DESCRIPTION
-		"TKEY", //22 - MUSICALKEY
-		"TLEN", //23 - LENGTH
-		"TMED", //24 - MEDIATYPE
-		"TOAL", //25 - ORIGINALALBUM
-		"TOPE", //26 - ORIGINALARTIST
-		"TOFN", //27 - ORIGINALFILENAME
-		"TOLY", //28 - ORIGINALLYRICIST
-		"TORY", //29 - ORIGINALYEAR
-		"TOWN", //30 - FILEOWNER
-		"TRSN", //31 - RADIOSTATION
-		"TRSO", //32 - RADIOSTATIONOWNER
-		"TDRA", //33 - RECORDINGDATES
-		"TSSE", //34 - ENCODINGSETTINGS
-		"TSRC", //35 - ISRC
-		"TSIZ", //36 - SIZE
-		"TXXX", //37 - USERINFO
-		"IPLS", //38 - INVOLVEDPEOPLE
+		"AENC", //0
+		"APIC", //1
+		"ASPI", //2
+		"COMM", //3
+		"COMR", //4
+		"ENCR", //5
+		"EQU2", //6
+		"EQUA", //7
+		"ETCO", //8
+		"GEOB", //9
+		"GRID", //10
+		"IPLS", //11
+		"LINK", //12
+		"MCDI", //13
+		"MLLT", //14
+		"OWNE", //15
+		"PCNT", //16
+		"POPM", //17
+		"POSS", //18
+		"PRIV", //19
+		"RBUF", //20
+		"RVA2", //21
+		"RVAD", //22
+		"RVRB", //23
+		"SEEK", //24
+		"SIGN", //25
+		"SYLT", //26
+		"SYTC", //27
+		"TALB", //28
+		"TBPM", //29
+		"TCOM", //30
+		"TCON", //31
+		"TCOP", //32
+		"TDAT", //33
+		"TDEN", //34
+		"TDLY", //35
+		"TDOR", //36
+		"TDRC", //37
+		"TDRL", //38
+		"TDTG", //39
+		"TENC", //40
+		"TEXT", //41
+		"TFLT", //42
+		"TIPL", //43
+		"TIME", //44
+		"TIT1", //45
+		"TIT2", //46
+		"TIT3", //47
+		"TKEY", //48
+		"TLEN", //49
+		"TMCL", //50
+		"TMED", //51
+		"TMOO", //52
+		"TOAL", //53
+		"TOFL", //54
+		"TOLY", //55
+		"TOPE", //56
+		"TORY", //57
+		"TOWN", //58
+		"TPE1", //59
+		"TPE2", //60
+		"TPE3", //61
+		"TPE4", //62
+		"TPOS", //63
+		"TPRO", //64
+		"TPUB", //65
+		"TRCK", //66
+		"TRDA", //67
+		"TRSN", //68
+		"TRSO", //69
+		"TSO2", //70
+		"TSOA", //71
+		"TSOC", //72
+		"TSOP", //73
+		"TSOT", //74
+		"TSIZ", //75
+		"TSRC", //76
+		"TSSE", //77
+		"TSST", //78
+		"TXXX", //79
+		"TYER", //80
+		"UFID", //81
+		"USER", //82
+		"USLT", //83
+		"WCOM", //84
+		"WCOP", //85
+		"WOAF", //86
+		"WOAR", //87
+		"WOAS", //88
+		"WORS", //89
+		"WPAY", //90
+		"WPUB", //91
+		"WXXX"  //92
 	};
 	
-	if((unsigned int)frameID > frames.size())
+	if(static_cast<int>(frameID) > frames.size())
 		return "";
-	return frames[(unsigned int)frameID];
+	return frames[static_cast<int>(frameID)];
 }
 
 //bool ID3::allowsMultipleFrames(const Frames frameID) {
