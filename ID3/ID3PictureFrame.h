@@ -31,7 +31,7 @@ namespace ID3 {
 	 * An enum of the different picture types defined in the ID3v2 Attached
 	 * Picture frame.
 	 */
-	enum class PictureType : char {
+	enum class PictureType : uint8_t {
 		OTHER              = 0,
 		FILE_ICON          = 1,
 		OTHER_FILE_ICON    = 2,
@@ -142,7 +142,7 @@ namespace ID3 {
 			/**
 			 * Get the picture data.
 			 * 
-			 * @return The picture data as a char vector.
+			 * @return The picture data as a uint8_t vector.
 			 */
 			ByteArray picture() const;
 			
@@ -153,20 +153,27 @@ namespace ID3 {
 			 * ID3::TextFrame::allowedMIMEType(std::string&), then this Frame will
 			 * become "null".
 			 * 
-			 * @param newPictureData The new PNG or JPG picture, as a char vector.
+			 * @param newPictureData The new PNG or JPG picture, as a uint8_t vector.
 			 * @param newMIMEType The new MIME type.
 			 */
 			void picture(const ByteArray& newPictureData,
 			             const std::string& newMIMEType);
 			
 			/**
+			 * Print information about the frame.
+			 * 
+			 * @see ID3::Frame::print()
+			 */
+			virtual void print() const;
+			
+			/**
 			 * The write() method for PictureFrame writes a ByteArray with the
 			 * currently stored content.
 			 * 
 			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write(unsigned short)
+			 * @see ID3::Frame::write(ushort)
 			 */
-			virtual ByteArray write(unsigned short version=0,
+			virtual ByteArray write(ushort version=0,
 			                        bool minimize=false);
 			
 			/**
@@ -195,11 +202,10 @@ namespace ID3 {
 			 *       picture type, or description null-termination.
 			 * 
 			 * @see ID3::Frame::Frame(std::string&,
-			 *                        unsigned short,
-			 *                        ByteArray&,
-			 *                        unsigned long)
+			 *                        ushort,
+			 *                        ByteArray&)
 			 */
-			PictureFrame(const unsigned short version,
+			PictureFrame(const ushort version,
 			             const ByteArray& frameBytes);
 			
 			/**
@@ -221,7 +227,7 @@ namespace ID3 {
 			 * @param type The picture type (optional). Defaults to the front cover.
 			 * 
 			 */
-			PictureFrame(const unsigned short version,
+			PictureFrame(const ushort version,
 			             const ByteArray pictureBytes,
 			             const std::string& mimeType,
 			             const std::string& description="",
@@ -265,7 +271,7 @@ namespace ID3 {
 			std::string textDescription;
 			
 			/**
-			 * The PNG or JPG image, saved as a char vector.
+			 * The PNG or JPG image, saved as a uint8_t vector.
 			 * 
 			 * @see ID3::PictureFrame::picture()
 			 */

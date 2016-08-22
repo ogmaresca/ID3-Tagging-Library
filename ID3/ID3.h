@@ -63,7 +63,7 @@ namespace ID3 {
 	////////////////////////////// T Y P E D E F S //////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
-	typedef std::vector<char> ByteArray;
+	typedef std::vector<uint8_t> ByteArray;
 	typedef std::shared_ptr<Frame> FramePtr;
 	typedef std::unordered_map<std::string, FramePtr> FrameMap;
 	typedef std::pair<std::string, FramePtr> FramePair;
@@ -124,7 +124,7 @@ namespace ID3 {
 	 * @see http://id3.org/id3v2.4.0-frames
 	 * @todo Add values for each frame ID.
 	 */
-	enum Frames : short {
+	enum Frames : ushort {
 		FRAME_AUDIO_ENCRYPTION = 0,
 		FRAMEID_AENC           = 0,
 		
@@ -618,7 +618,7 @@ namespace ID3 {
 		 * 
 		 * Defined in ID3PictureFrame.cpp.
 		 * 
-		 * @param pictureByteArray The char vector of the PNG or JPG image.
+		 * @param pictureByteArray The uint8_t vector of the PNG or JPG image.
 		 * @param mimeType The MIME type.
 		 * @param pictureDescription The description.
 		 * @param pictureType The picture type defined in the ID3v2 specification
@@ -864,8 +864,7 @@ namespace ID3 {
 			/**
 			 * Returns a string representation of the ID3 versions used in the file.
 			 * 
-			 * @param verbose If true, it will print the size and flags
-			 *                of the ID3v2 version (optional).
+			 * @param verbose If true, it will print the flags of the ID3v2 version.
 			 * @return The string representation of the versions used.
 			 */
 			std::string getVersionString(bool verbose=false) const;
@@ -875,6 +874,11 @@ namespace ID3 {
 			 *          otherwise.
 			 */
 			const bool null() const;
+			
+			/**
+			 * Print all the tag information.
+			 */
+			void print() const;
 			
 		protected:
 			/**
@@ -899,23 +903,25 @@ namespace ID3 {
 				bool flagExtHeader;
 				bool flagExperimental;
 				bool flagFooter;
-				unsigned long size;
+				ulong size;
 			};
 			
 			/**
 			 * The filesize of the music file.
 			 */
-			unsigned long filesize;
+			ulong filesize;
+			
+			/**
+			 * The filename (if not getting the file via an ifstream object).			 
+			 */
+			std::string filename;
 			
 			/**
 			 * A constructor helper method that gets the tag information from the given file.
 			 * 
 			 * @param file The file object.
-			 * @param close Whether to close the file at the end of the method.
-			 *        If using the constructor Tag::Tag(std::ifstream&, const std::string&),
-			 *        then this will be set to false.
 			 */
-			void readFile(std::ifstream& file, bool close=true);
+			void readFile(std::ifstream& file);
 			
 			/**
 			 * A constructor helper method that reads the ID3v1 tags from
@@ -962,7 +968,6 @@ namespace ID3 {
 			 */
 			void setTags(const V1::ExtendedTag& tags);
 			
-		private:
 			/**
 			 * This will be true if the given file is a valid MP3 file, and
 			 * false otherwise. Call null() to check the value externally.

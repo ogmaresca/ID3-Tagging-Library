@@ -10,7 +10,7 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <iostream> //For printing
+#include <iostream>  //For printing
 
 #include "ID3.h"
 #include "ID3Frame.h"
@@ -33,7 +33,7 @@ Frame::Frame() noexcept : ID3Ver(MAX_SUPPORTED_VERSION),
 
 ///@pkg ID3Frame.h
 Frame::Frame(const std::string& frameName,
-             const unsigned short version,
+             const ushort version,
              const ByteArray& frameBytes) : id(frameName),
                                             ID3Ver(version),
                                             frameContent(frameBytes),
@@ -63,7 +63,15 @@ Frame::operator ByteArray() const noexcept { return frameContent; }
 bool Frame::null() const { return isNull; }
 
 ///@pkg ID3Frame.h
-unsigned long Frame::size() const { return frameContent.size(); }
+ulong Frame::size(bool header) const {
+	const ulong FRAME_SIZE  = frameContent.size();
+	const ulong HEADER_SIZE = headerSize();
+	
+	if(header)
+		return FRAME_SIZE;
+	
+	return FRAME_SIZE < HEADER_SIZE ? 0 : FRAME_SIZE - HEADER_SIZE;
+}
 
 ///@pkg ID3Frame.h
 std::string Frame::frame() const { return id; }
@@ -72,7 +80,7 @@ std::string Frame::frame() const { return id; }
 ByteArray Frame::bytes(bool header) const noexcept {
 	if(!header)
 		return frameContent;
-	const unsigned short HEADER_SIZE = headerSize();
+	const ushort HEADER_SIZE = headerSize();
 	if(frameContent.size() < HEADER_SIZE)
 		return ByteArray();
 	return ByteArray(frameContent.begin() + HEADER_SIZE, frameContent.end());
@@ -166,12 +174,63 @@ uint8_t Frame::groupIdentity() const {
 }
 
 ///@pkg ID3Frame.h
-unsigned short Frame::headerSize() const {
+ushort Frame::headerSize() const {
 	return HEADER_BYTE_SIZE +
 	       (compressed() ? 4 : 0) +
 	       (encrypted() ? 1 : 0) +
 	       (groupingIdentity() ? 1 : 0) +
 	       (dataLengthIndicator() ? 4 : 0);
+}
+
+///@pkg ID3Frame.h
+void Frame::print() const {
+	const ushort HEADER_SIZE = headerSize();
+	const ulong BODY_SIZE = size();
+	const ulong FRAME_SIZE = size(true);
+	
+	std::cout << std::showbase << "Information about frame " << id << ": " << std::endl;
+	std::cout << "Edited:         " << std::boolalpha << isEdited << std::endl;
+	std::cout << "Read from file: " << std::boolalpha << isFromFile << std::endl;
+	std::cout << "Null:           " << std::boolalpha << isNull << std::endl;
+	
+	if(isNull) {
+		std::cout << std::noboolalpha << std::noshowbase;
+		return;
+	}
+	
+	std::cout << "Frame size:     " << FRAME_SIZE << std::endl;
+	if(FRAME_SIZE > 0) {
+		std::cout << "Flags:          ";
+		if(discardUponTagAlterIfUnknown()) std::cout << " -discardIfUnknown";
+		if(discardUponAudioAlter())        std::cout << " -discardUponAudioAlter";
+		if(readOnly()) std::cout << " -readOnly";
+		if(compressed()) std::cout << " -compressed";
+		if(encrypted()) std::cout << " -encrypted";
+		if(groupingIdentity()) std::cout << " -groupingIdentity";
+		if(unsynchronized()) std::cout << " -unsynchronization";
+		if(dataLengthIndicator()) std::cout << " -dataLengthIndicator";
+		std::cout << std::endl;
+		if(groupingIdentity())
+			std::cout << "Group identity: " << std::boolalpha << groupIdentity() << std::endl;
+		std::cout << "Header size:    " << std::dec << HEADER_SIZE << std::endl;
+		std::cout << "Header bytes:  ";
+		for(ulong i = 0; i < HEADER_SIZE && i < FRAME_SIZE; i++)
+			std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
+		std::cout << std::endl;
+		
+		std::cout << "Body size:      " << std::dec << BODY_SIZE << std::endl;
+	}
+	std::cout << "Empty:          " << std::boolalpha << empty() << std::endl;
+	std::cout << "Body bytes:    ";
+	if(BODY_SIZE <= 100) {
+		for(ulong i = HEADER_SIZE; i < FRAME_SIZE; i++)
+			std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
+	} else {
+		std::cout << " (only showing the first 100 bytes)";
+		for(ulong i = HEADER_SIZE; i < HEADER_SIZE + 100UL && i < FRAME_SIZE; i++)
+			std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
+	}
+	std::cout << std::endl << std::noboolalpha << std::dec << std::noshowbase;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -182,14 +241,10 @@ unsigned short Frame::headerSize() const {
 
 ///@pkg ID3Frame.h
 UnknownFrame::UnknownFrame(const std::string& frameName,
-                           const unsigned short version,
+                           const ushort version,
                            const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                                        version,
-                                                                       frameBytes) {
-	//Pictures are huge, don't want to print that
-	if(!isNull)
-		std::cout << "Content for UnknownFrame " << id << ": " << std::string(frameBytes.begin()+HEADER_BYTE_SIZE, frameBytes.end()) << std::endl;
-}
+                                                                       frameBytes) {}
 
 ///@pkg ID3Frame.h
 UnknownFrame::UnknownFrame(const std::string& frameName) : Frame::Frame() {
@@ -222,7 +277,13 @@ bool UnknownFrame::empty() const {
 }
 
 ///@pkg ID3Frame.h
-ByteArray UnknownFrame::write(unsigned short version, bool minimize) {
+void UnknownFrame::print() const {
+	Frame::print();
+	std::cout << "Frame class:    UnknownFrame" << std::endl;
+}
+
+///@pkg ID3Frame.h
+ByteArray UnknownFrame::write(ushort version, bool minimize) {
 	if(discardUponTagAlterIfUnknown()) {
 		frameContent = ByteArray();
 	} else if(frameContent.size() >= HEADER_BYTE_SIZE &&

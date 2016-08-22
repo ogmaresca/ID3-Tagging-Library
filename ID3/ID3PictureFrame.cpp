@@ -38,7 +38,7 @@ Picture::Picture(const ByteArray&   pictureByteArray,
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3PictureFrame.h
-PictureFrame::PictureFrame(const unsigned short version,
+PictureFrame::PictureFrame(const ushort version,
                            const ByteArray& frameBytes) : Frame::Frame("APIC",
                                                                        version,
                                                                        frameBytes),
@@ -49,7 +49,7 @@ PictureFrame::PictureFrame(const unsigned short version,
 }
 
 ///@pkg ID3PictureFrame.h
-PictureFrame::PictureFrame(const unsigned short version,
+PictureFrame::PictureFrame(const ushort version,
                            const ByteArray pictureBytes,
 			                  const std::string& mimeType,
 			                  const std::string& description,
@@ -116,8 +116,17 @@ void PictureFrame::picture(const ByteArray& newPictureData,
 	textMIME = newMIMEType;
 }
 
+///@pkg ID3PictureFrame.h
+void PictureFrame::print() const {
+	Frame::print();
+	std::cout << "Picture type:   " << (short)APICType << std::endl;
+	std::cout << "MIME type:      " << textMIME << std::endl;
+	std::cout << "Description:    " << textDescription << std::endl;
+	std::cout << "Frame class:    PictureFrame" << std::endl;
+}
+
 ///@pkg ID3TextFrame.h
-ByteArray PictureFrame::write(unsigned short version, bool minimize) {
+ByteArray PictureFrame::write(ushort version, bool minimize) {
 	if(version >= MIN_SUPPORTED_VERSION && version <= MAX_SUPPORTED_VERSION)
 		ID3Ver = version;
 	
@@ -129,28 +138,28 @@ ByteArray PictureFrame::write(unsigned short version, bool minimize) {
 
 ///@pkg ID3TextFrame.h
 void PictureFrame::read() {
-	const unsigned short HEADER_SIZE = headerSize();
+	const ushort HEADER_SIZE = headerSize();
 	
-	const unsigned long FRAME_SIZE = size();
+	const ulong FRAME_SIZE = size();
 	
 	//Make sure that there is enough room for text before reading the frame bytes
 	if(frameContent.size() > HEADER_SIZE) {
 		//The encoding
-		const char encoding = frameContent[HEADER_SIZE];
+		const uint8_t encoding = frameContent[HEADER_SIZE];
 		//If the encoding uses 16-byte or 8-byte characters
 		const bool wideChars = encoding == ENCODING_UTF16BOM || encoding == ENCODING_UTF16;
 		
-		unsigned long mimeEnd   = 0,                 //The end of the MIME type string
-		                                             //It will actually be the null
-		                                             //character after the string
-		              descStart = 0,                 //The start of the description
-		              descEnd   = 0,                 //The end of the description
-		              descGap   = wideChars ? 2 : 1; //The number of bytes in the
-		                                             //gap between the description
-		                                             //and the picture data
+		ulong mimeEnd   = 0,                 //The end of the MIME type string
+		                                     //It will actually be the null
+		                                     //character after the string
+		      descStart = 0,                 //The start of the description
+		      descEnd   = 0,                 //The end of the description
+		      descGap   = wideChars ? 2 : 1; //The number of bytes in the gap
+		                                     //between the description and the
+		                                     //picture data
 		
 		//Get the MIME type
-		for(unsigned long i = HEADER_SIZE + 1; i < FRAME_SIZE; i++) {
+		for(ulong i = HEADER_SIZE + 1; i < FRAME_SIZE; i++) {
 			if(frameContent[i] == '\0') {
 				mimeEnd = i;
 				//The MIME string is always stored in LATIN-1
@@ -173,29 +182,29 @@ void PictureFrame::read() {
 			return;
 		} else {
 			switch(frameContent[mimeEnd + 1]) {
-				case static_cast<char>(PictureType::FILE_ICON):
-				case static_cast<char>(PictureType::OTHER_FILE_ICON):
-				case static_cast<char>(PictureType::FRONT_COVER):
-				case static_cast<char>(PictureType::BACK_COVER):
-				case static_cast<char>(PictureType::LEAFLET_PAGE):
-				case static_cast<char>(PictureType::MEDIA):
-				case static_cast<char>(PictureType::LEAD_ARTIST):
-				case static_cast<char>(PictureType::ARTIST):
-				case static_cast<char>(PictureType::CONDUCTOR):
-				case static_cast<char>(PictureType::BAND):
-				case static_cast<char>(PictureType::COMPOSER):
-				case static_cast<char>(PictureType::LYRICIST):
-				case static_cast<char>(PictureType::RECORDING_LOCATION):
-				case static_cast<char>(PictureType::DURING_RECORDING):
-				case static_cast<char>(PictureType::DURING_PERFORMANCE):
-				case static_cast<char>(PictureType::MOVIE_CAPTURE):
-				case static_cast<char>(PictureType::BRIGHT_FISH):
-				case static_cast<char>(PictureType::ILLUSTRATION):
-				case static_cast<char>(PictureType::ARTIST_LOGOTYPE):
-				case static_cast<char>(PictureType::PUBLISHER_LOGOTYPE): {
+				case static_cast<uint8_t>(PictureType::FILE_ICON):
+				case static_cast<uint8_t>(PictureType::OTHER_FILE_ICON):
+				case static_cast<uint8_t>(PictureType::FRONT_COVER):
+				case static_cast<uint8_t>(PictureType::BACK_COVER):
+				case static_cast<uint8_t>(PictureType::LEAFLET_PAGE):
+				case static_cast<uint8_t>(PictureType::MEDIA):
+				case static_cast<uint8_t>(PictureType::LEAD_ARTIST):
+				case static_cast<uint8_t>(PictureType::ARTIST):
+				case static_cast<uint8_t>(PictureType::CONDUCTOR):
+				case static_cast<uint8_t>(PictureType::BAND):
+				case static_cast<uint8_t>(PictureType::COMPOSER):
+				case static_cast<uint8_t>(PictureType::LYRICIST):
+				case static_cast<uint8_t>(PictureType::RECORDING_LOCATION):
+				case static_cast<uint8_t>(PictureType::DURING_RECORDING):
+				case static_cast<uint8_t>(PictureType::DURING_PERFORMANCE):
+				case static_cast<uint8_t>(PictureType::MOVIE_CAPTURE):
+				case static_cast<uint8_t>(PictureType::BRIGHT_FISH):
+				case static_cast<uint8_t>(PictureType::ILLUSTRATION):
+				case static_cast<uint8_t>(PictureType::ARTIST_LOGOTYPE):
+				case static_cast<uint8_t>(PictureType::PUBLISHER_LOGOTYPE): {
 					APICType = static_cast<PictureType>(frameContent[mimeEnd + 1]);
 					break;
-				} case static_cast<char>(PictureType::OTHER): default: {
+				} case static_cast<uint8_t>(PictureType::OTHER): default: {
 					APICType = PictureType::OTHER;
 				}
 			}
@@ -203,7 +212,7 @@ void PictureFrame::read() {
 		
 		//Get the description
 		descStart = mimeEnd + 2;
-		for(unsigned long i = descStart; i + descGap <= FRAME_SIZE; i += descGap) {
+		for(ulong i = descStart; i + descGap <= FRAME_SIZE; i += descGap) {
 			//Prevent false positives in UTF-16 encodings
 			if(frameContent[i] == '\0') {
 				if(wideChars && frameContent[i+1] != '\0')
@@ -235,9 +244,6 @@ void PictureFrame::read() {
 		textDescription = "";
 		pictureData = ByteArray();
 	}
-	
-	//std::cout << "Content for PictureFrame " << id << " " << (short)APICType << textDescription << " " << textMIME << ": " << std::string(pictureData.begin(), pictureData.end()) << std::endl;
-	std::cout << "Content for PictureFrame " << id << ": " << (short)APICType << textDescription << " " << textMIME;
 }
 
 ///@pkg ID3PictureFrame.h

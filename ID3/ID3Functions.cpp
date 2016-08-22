@@ -20,19 +20,19 @@
 using namespace ID3;
 
 ///@pkg ID3Functions.h
-std::string ID3::V1::getGenreString(unsigned short genre) {
+std::string ID3::V1::getGenreString(ushort genre) {
 	if(genre < V1::GENRES.size())
 		return V1::GENRES[genre];
 	return "";
 }
 
 ///@pkg ID3Functions.h
-unsigned long ID3::byteIntVal(uint8_t* array, int size, bool synchsafe) {
+ulong ID3::byteIntVal(uint8_t* array, int size, bool synchsafe) {
 	if(array == nullptr || size < 1) return 0;
 	
 	const short shiftSize = synchsafe ? 7 : 8;
 	
-	unsigned long value = *array++;
+	ulong value = *array++;
 	
 	for(int i = 1; i < size; i++)
 		value = (value << shiftSize) + *array++;
@@ -41,9 +41,9 @@ unsigned long ID3::byteIntVal(uint8_t* array, int size, bool synchsafe) {
 }
 
 ///@pkg ID3Functions.h
-ByteArray ID3::intToByteArray(unsigned long val, int length, bool synchsafe) {
-	const short shiftSize = synchsafe ? 7 : 8;
-	const short modVal = synchsafe ? 0x80 : 0x100;
+ByteArray ID3::intToByteArray(ulong val, ushort length, bool synchsafe) {
+	const ushort shiftSize = synchsafe ? 7 : 8;
+	const ushort modVal = synchsafe ? 0x80 : 0x100;
 	
 	//No length given
 	if(length == 0) {
@@ -59,8 +59,8 @@ ByteArray ID3::intToByteArray(unsigned long val, int length, bool synchsafe) {
 		ByteArray byteVector(length);
 		//If val is too big to fit in the given size, then make it the maximum
 		//possible value that will fit
-		if(val > (unsigned long)(1 << (length * shiftSize)) - 1)
-			val = (unsigned long)(1 << (length * shiftSize)) - 1;
+		if(val > (1UL << static_cast<ulong>(length * shiftSize)) - 1UL)
+			val = (1UL << static_cast<ulong>(length * shiftSize)) - 1UL;
 		for(int i = length - 1; i >= 0; i--) {
 			byteVector[i] = val % modVal;
 			val >>= shiftSize;
@@ -84,7 +84,7 @@ std::string ID3::utf16toutf8(const ByteArray& u16s,
 		start = 0;
 	
 	//Set the end
-	if(end < 0 || static_cast<unsigned long>(end) > u16s.size())
+	if(end < 0 || static_cast<ulong>(end) > u16s.size())
 		end = u16s.size();
 	
 	//UTF-16 uses 2-byte character widths. If there's 0 bytes then
@@ -105,14 +105,12 @@ std::string ID3::utf16toutf8(const ByteArray& u16s,
 	std::string toReturn;
 	
 	//If it has the BOM, it checks the first character in the string.
-	//If it's 0xFFFE then it uses little endian, and the bytes for each
-	//character are flipped around.
-	//If it's 0xFEFF, then it uses big endian.
+	//If it's 0xFFFE then it uses little endian, and the bytes for each character
+	//are flipped around. If it's 0xFEFF, then it uses big endian.
 	//If there's no BOM, then it's assumed the string uses big endian.
-	//ICU does not seem to processes the BOM or little endian encoding,
-	//so this has to be manually done.
-	//This is automatically checked and processed in utf16toutf8(),
-	//no need to mess with the BOM beforehand.
+	//ICU does not seem to processes the BOM or little endian encoding, so it has
+	//to be manually done. This is automatically checked and processed in
+	//utf16toutf8(), no need to mess with the BOM beforehand.
 	if((uint8_t)u16s[start] == 0xFF && (uint8_t)u16s[start+1] == 0xFE) { //Has Little Endian BOM
 		offset = 2; //Don't want to include the BOM in the returned string
 		
@@ -165,7 +163,7 @@ std::string ID3::latin1toutf8(const ByteArray& latin1s, long start, long end) {
 		start = 0;
 	
 	//Set the end 
-	if(end < 0 || static_cast<unsigned long>(end) > latin1s.size())
+	if(end < 0 || static_cast<ulong>(end) > latin1s.size())
 		end = latin1s.size();
 	
 	//Empty string base case
@@ -208,7 +206,7 @@ std::string ID3::latin1toutf8(const ByteArray& latin1s, long start, long end) {
 }
 
 ///@pkg ID3Functions.h
-std::string ID3::getUTF8String(char encoding,
+std::string ID3::getUTF8String(uint8_t encoding,
                                const ByteArray& bytes,
                                long start,
                                long end) {
@@ -217,7 +215,7 @@ std::string ID3::getUTF8String(char encoding,
 		start = 0;
 	
 	//Set the end 
-	if(end < 0 || static_cast<unsigned long>(end) > bytes.size())
+	if(end < 0 || static_cast<ulong>(end) > bytes.size())
 		end = bytes.size();
 	
 	//Empty string base case
@@ -337,9 +335,9 @@ std::string ID3::getFrameName(const Frames frameID) {
 		"WXXX"  //92
 	};
 	
-	if(static_cast<unsigned short>(frameID) > frames.size())
+	if(static_cast<ushort>(frameID) > frames.size())
 		return "";
-	return frames[static_cast<unsigned short>(frameID)];
+	return frames[static_cast<ushort>(frameID)];
 }
 
 //bool ID3::allowsMultipleFrames(const Frames frameID) {

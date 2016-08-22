@@ -91,16 +91,6 @@ namespace ID3 {
 			virtual bool empty() const;
 			
 			/**
-			 * The write() method for TextFrame re-creates the frame
-			 * header with UTF-8 encoding and its stored text content.
-			 * 
-			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write(unsigned short, bool)
-			 */
-			virtual ByteArray write(unsigned short version=0,
-			                        bool minimize=false);
-			
-			/**
 			 * Get the text content.
 			 * 
 			 * @returns The text content of the frame in UTF-8 encoding.
@@ -116,6 +106,23 @@ namespace ID3 {
 			 */
 			virtual void content(const std::string& newContent);
 			
+			/**
+			 * Print information about the frame.
+			 * 
+			 * @see ID3::Frame::print()
+			 */
+			virtual void print() const;
+			
+			/**
+			 * The write() method for TextFrame re-creates the frame
+			 * header with UTF-8 encoding and its stored text content.
+			 * 
+			 * @todo Actually implement the function.
+			 * @see ID3::Frame::write(ushort, bool)
+			 */
+			virtual ByteArray write(ushort version=0,
+			                        bool minimize=false);
+		
 		protected:
 			/**
 			 * This constructor calls the identical constructor in the
@@ -128,11 +135,11 @@ namespace ID3 {
 			 * NOTE: The ID3v2 version is not checked to verify that it
 			 *       is a supported ID3v2 version.
 			 * 
-			 * @see ID3::Frame::Frame(std::string&, unsigned short, ByteArray&)
+			 * @see ID3::Frame::Frame(std::string&, ushort, ByteArray&)
 			 */
 			TextFrame(const std::string& frameName,
-			          const unsigned short version,
-			          const ByteArray& frameBytes);
+			          const ushort       version,
+			          const ByteArray&   frameBytes);
 			
 			/**
 			 * This constructor manually creates a text frame with
@@ -150,7 +157,7 @@ namespace ID3 {
 			 * @param value The text of the frame (optional).
 			 */
 			TextFrame(const std::string& frameName,
-			          const unsigned short version,
+			          const ushort       version,
 			          const std::string& value="");
 			
 			/**
@@ -305,6 +312,13 @@ namespace ID3 {
 			 * @param newContent The new text content.
 			 */
 			virtual void content(const std::string& newContent);
+			
+			/**
+			 * Print information about the frame.
+			 * 
+			 * @see ID3::Frame::print()
+			 */
+			virtual void print() const;
 		
 		protected:
 			/**
@@ -323,13 +337,12 @@ namespace ID3 {
 			 *       is a supported ID3v2 version.
 			 * 
 			 * @see ID3::Frame::Frame(std::string&,
-			 *                        unsigned short,
-			 *                        ByteArray&,
-			 *                        unsigned long)
+			 *                        ushort,
+			 *                        ByteArray&)
 			 */
 			NumericalTextFrame(const std::string& frameName,
-			                   const unsigned short version,
-			                   const ByteArray& frameBytes);
+			                   const ushort       version,
+			                   const ByteArray&   frameBytes);
 			
 			/**
 			 * This constructor manually creates a text frame with
@@ -348,10 +361,10 @@ namespace ID3 {
 			 * @param frameName The frame ID.
 			 * @param version The ID3v2 major version.
 			 * @param value The text of the frame (optional).
-			 * @see ID3::Frame::Frame(std::string&, unsigned short, ByteArray&)
+			 * @see ID3::Frame::Frame(std::string&, ushort, ByteArray&)
 			 */
 			NumericalTextFrame(const std::string& frameName,
-			                   const unsigned short version,
+			                   const ushort       version,
 			                   const std::string& value="");
 			
 			/**
@@ -371,8 +384,8 @@ namespace ID3 {
 			 * @param description The frame description (optional).
 			 */
 			NumericalTextFrame(const std::string& frameName,
-			                   const unsigned short version,
-			                   const long intContent);
+			                   const ushort       version,
+			                   const long         intContent);
 			
 			/**
 			 * An empty constructor to initialize variables. Creating a Frame with
@@ -444,19 +457,6 @@ namespace ID3 {
 			virtual FrameClass type() const noexcept;
 			
 			/**
-			 * The write() method for DescriptiveTextFrame re-creates the frame
-			 * header with UTF-8 encoding and its stored text content, description,
-			 * and language (if it has one). If the Frame has language enabled,
-			 * and the Frame's language is empty upon the call to write(), the
-			 * language will default to "xxx".
-			 * 
-			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write(unsigned short, bool)
-			 */
-			virtual ByteArray write(unsigned short version=0,
-			                        bool minimize=false);
-			
-			/**
 			 * Set the text content and optionally description.
 			 * Call write() to finalize changes.
 			 * 
@@ -507,6 +507,26 @@ namespace ID3 {
 			 * @param newLanguage The new language.
 			 */
 			virtual void language(const std::string& newLanguage);
+			
+			/**
+			 * Print information about the frame.
+			 * 
+			 * @see ID3::Frame::print()
+			 */
+			virtual void print() const;
+			
+			/**
+			 * The write() method for DescriptiveTextFrame re-creates the frame
+			 * header with UTF-8 encoding and its stored text content, description,
+			 * and language (if it has one). If the Frame has language enabled,
+			 * and the Frame's language is empty upon the call to write(), the
+			 * language will default to "xxx".
+			 * 
+			 * @todo Actually implement the function.
+			 * @see ID3::Frame::write(ushort, bool)
+			 */
+			virtual ByteArray write(ushort version=0,
+			                        bool   minimize=false);
 		
 		protected:
 			/**
@@ -524,10 +544,10 @@ namespace ID3 {
 			 *                the option values checked for are
 			 *                ID3::DescriptiveTextFrame::OPTION_LANGUAGE and
 			 *                ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT (optional).
-			 * @see ID3::Frame::Frame(std::string&, unsigned short, ByteArray&)
+			 * @see ID3::Frame::Frame(std::string&, ushort, ByteArray&)
 			 */
 			DescriptiveTextFrame(const std::string& frameName,
-			                     const unsigned short version,
+			                     const ushort version,
 			                     const ByteArray& frameBytes,
 			                     const short options=0);
 			
@@ -560,11 +580,11 @@ namespace ID3 {
 			 *                For multiple values, OR (option | option) them together.
 			 */
 			DescriptiveTextFrame(const std::string& frameName,
-			                     const unsigned short version,
+			                     const ushort       version,
 			                     const std::string& value="",
 			                     const std::string& description="",
 			                     const std::string& language="",
-			                     const short options=0);
+			                     const short        options=0);
 			
 			/**
 			 * An empty constructor to initialize variables. Creating a Frame with
@@ -648,14 +668,21 @@ namespace ID3 {
 			virtual FrameClass type() const noexcept;
 			
 			/**
+			 * Print information about the frame.
+			 * 
+			 * @see ID3::Frame::print()
+			 */
+			virtual void print() const;
+			
+			/**
 			 * The write() method for URLTextFrame re-creates the frame
 			 * header with LATIN-1 encoding and its stored text content.
 			 * 
 			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write(unsigned short, bool)
+			 * @see ID3::Frame::write(ushort, bool)
 			 */
-			virtual ByteArray write(unsigned short version=0,
-			                        bool minimize=false);
+			virtual ByteArray write(ushort version=0,
+			                        bool   minimize=false);
 		
 		protected:
 			/**
@@ -669,11 +696,11 @@ namespace ID3 {
 			 * NOTE: The ID3v2 version is not checked to verify that it
 			 *       is a supported ID3v2 version.
 			 * 
-			 * @see ID3::Frame::Frame(std::string&, unsigned short, ByteArray&)
+			 * @see ID3::Frame::Frame(std::string&, ushort, ByteArray&)
 			 */
 			URLTextFrame(const std::string& frameName,
-			             const unsigned short version,
-			             const ByteArray& frameBytes);
+			             const ushort       version,
+			             const ByteArray&   frameBytes);
 			
 			/**
 			 * This constructor manually creates a text frame with custom text.
@@ -691,7 +718,7 @@ namespace ID3 {
 			 * @param value The text of the frame (optional).
 			 */
 			URLTextFrame(const std::string& frameName,
-			             const unsigned short version,
+			             const ushort       version,
 			             const std::string& value="");
 			
 			/**

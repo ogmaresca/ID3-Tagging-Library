@@ -26,16 +26,16 @@
 using namespace ID3;
 
 ///@pkg ID3.h
-Tag::Tag(std::ifstream& file) : Tag::Tag() {
+Tag::Tag(std::ifstream& file) : isNull(true) {
 	if(!file.is_open())
 		return;
 	file.seekg(0, std::ifstream::end);
 	filesize = file.tellg();
-	readFile(file, false);
+	readFile(file);
 }
 
 ///@pkg ID3.h
-Tag::Tag(const std::string& fileLoc) : Tag::Tag() {
+Tag::Tag(const std::string& fileLoc) : filename(fileLoc), isNull(true) {
 	std::ifstream file;
 	
 	//Check if the file is an MP3 file
@@ -48,7 +48,13 @@ Tag::Tag(const std::string& fileLoc) : Tag::Tag() {
 		filesize = file.tellg();
 		readFile(file);
 	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag(const Glib::ustring& fileLoc): " << e.what() << std::endl;
+		std::cerr << "Error in ID3::Tag::Tag(std::string&): " << e.what() << std::endl;
+	}
+	
+	try {
+		file.close();
+	} catch(const std::exception& e) {
+		std::cerr << "Error in ID3::Tag::Tag(std::string&) closing the file: " << e.what() << std::endl;
 	}
 }
 
@@ -252,12 +258,11 @@ std::string Tag::getVersionString(bool verbose) const {
 		versionString += "v2." + std::to_string(v2TagInfo.majorVer) + ".";
 		versionString += std::to_string(v2TagInfo.minorVer);
 		if(verbose) {
-			versionString += " (" + std::to_string(v2TagInfo.size) + "B";
+			std::string flagString;
 			if(v2TagInfo.flagUnsynchronisation) versionString += " -unsynchronisation";
-			if(v2TagInfo.flagExtHeader) versionString += " -extendedheader";
-			if(v2TagInfo.flagExperimental) versionString += " -experimental";
-			if(v2TagInfo.flagFooter) versionString += " -footer";
-			versionString += ")";
+			if(v2TagInfo.flagExtHeader)         versionString += " -extendedheader";
+			if(v2TagInfo.flagExperimental)      versionString += " -experimental";
+			if(v2TagInfo.flagFooter)            versionString += " -footer";
 		}
 	}
 	
@@ -270,7 +275,33 @@ const bool Tag::null() const {
 }
 
 ///@pkg ID3.h
-void Tag::readFile(std::ifstream& file, bool close) {
+void Tag::print() const {
+	std::cout << std::endl << "......................" << std::endl;
+	if(filename == "")
+		std::cout << "Printing information about ID3 File:" << std::endl;
+	else
+		std::cout << "Printing information about file " << filename << ":" << std::endl;
+	std::cout << "Filesize:                 " << filesize << std::endl;
+	std::cout << "Tag size:                 " << v2TagInfo.size << std::endl;
+	std::cout << "Null:                     " << std::boolalpha << isNull << std::endl;
+	
+	if(isNull) {
+		std::cout << ".........................." << std::endl << std::noboolalpha;
+		return;
+	}
+	
+	std::cout << "ID3 version(s) and flags: " << getVersionString(true) << std::endl;
+	
+	for(FramePair currentFramePair : frames) {
+		std::cout << "--------------------------" << std::endl;
+		currentFramePair.second->print();
+	}
+	
+	std::cout << ".........................." << std::endl << std::noboolalpha;
+}
+
+///@pkg ID3.h
+void Tag::readFile(std::ifstream& file) {
 	if(!file.good())
 		return;
 	
@@ -278,12 +309,6 @@ void Tag::readFile(std::ifstream& file, bool close) {
 	
 	readFileV2(file);
 	readFileV1(file);
-	
-	try {
-		if(close) file.close();
-	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::getFile(const std::ifstream& file) closing the file: " << e.what() << std::endl;
-	}
 }
 
 ///@pkg ID3.h
@@ -300,7 +325,7 @@ void Tag::readFileV1(std::ifstream& file) {
 		if(file.fail())
 			return;
 		
-		file.read(reinterpret_cast<char *>(&tags), V1::BYTE_SIZE);
+		file.read(reinterpret_cast<char*>(&tags), V1::BYTE_SIZE);
 		
 		if(memcmp(tags.header, "TAG", 3) != 0)
 			return;
@@ -309,14 +334,14 @@ void Tag::readFileV1(std::ifstream& file) {
 		if(filesize > V1::BYTE_SIZE + V1::EXTENDED_BYTE_SIZE) {
 			file.seekg(-V1::BYTE_SIZE-V1::EXTENDED_BYTE_SIZE, std::ifstream::end);
 			extTagsSet = !file.fail();
-			if(extTagsSet) file.read(reinterpret_cast<char *>(&extTags), V1::EXTENDED_BYTE_SIZE);
+			if(extTagsSet) file.read(reinterpret_cast<char*>(&extTags), V1::EXTENDED_BYTE_SIZE);
 			extTagsSet = memcmp(extTags.header, "TAG+", 4) == 0;
 		}
 		
 		setTags(tags);
 		if(extTagsSet) setTags(extTags);
 	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::getFileV1(const std::ifstream& file): " << e.what() << std::endl;
+		std::cerr << "Error in ID3::Tag::getFileV1(std::ifstream&): " << e.what() << std::endl;
 	}
 }
 
@@ -332,7 +357,7 @@ void Tag::readFileV2(std::ifstream& file) {
 		if(file.fail())
 			return;
 		
-		file.read(reinterpret_cast<char *>(&tagsHeader), HEADER_BYTE_SIZE);
+		file.read(reinterpret_cast<char*>(&tagsHeader), HEADER_BYTE_SIZE);
 		
 		if(memcmp(tagsHeader.header, "ID3", 3) != 0)
 			return;
@@ -363,7 +388,7 @@ void Tag::readFileV2(std::ifstream& file) {
 		tagsSet.v2 = true;
 		
 		//The position to start reading from the file
-		unsigned long frameStartPos = HEADER_BYTE_SIZE;
+		ulong frameStartPos = HEADER_BYTE_SIZE;
 		
 		//Skip over the extended header
 		if(v2TagInfo.flagExtHeader) {
@@ -374,7 +399,7 @@ void Tag::readFileV2(std::ifstream& file) {
 			ExtHeader extHeader;
 			file.seekg(frameStartPos, std::ifstream::beg);
 			if(!file.fail()) {
-				file.read(reinterpret_cast<char *>(&extHeader), HEADER_BYTE_SIZE);
+				file.read(reinterpret_cast<char*>(&extHeader), HEADER_BYTE_SIZE);
 				//Only the ID3v2.4.0 standard page says that the extended header's size is synchsafe.
 				//I do not know if that is accurate or not, but I will take their word for it.
 				frameStartPos += HEADER_BYTE_SIZE + byteIntVal(extHeader.size, 4, v2TagInfo.majorVer >= 4);
@@ -382,7 +407,7 @@ void Tag::readFileV2(std::ifstream& file) {
 		}
 		
 		//The byte position on the file when the ID3v2 tags end
-		const unsigned long ID3_END_POS = frameStartPos + v2TagInfo.size;
+		const ulong ID3_END_POS = frameStartPos + v2TagInfo.size;
 		
 		//Validate the size of the ID3v2 tag
 		if(ID3_END_POS > filesize)
@@ -401,13 +426,13 @@ void Tag::readFileV2(std::ifstream& file) {
 				frames.emplace(frame->frame(), frame);
 			//If the frame content is a valid size (bigger than an ID3v2 header)
 			//then continue on to the next frame. If not, then stop the loop.
-			if(frame->size() > HEADER_BYTE_SIZE)
-				frameStartPos += frame->size();
+			if(frame->size(true) > HEADER_BYTE_SIZE && frame->frame() != "")
+				frameStartPos += frame->size(true);
 			else
 				break;
 		}
 	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::getFileV2(const std::ifstream& file): " << e.what() << std::endl;
+		std::cerr << "Error in ID3::Tag::getFileV2(std::ifstream&): " << e.what() << std::endl;
 	}
 }
 
@@ -446,7 +471,7 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 		                                        v2TagInfo.majorVer,
 		                                        V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::setTags(const ID3::v1Tag& tags, bool zeroCheck): " << e.what() << std::endl;
+		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::Tag&, bool): " << e.what() << std::endl;
 	}
 }
 
@@ -488,7 +513,7 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 		                                        v2TagInfo.majorVer,
 		                                        V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::setTags(const ID3::v1_1Tag& tags, bool zeroCheck): " << e.what() << std::endl;
+		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::P1Tag&, bool): " << e.what() << std::endl;
 	}
 }
 
@@ -515,7 +540,7 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 		/*
 		 * Placeholder comment for when I add playback speed support and
 		 * support for start and end times.
-		unsigned int speed;
+		uint speed;
 		startTime = atoi(tags.startTime);
 		endTime = atoi(tags.endTime);
 		speed = tags.speed;
@@ -528,7 +553,7 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 			case 0: default: { playbackSpeed = V1::ExtendedSpeeds::UNSET; break; }
 		}*/
 	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::setTags(const ID3::v1ExtendedTag& tags): " << e.what() << std::endl;
+		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::ExtendedTag&): " << e.what() << std::endl;
 	}
 }
 

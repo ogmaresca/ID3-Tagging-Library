@@ -30,7 +30,7 @@ namespace ID3 {
 	/**
 	 * @see ID3.h
 	 */
-	typedef std::vector<char> ByteArray;
+	typedef std::vector<uint8_t> ByteArray;
 	
 	/**
 	 * An enum that  represents a Frame class.
@@ -51,7 +51,7 @@ namespace ID3 {
 	/**
 	 * An enum of text encodings used in ID3v2 frames.
 	 */
-	enum FrameEncoding : char {
+	enum FrameEncoding : uint8_t {
 		ENCODING_LATIN1   = 0, //AKA ISO-8859-1
 		ENCODING_UTF16BOM = 1, //AKA UCS-2
 		ENCODING_UTF16    = 2, //ID3v2.4+ only, ID3-Tagging-Library will read in ID3v2.3
@@ -236,11 +236,15 @@ namespace ID3 {
 			
 			/**
 			 * Get the size of the frame.
-			 * The frame header size is stored at ID3::HEADER_BYTE_SIZE.
+			 * The frame header size can be retrieved at ID3::Frame::headerSize().
 			 * 
+			 * NOTE: If the Frame was created by reading from a file, then this
+			 *       will always return 0 until write() is called.
+			 * 
+			 * @param header If true, the header size will be included in the size.
 			 * @return The size of the frame.
 			 */
-			unsigned long size() const;
+			ulong size(bool header=false) const;
 			
 			/**
 			 * Get the string ID of the frame (ex: "TIT2" for titles).
@@ -342,6 +346,7 @@ namespace ID3 {
 			 * this will always return 0.
 			 * 
 			 * @return The group identity.
+			 * @see ID3::Frame::groupingIdentity()
 			 */
 			uint8_t groupIdentity() const;
 			
@@ -352,7 +357,12 @@ namespace ID3 {
 			 * 
 			 * @return The size of the frame header.
 			 */
-			unsigned short headerSize() const;
+			ushort headerSize() const;
+			
+			/**
+			 * Print information about the Frame.
+			 */
+			virtual void print() const;
 			
 			/**
 			 * Save any changes made to the frame, and get the updated content of
@@ -371,7 +381,7 @@ namespace ID3 {
 			 * @return The new content of the frame, in bytes.
 			 * @abstract
 			 */
-			virtual ByteArray write(unsigned short version=0,
+			virtual ByteArray write(ushort version=0,
 			                        bool minimize=false) = 0;
 		
 		protected:
@@ -395,7 +405,7 @@ namespace ID3 {
 			 * @param frameBytes The content of the frame in bytes.
 			 */
 			Frame(const std::string& frameName,
-			      const unsigned short version,
+			      const ushort version,
 			      const ByteArray& frameBytes);
 			
 			/**
@@ -426,7 +436,7 @@ namespace ID3 {
 			 * This variable records the ID3 version used for reading
 			 * and writing. It can be updated through ID3::Frame::write().
 			 */
-			unsigned short ID3Ver;
+			ushort ID3Ver;
 			
 			/**
 			 * This ByteArray records the bytes of the frame on file,
@@ -502,6 +512,13 @@ namespace ID3 {
 			virtual bool empty() const;
 			
 			/**
+			 * Print information about the frame.
+			 * 
+			 * @see ID3::Frame::print()
+			 */
+			virtual void print() const;
+			
+			/**
 			 * The write() method for UnknownFrame will only do two things to the
 			 * frame. If the flag to discard unknown frames when the tag is altered
 			 * is set, then the Frame contents will be cleared. Additionally, if
@@ -511,9 +528,9 @@ namespace ID3 {
 			 * modified to support the changes between ID3v2 that were made about
 			 * whether the frame size is a synchsafe value or nnot.
 			 * 
-			 * @see ID3::Frame::write(unsigned short)
+			 * @see ID3::Frame::write(ushort)
 			 */
-			virtual ByteArray write(unsigned short version=0,
+			virtual ByteArray write(ushort version=0,
 			                        bool minimize=false);
 		
 		protected:
@@ -523,11 +540,11 @@ namespace ID3 {
 			 * is bigger than HEADER_BYTE_SIZE.
 			 * 
 			 * @see ID3::Frame::Frame(std::string&,
-			 *                        unsigned short,
+			 *                        ushort,
 			 *                        ByteArray&)
 			 */
 			UnknownFrame(const std::string& frameName,
-			             const unsigned short version,
+			             const ushort version,
 			             const ByteArray& frameBytes);
 			
 			/**

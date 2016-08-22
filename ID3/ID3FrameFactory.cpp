@@ -16,23 +16,23 @@
 #include "ID3PictureFrame.h"
 #include "ID3Functions.h"
 #include "ID3Constants.h"
-
+#include <iostream>
 using namespace ID3;
 
 ///@pkg ID3FrameFactory.h
 FrameFactory::FrameFactory(std::ifstream& file,
-                           const unsigned int version,
-                           const unsigned long tagSize) : musicFile(&file),
-                                                          ID3Ver(version),
-                                                          ID3Size(tagSize) {}
+                           const ushort   version,
+                           const ulong    tagEnd) : musicFile(&file),
+                                                    ID3Ver(version),
+                                                    ID3Size(tagEnd) {}
 
 ///@pkg ID3FrameFactory.h	                                              
-FrameFactory::FrameFactory(const unsigned int version) : musicFile(nullptr),
-                                                         ID3Ver(version),
-                                                         ID3Size(0) {}
+FrameFactory::FrameFactory(const ushort version) : musicFile(nullptr),
+                                                   ID3Ver(version),
+                                                   ID3Size(0) {}
 
 ///@pkg ID3FrameFactory.h
-FramePtr FrameFactory::create(const unsigned long readpos) const {
+FramePtr FrameFactory::create(const ulong readpos) const {
 	//Validate the file
 	if(readpos + HEADER_BYTE_SIZE > ID3Size ||
 	   musicFile == nullptr ||
@@ -48,7 +48,7 @@ FramePtr FrameFactory::create(const unsigned long readpos) const {
 	musicFile->read(reinterpret_cast<char*>(&header), HEADER_BYTE_SIZE);
 	
 	//Get the size of the frame
-	unsigned long frameSize = byteIntVal(header.size, 4, ID3Ver >= 4);
+	ulong frameSize = byteIntVal(header.size, 4, ID3Ver >= 4);
 	
 	//Validate the frame size
 	if(frameSize == 0 || frameSize + HEADER_BYTE_SIZE > ID3Size)
@@ -65,7 +65,8 @@ FramePtr FrameFactory::create(const unsigned long readpos) const {
 	musicFile->seekg(readpos, std::ifstream::beg);
 	if(musicFile->fail())
 		return FramePtr(new UnknownFrame(id));
-	musicFile->read(&frameBytes.front(), frameSize + HEADER_BYTE_SIZE);
+	//musicFile->read(reinterpret_cast<char*>(&frameBytes.front()), frameSize + HEADER_BYTE_SIZE);
+	musicFile->read(reinterpret_cast<char*>(&frameBytes.front()), frameSize + HEADER_BYTE_SIZE);
 	
 	//Return the Frame
 	switch(frameType) {
@@ -85,7 +86,7 @@ FramePtr FrameFactory::create(const unsigned long readpos) const {
 }
 
 ///@pkg ID3FrameFactory.h
-FramePair FrameFactory::createPair(const unsigned long readpos) const {
+FramePair FrameFactory::createPair(const ulong readpos) const {
 	FramePtr frame = create(readpos);
 	return FramePair(frame->frame(), frame);
 }
@@ -165,27 +166,27 @@ FramePair FrameFactory::createPicturePair(const ByteArray&   pictureByteArray,
 ///@pkg ID3FrameFactory.h
 ///@static
 FramePtr FrameFactory::create(std::ifstream& file,
-                              const unsigned long readpos,
-                              const unsigned int version,
-                              const unsigned long tagSize) {
-	FrameFactory factory(file, version, tagSize);
+                              const ulong    readpos,
+                              const ushort   version,
+                              const ulong    tagEnd) {
+	FrameFactory factory(file, version, tagEnd);
 	return factory.create(readpos);
 }
 
 ///@pkg ID3FrameFactory.h
 ///@static
 FramePair FrameFactory::createPair(std::ifstream& file,
-                                   const unsigned long readpos,
-                                   const unsigned int version,
-                                   const unsigned long tagSize) {
-	FramePtr frame = create(file, readpos, version, tagSize);
+                                   const ulong    readpos,
+                                   const ushort   version,
+                                   const ulong    tagEnd) {
+	FramePtr frame = create(file, readpos, version, tagEnd);
 	return FramePair(frame->frame(), frame);
 }
 
 ///@pkg ID3FrameFactory.h
 ///@static
 FramePtr FrameFactory::create(const std::string& frameName,
-                              const unsigned long version,
+                              const ushort       version,
                               const std::string& textContent,
                               const std::string& description,
                               const std::string& language) {
@@ -195,8 +196,8 @@ FramePtr FrameFactory::create(const std::string& frameName,
 
 ///@pkg ID3FrameFactory.h
 ///@static
-FramePtr FrameFactory::create(const Frames frameName,
-                              const unsigned long version,
+FramePtr FrameFactory::create(const Frames       frameName,
+                              const ushort       version,
                               const std::string& textContent,
                               const std::string& description,
                               const std::string& language) {
@@ -206,7 +207,7 @@ FramePtr FrameFactory::create(const Frames frameName,
 ///@pkg ID3FrameFactory.h
 ///@static
 FramePair FrameFactory::createPair(const std::string& frameName,
-                                   const unsigned long version,
+                                   const ushort       version,
                                    const std::string& textContent,
                                    const std::string& description,
                                    const std::string& language) {
@@ -215,8 +216,8 @@ FramePair FrameFactory::createPair(const std::string& frameName,
 
 ///@pkg ID3FrameFactory.h
 ///@static
-FramePair FrameFactory::createPair(const Frames frameName,
-                                   const unsigned long version,
+FramePair FrameFactory::createPair(const Frames       frameName,
+                                   const ushort       version,
                                    const std::string& textContent,
                                    const std::string& description,
                                    const std::string& language) {
@@ -226,22 +227,22 @@ FramePair FrameFactory::createPair(const Frames frameName,
 
 ///@pkg ID3FrameFactory.h
 ///@static
-FramePtr FrameFactory::createPicture(const unsigned long version,
-                                     const ByteArray&    pictureByteArray,
-			                            const std::string&  mimeType,
-			                            const std::string&  description,
-			                            const PictureType   type) {
+FramePtr FrameFactory::createPicture(const ushort       version,
+                                     const ByteArray&   pictureByteArray,
+			                            const std::string& mimeType,
+			                            const std::string& description,
+			                            const PictureType  type) {
 	FrameFactory factory(version);
 	return factory.createPicture(pictureByteArray, mimeType, description, type);
 }
 
 ///@pkg ID3FrameFactory.h
 ///@static
-FramePair FrameFactory::createPicturePair(const unsigned long version,
-                                          const ByteArray&    pictureByteArray,
-			                                 const std::string&  mimeType,
-			                                 const std::string&  description,
-			                                 const PictureType   type) {
+FramePair FrameFactory::createPicturePair(const ushort       version,
+                                          const ByteArray&   pictureByteArray,
+			                                 const std::string& mimeType,
+			                                 const std::string& description,
+			                                 const PictureType  type) {
 	FramePtr frame = createPicture(version, pictureByteArray, mimeType, description, type);
 	return FramePair(frame->frame(), frame);
 }

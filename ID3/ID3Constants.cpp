@@ -15,22 +15,22 @@
 using namespace ID3;
 
 ///@pkg ID3.h
-const unsigned short ID3::V1::BYTE_SIZE = 128;
+const ushort ID3::V1::BYTE_SIZE = 128;
 
 ///@pkg ID3.h
-const unsigned short ID3::V1::EXTENDED_BYTE_SIZE = 227;
+const ushort ID3::V1::EXTENDED_BYTE_SIZE = 227;
 
 ///@pkg ID3.h
-const unsigned short ID3::HEADER_BYTE_SIZE = 10;
+const ushort ID3::HEADER_BYTE_SIZE = 10;
 
 ///@pkg ID3.h
-const unsigned short ID3::MIN_SUPPORTED_VERSION = 3;
+const ushort ID3::MIN_SUPPORTED_VERSION = 3;
 
 ///@pkg ID3.h
-const unsigned short ID3::MAX_SUPPORTED_VERSION = 4;
+const ushort ID3::MAX_SUPPORTED_VERSION = 4;
 
 ///@pkg ID3.h
-const unsigned short ID3::SUPPORTED_MINOR_VERSION = 0;
+const ushort ID3::SUPPORTED_MINOR_VERSION = 0;
 
 ///@pkg ID3.h
 const uint8_t ID3::FLAG_UNSYNCHRONISATION = 0b10000000;
@@ -39,7 +39,7 @@ const uint8_t ID3::FLAG_EXPERIMENTAL =      0b00100000;
 const uint8_t ID3::FLAG_FOOTER =            0b00010000;
 
 ///@pkg ID3.h
-const unsigned long ID3::MAX_TAG_SIZE = (1 << 28) - 1;
+const ulong ID3::MAX_TAG_SIZE = (1 << 28) - 1;
 
 ///@pkg ID3.h
 const std::vector<std::string> ID3::V1::GENRES = {

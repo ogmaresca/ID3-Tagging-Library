@@ -38,7 +38,7 @@ namespace ID3 {
 		 * @param genre The integer ID for the ID3v1 genre.
 		 * @returns The genre if the genre was found, and a blank string otherwise.
 		 */
-		std::string getGenreString(unsigned short genre);
+		std::string getGenreString(ushort genre);
 	}
 	
 	/**
@@ -54,7 +54,7 @@ namespace ID3 {
 	 *        where the first bit of each byte is always zeroed.
 	 * @return The summed value of the char array's bits.
 	 */
-	unsigned long byteIntVal(uint8_t* array, int length, bool synchsafe=false);
+	ulong byteIntVal(uint8_t* array, int length, bool synchsafe=false);
 	
 	/**
 	 * Given an unsigned integer value, receive a ByteArray that encodes the
@@ -70,7 +70,7 @@ namespace ID3 {
 	 *        where the first bit of each byte is always zeroed.
 	 * @return The integer value encoded as a ByteArray.
 	 */
-	ByteArray intToByteArray(unsigned long val, int length=0, bool synchsafe=false);
+	ByteArray intToByteArray(ulong val, ushort length=0, bool synchsafe=false);
 	
 	/**
 	 * Create a std::string object with the call std::string(const char* s, size_type n).
@@ -137,10 +137,10 @@ namespace ID3 {
 	 *            the ByteArray.
 	 * @return The UTF-8 encoded string.
 	 */
-	std::string getUTF8String(char encoding,
-	                                 const ByteArray& bytes,
-	                                 long start=-1,
-	                                 long end=-1);
+	std::string getUTF8String(uint8_t encoding,
+	                          const ByteArray& bytes,
+	                          long start=-1,
+	                          long end=-1);
 	
 	/**
 	 * Convert a Frames enum value to the ID3v2 frame name string.
