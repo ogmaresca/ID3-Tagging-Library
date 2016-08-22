@@ -14,8 +14,8 @@
 #include <unicode/unistr.h> //For icu::UnicodeString
 #include <algorithm>        //For std::reverse()
 
-#include "ID3.h"
 #include "ID3Functions.h"
+#include "ID3Constants.h"
 
 using namespace ID3;
 
@@ -205,6 +205,37 @@ std::string ID3::latin1toutf8(const ByteArray& latin1s, long start, long end) {
 	
 	//Return the string
 	return toReturn;
+}
+
+///@pkg ID3Functions.h
+std::string ID3::getUTF8String(char encoding,
+                               const ByteArray& bytes,
+                               long start,
+                               long end) {
+	//Set the start
+	if(start < 0)
+		start = 0;
+	
+	//Set the end 
+	if(end < 0 || static_cast<unsigned long>(end) > bytes.size())
+		end = bytes.size();
+	
+	//Empty string base case
+	if(end <= start)
+		return "";
+	
+	switch(encoding) {
+		//UTF-16 case
+		case FrameEncoding::ENCODING_UTF16BOM:
+		case FrameEncoding::ENCODING_UTF16: return utf16toutf8(bytes, start, end);
+		//UTF-8 case
+		case FrameEncoding::ENCODING_UTF8: return std::string(bytes.begin()+start,
+		                                                      bytes.begin()+end);
+		//LATIN-1 case
+		case FrameEncoding::ENCODING_LATIN1: default: return latin1toutf8(bytes,
+		                                                                  start,
+		                                                                  end);
+	}
 }
 
 ///@pkg ID3Functions.h

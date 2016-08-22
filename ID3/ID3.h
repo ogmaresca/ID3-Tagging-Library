@@ -20,6 +20,7 @@
 #include <functional>
 
 #include "ID3Frame.h"
+#include "ID3PictureFrame.h"
 
 /**
  * The ID3 namespace defines everything related to reading and writing
@@ -55,7 +56,6 @@
  * @todo Add support for multiple values.
  * @todo Add support for non-text frames.
  * @todo Read the ID3v2 Extended Header.
- * @todo Read the ID3v2 Footer.
  */
 namespace ID3 {
 	/////////////////////////////////////////////////////////////////////////////
@@ -67,72 +67,6 @@ namespace ID3 {
 	typedef std::shared_ptr<Frame> FramePtr;
 	typedef std::unordered_map<std::string, FramePtr> FrameMap;
 	typedef std::pair<std::string, FramePtr> FramePair;
-	
-	/////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////
-	///////////////////////////// C O N S T A N T S /////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////
-	/**
-	 * ID3v1 contstants.
-	 */
-	namespace V1 {
-		/**
-		 * The number of bytes used in ID3v1 tags.
-		 */
-		extern const unsigned short BYTE_SIZE;
-		
-		/**
-		 * The number of bytes used in ID3v1 Extended tags.
-		 */
-		extern const unsigned short EXTENDED_BYTE_SIZE;
-		
-		/**
-		 * A string vector of the 148 defined genres for ID3v1.
-		 */
-		extern const std::vector<std::string> GENRES;
-	}
-	
-	/**
-	 * The number of bytes used in the ID3v2 headers and the ID3v2 frame header.
-	 */
-	extern const unsigned short HEADER_BYTE_SIZE;
-	
-	/**
-	 * The minimum ID3v2 supported major version. Any music file with a
-	 * smaller version will not be read.
-	 */
-	extern const unsigned short MIN_SUPPORTED_VERSION;
-	
-	/**
-	 * The maximum ID3v2 supported major version. Any music file with a
-	 * greater version will not be read.
-	 */
-	extern const unsigned short MAX_SUPPORTED_VERSION;
-	
-	/**
-	 * The ID3v2 supported minor version. Any music with an ID3v2 version
-	 * that does not use this minor version will not be read. This is
-	 * also the minor version that will be used for writing.
-	 */
-	extern const unsigned short SUPPORTED_MINOR_VERSION;
-	
-	/**
-	 * The flag values in found in the ID3v2 header.
-	 * Check if the flag is used with flag & ID3::V2_FLAG_XXXX == ID3::V2_FLAG_XXXX.
-	 */
-	extern const uint8_t FLAG_UNSYNCHRONISATION;
-	extern const uint8_t FLAG_EXT_HEADER;
-	extern const uint8_t FLAG_EXPERIMENTAL;
-	extern const uint8_t FLAG_FOOTER;
-	
-	/**
-	 * The maximum size allowed for ID3v2 tags.
-	 * The ID3v2 size field is 4 bytes long, and each byte is unsigned
-	 * and synchsafe (the most significant bit is always 0).
-	 * The value is therefore 2^28 - 1, ~268MB, or ~256MiB.
-	 */
-	extern const unsigned long MAX_TAG_SIZE;
 	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
@@ -155,16 +89,6 @@ namespace ID3 {
 			HARDCORE = 4
 		};
 	}*/
-	
-	/**
-	 * An enum of text encodings used in ID3v2 frames.
-	 */
-	enum FrameEncoding {
-		ENCODING_LATIN1   = 0, //AKA ISO-8859-1
-		ENCODING_UTF16BOM = 1, //AKA UCS-2
-		ENCODING_UTF16    = 2, //ID3v2.4+ only, ID3-Tagging-Library will read in ID3v2.3
-		ENCODING_UTF8     = 3  //ID3v2.4+ only, ID3-Tagging-Library will read in ID3v2.3
-	};
 	
 	/**
 	 * An enum containing the highest value for each star rating for the
@@ -204,7 +128,9 @@ namespace ID3 {
 		FRAME_AUDIO_ENCRYPTION = 0,
 		FRAMEID_AENC           = 0,
 		
+		FRAME_ATTACHED_IMAGE   = 1,
 		FRAME_ATTACHED_PICTURE = 1,
+		FRAME_IMAGE            = 1,
 		FRAME_PICTURE          = 1,
 		FRAMEID_APIC           = 1,
 		
@@ -604,41 +530,6 @@ namespace ID3 {
 		FRAMEID_WXXX           = 92
 	};
 	
-	/**
-	 * An enum of the different picture types defined in the ID3v2 Attached
-	 * Picture frame.
-	 */
-	enum class PictureType : short {
-		OTHER              = 0,
-		FIlE_ICON          = 1,
-		OTHER_FILE_ICON    = 2,
-		FRONT_COVER        = 3,
-		BACK_COVER         = 4,
-		LEAFLET_PAGE       = 5,
-		MEDIA              = 6,
-		LEAD_ARTIST        = 7,
-		LEAD_PERFORMER     = 7,
-		SOLOIST            = 7,
-		ARTIST             = 8,
-		PERFORMER          = 8,
-		CONDUCTOR          = 9,
-		BAND               = 10,
-		ORCHESTRA          = 10,
-		COMPOSER           = 11,
-		LYRICIST           = 12,
-		TEXT_WRITER        = 12,
-		RECORDING_LOCATION = 13,
-		DURING_RECORDING   = 14,
-		DURING_PERFORMANCE = 15,
-		MOVIE_CAPTURE      = 16,
-		BRIGHT_FISH        = 17,
-		ILLUSTRATION       = 18,
-		BAND_LOGOTYPE      = 19,
-		ARTIST_LOGOTYPE    = 19,
-		PUBLISHER_LOGOTYPE = 20,
-		STUDIO_LOGOTYPE    = 20
-	};
-	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// S T R U C T S ///////////////////////////////
@@ -714,13 +605,34 @@ namespace ID3 {
 	};
 	
 	/**
-	 * A 10-bit struct that captures the structure of the ID3v2 frame header.
+	 * A struct that contains information about a picture embedded in ID3v2 tags.
+	 * Every field of this struct is constant, you must create a new Picture to
+	 * modify a field.
+	 * The null variable will be set to true if given an invalid MIME type. The
+	 * picture data is not checked to verify that it is a valid image.
 	 */
-	struct FrameHeader {
-		char id[4];
-		uint8_t size[4]; //A synchsafe integer in ID3v2.4+
-		uint8_t flags1;
-		uint8_t flags2;
+	struct Picture {
+		/**
+		 * Create a Picture struct. Every parameter is optional, but unless given
+		 * a valid MIME type the struct will be null.
+		 * 
+		 * Defined in ID3PictureFrame.cpp.
+		 * 
+		 * @param pictureByteArray The char vector of the PNG or JPG image.
+		 * @param mimeType The MIME type.
+		 * @param pictureDescription The description.
+		 * @param pictureType The picture type defined in the ID3v2 specification
+		 *                    for the APIC field. Defaults to FRONT_COVER.
+		 */
+		Picture(const ByteArray&   pictureByteArray=ByteArray(),
+			     const std::string& mimeType="",
+			     const std::string& pictureDescription="",
+			     const PictureType  pictureType=PictureType::FRONT_COVER);
+		const std::string MIME;
+		const PictureType type;
+		const std::string description;
+		const ByteArray   data;
+		const bool        null;
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -733,6 +645,8 @@ namespace ID3 {
 	 * A class that, given a file or filename, will read its ID3 tags.
 	 * Call Tag::null() after instantiation to check if the file was
 	 * properly read. Files must be .mp3 files.
+	 * 
+	 * Defined in ID3Tag.cpp.
 	 */	
 	class Tag {
 		public:
@@ -768,6 +682,15 @@ namespace ID3 {
 			////////////////// G E T T E R S   &   S E T T E R S //////////////////
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
+			
+			/**
+			 * Check if a frame exists.
+			 * 
+			 * @param frameName A Frames enum variable that represents
+			 *                  an ID3v2 frame ID.
+			 * @return If the Frame exists or not.
+			 */
+			bool frameExists(Frames frameName) const;
 			
 			/**
 			 * Get the text content of a frame.
@@ -921,6 +844,15 @@ namespace ID3 {
 			 *         no bpm set.
 			 */
 			std::string bpm() const;
+			
+			/**
+			 * Get the attached picture.
+			 * 
+			 * @return The attached picture, encapsulated in a ID3::Picture struct.
+			 *         If there is no attached picture, or it has an improper
+			 *         MIME type, the null field will be true.
+			 */
+			Picture picture() const;
 			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////

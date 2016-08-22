@@ -19,7 +19,9 @@
 #include "ID3.h"
 #include "ID3Functions.h"
 #include "ID3FrameFactory.h"
-#include "ID3Frame.h"
+#include "ID3TextFrame.h"
+#include "ID3PictureFrame.h"
+#include "ID3Constants.h"
 
 using namespace ID3;
 
@@ -59,6 +61,18 @@ Tag::Tag() : isNull(true) {}
 //////////////////////  G E T T E R S   &   S E T T E R S //////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+///@pkg ID3.h
+bool Tag::frameExists(Frames frameName) const {
+	//Try to get the FramePtr at the given frame ID. If it is not in the map,
+	//then an out_of_range exception is thrown that can be caught.
+	try {
+		frames.at(getFrameName(frameName));
+	} catch(std::out_of_range) {
+		return false;
+	}
+	return true;
+}
 
 ///@pkg ID3.h
 std::string Tag::textContent(Frames frameName) const {
@@ -197,6 +211,26 @@ std::string Tag::composer() const {
 ///@pkg ID3.h
 std::string Tag::bpm() const {
 	return textContent(Frames::FRAME_BPM);
+}
+
+///@pkg ID3.h
+Picture Tag::picture() const {
+	try {
+		//Get the FramePtr
+		FramePtr pictureFrameBase = frames.at(getFrameName(FRAME_PICTURE));
+		
+		//Cast it as a PictureFrame
+		PictureFrame* picture = dynamic_cast<PictureFrame*>(pictureFrameBase.get());
+		
+		//Return a Picture struct
+		return picture == nullptr ? Picture() :
+		                            Picture(picture->picture(),
+		                                    picture->mimeType(),
+		                                    picture->description(),
+		                                    picture->pictureType());
+	} catch(std::out_of_range) {
+		return Picture();
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////

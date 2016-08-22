@@ -16,6 +16,8 @@
 #include <string> //For std::string
 #include <vector> //For std::vector
 
+#include "ID3.h"
+
 /**
  * The ID3 namespace defines everything related to reading and writing
  * ID3 tags. The only supported versions for reading are ID3v1, ID3v1.1,
@@ -114,6 +116,31 @@ namespace ID3 {
 	 * @return The UTF-8 encoded string.
 	 */
 	std::string latin1toutf8(const ByteArray& ulatin1s, long start=-1, long end=-1);
+	
+	/**
+	 * Get a ByteArray encoded in either LATIN-1, UTF-8, or UTF-16, and return
+	 * the string as a UTF-8 encoded string.
+	 * This function uses utf16toutf8() to encode UTF-16 strings to UTF-8, and
+	 * ID3::latin1toutf8() to encode LATIN-1 strings to UTF-8.
+	 * 
+	 * @param encoding A char whose int values are represented by the enum
+	 *                 ID3::FrameEncoding. If the encoding is unknown it will
+	 *                 default to LATIN-1.
+	 * @param bytes The char vector that contains the string you wish to encode.
+	 * @param start The byte position in the ByteArray to start reading
+	 *              (optional). If not given a value or given a negative value,
+	 *              it will default to 0.
+	 * @param end The byte position + 1 in the ByteArray to end reading
+	 *            (optional). If not given or given a negative value, it will
+	 *            default to the end of the ByteArray. If it is longer than the
+	 *            length of the ByteArray, the function will stop at the end of
+	 *            the ByteArray.
+	 * @return The UTF-8 encoded string.
+	 */
+	std::string getUTF8String(char encoding,
+	                                 const ByteArray& bytes,
+	                                 long start=-1,
+	                                 long end=-1);
 	
 	/**
 	 * Convert a Frames enum value to the ID3v2 frame name string.

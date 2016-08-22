@@ -15,6 +15,7 @@
 #include "ID3.h"
 #include "ID3Frame.h"
 #include "ID3Functions.h"
+#include "ID3Constants.h"
 
 using namespace ID3;
 
@@ -33,12 +34,12 @@ Frame::Frame() noexcept : ID3Ver(MAX_SUPPORTED_VERSION),
 ///@pkg ID3Frame.h
 Frame::Frame(const std::string& frameName,
              const unsigned short version,
-             ByteArray& frameBytes) : id(frameName),
-                                      ID3Ver(version),
-                                      frameContent(frameBytes),
-                                      isNull(frameBytes.size() <= HEADER_BYTE_SIZE),
-                                      isEdited(false),
-                                      isFromFile(true) {
+             const ByteArray& frameBytes) : id(frameName),
+                                            ID3Ver(version),
+                                            frameContent(frameBytes),
+                                            isNull(frameBytes.size() <= HEADER_BYTE_SIZE),
+                                            isEdited(false),
+                                            isFromFile(true) {
 	if(!isNull && (compressed() || encrypted() || unsynchronized()))
 		isNull = true;
 }
@@ -182,16 +183,12 @@ unsigned short Frame::headerSize() const {
 ///@pkg ID3Frame.h
 UnknownFrame::UnknownFrame(const std::string& frameName,
                            const unsigned short version,
-                           ByteArray& frameBytes) : Frame::Frame(frameName,
-                                                                 version,
-                                                                 frameBytes) {
+                           const ByteArray& frameBytes) : Frame::Frame(frameName,
+                                                                       version,
+                                                                       frameBytes) {
 	//Pictures are huge, don't want to print that
-	if(!isNull) {
-		if(id == "APIC")
-			std::cout << "Content for UnknownFrame " << id << ": <frame content too large to print>" << std::endl;
-		else
-			std::cout << "Content for UnknownFrame " << id << ": " << std::string(frameBytes.begin()+HEADER_BYTE_SIZE, frameBytes.end()) << std::endl;
-	}
+	if(!isNull)
+		std::cout << "Content for UnknownFrame " << id << ": " << std::string(frameBytes.begin()+HEADER_BYTE_SIZE, frameBytes.end()) << std::endl;
 }
 
 ///@pkg ID3Frame.h

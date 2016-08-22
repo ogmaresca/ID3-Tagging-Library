@@ -12,7 +12,10 @@
 
 #include "ID3.h"
 #include "ID3FrameFactory.h"
+#include "ID3TextFrame.h"
+#include "ID3PictureFrame.h"
 #include "ID3Functions.h"
+#include "ID3Constants.h"
 
 using namespace ID3;
 
@@ -74,6 +77,8 @@ FramePtr FrameFactory::create(const unsigned long readpos) const {
 			return FramePtr(new DescriptiveTextFrame(id, ID3Ver, frameBytes, frameOptions(id)));
 		case FrameClass::CLASS_URL:
 			return FramePtr(new URLTextFrame(id, ID3Ver, frameBytes));
+		case FrameClass::CLASS_PICTURE:
+			return FramePtr(new PictureFrame(ID3Ver, frameBytes));
 		case FrameClass::CLASS_UNKNOWN: default:
 			return FramePtr(new UnknownFrame(id, ID3Ver, frameBytes));
 	}
@@ -133,6 +138,27 @@ FramePair FrameFactory::createPair(const Frames frameName,
                                    const std::string& description,
                                    const std::string& language) const {
 	FramePtr frame = create(frameName, textContent, description, language);
+	return FramePair(frame->frame(), frame);
+}
+
+///@pkg ID3FrameFactory.h
+FramePtr FrameFactory::createPicture(const ByteArray&   pictureByteArray,
+			                            const std::string& mimeType,
+			                            const std::string& description,
+			                            const PictureType  type) const {
+	return FramePtr(new PictureFrame(ID3Ver,
+	                                 pictureByteArray,
+	                                 mimeType,
+	                                 description,
+	                                 type));
+}
+
+///@pkg ID3FrameFactory.h
+FramePair FrameFactory::createPicturePair(const ByteArray&   pictureByteArray,
+			                                 const std::string& mimeType,
+			                                 const std::string& description,
+			                                 const PictureType  type) const {
+	FramePtr frame = createPicture(pictureByteArray, mimeType, description, type);
 	return FramePair(frame->frame(), frame);
 }
 
@@ -198,6 +224,28 @@ FramePair FrameFactory::createPair(const Frames frameName,
 	return FramePair(frame->frame(), frame);
 }
 
+///@pkg ID3FrameFactory.h
+///@static
+FramePtr FrameFactory::createPicture(const unsigned long version,
+                                     const ByteArray&    pictureByteArray,
+			                            const std::string&  mimeType,
+			                            const std::string&  description,
+			                            const PictureType   type) {
+	FrameFactory factory(version);
+	return factory.createPicture(pictureByteArray, mimeType, description, type);
+}
+
+///@pkg ID3FrameFactory.h
+///@static
+FramePair FrameFactory::createPicturePair(const unsigned long version,
+                                          const ByteArray&    pictureByteArray,
+			                                 const std::string&  mimeType,
+			                                 const std::string&  description,
+			                                 const PictureType   type) {
+	FramePtr frame = createPicture(version, pictureByteArray, mimeType, description, type);
+	return FramePair(frame->frame(), frame);
+}
+
 ///@pkg ID3FrameFactory
 ///@static
 FrameClass FrameFactory::frameType(const std::string& frameID) {
@@ -205,7 +253,19 @@ FrameClass FrameFactory::frameType(const std::string& frameID) {
 		return FrameClass::CLASS_UNKNOWN;
 	
 	switch(frameID[0]) {
-		case 'T': {
+		  case 'A': {
+			if(frameID == "APIC")
+				return FrameClass::CLASS_PICTURE;
+			break;
+		} case 'C': {
+			if(frameID == "COMM")
+				return FrameClass::CLASS_DESCRIPTIVE;
+			break;
+		} case 'I': {
+			if(frameID == "IPLS")
+				return FrameClass::CLASS_TEXT;
+			break;
+		} case 'T': {
 			//Numerical Text Frames:
 			//Year, BPM, Date, Length, Playlist Delay, Time, and Original Release Year
 			//NOTE: Track and Disc are not numerical values as they may contain
@@ -221,22 +281,14 @@ FrameClass FrameFactory::frameType(const std::string& frameID) {
 			else if(frameID == "TXXX")
 				return FrameClass::CLASS_DESCRIPTIVE;
 			return FrameClass::CLASS_TEXT;
-		} case 'C': {
-			if(frameID == "COMM")
+		} case 'U': {
+			if(frameID == "USLT" || frameID == "USER")
 				return FrameClass::CLASS_DESCRIPTIVE;
 			break;
 		} case 'W': {
 			if(frameID == "WXXX")
 				return FrameClass::CLASS_DESCRIPTIVE;
 			return FrameClass::CLASS_URL;
-		} case 'I': {
-			if(frameID == "IPLS")
-				return FrameClass::CLASS_TEXT;
-			break;
-		}  case 'U': {
-			if(frameID == "USLT" || frameID == "USER")
-				return FrameClass::CLASS_DESCRIPTIVE;
-			break;
 		}
 	}
 	

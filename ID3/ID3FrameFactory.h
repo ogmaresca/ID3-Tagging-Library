@@ -19,6 +19,7 @@
 #include <memory>        //For std::shared_ptr
 
 #include "ID3Frame.h"
+#include "ID3PictureFrame.h"
 
 /**
  * The ID3 namespace defines everything related to reading and writing
@@ -62,8 +63,8 @@ namespace ID3 {
 			 *                that the tag size has already been checked to be
 			 *                smaller than the filesize.
 			 */
-			FrameFactory(std::ifstream& file,
-			             const unsigned int version,
+			FrameFactory(std::ifstream&      file,
+			             const unsigned int  version,
 			             const unsigned long tagSize);
 			
 			/**
@@ -117,7 +118,7 @@ namespace ID3 {
 			 * @param language The frame language. Only applied to text frames with languages. 
 			 * @return A FramePtr containing a relevant Frame object.
 			 */
-			FramePtr create(const Frames frameName,
+			FramePtr create(const Frames       frameName,
 			                const std::string& textContent="",
 			                const std::string& description="",
 			                const std::string& language="") const;
@@ -155,10 +156,39 @@ namespace ID3 {
 			 * @return A FramePair, with the Frame ID in the first slot and the
 			 *         FramePtr in the second slot.
 			 */
-			FramePair createPair(const Frames frameName,
+			FramePair createPair(const Frames       frameName,
 			                     const std::string& textContent="",
 			                     const std::string& description="",
 			                     const std::string& language="") const;
+			
+			/**
+			 * Create a picture Frame.
+			 * 
+			 * @param pictureByteArray A char vector of the picture's bytes.
+			 * @param mimeType The MIME type of the image (PNG or JPEG only).
+			 * @param description The image description (optional).
+			 * @param type The ID3v2 APIC type (optional, defaults to front cover).
+			 * @return A FramePtr with the relevant PictureFrame object.
+			 */
+			FramePtr createPicture(const ByteArray&   pictureByteArray,
+			                       const std::string& mimeType,
+			                       const std::string& description="",
+			                       const PictureType  type=PictureType::FRONT_COVER) const;
+			
+			/**
+			 * Create a picture Frame pair.
+			 * 
+			 * @param pictureByteArray A char vector of the picture's bytes.
+			 * @param mimeType The MIME type of the image (PNG or JPEG only).
+			 * @param description The image description (optional).
+			 * @param type The ID3v2 APIC type (optional, defaults to front cover).
+			 * @return A FramePair, with the Frame ID in the first slot and the
+			 *         FramePtr in the second slot.
+			 */
+			FramePair createPicturePair(const ByteArray&   pictureByteArray,
+			                            const std::string& mimeType,
+			                            const std::string& description="",
+			                            const PictureType  type=PictureType::FRONT_COVER) const;
 			
 			/**
 			 * Creates a Frame by reading from the given position on the file
@@ -178,9 +208,9 @@ namespace ID3 {
 			 * @param readpos The position on the file to start reading from.
 			 * @return A FramePtr containing a relevant Frame object.
 			 */
-			static FramePtr create(std::ifstream& file,
+			static FramePtr create(std::ifstream&      file,
 			                       const unsigned long readpos,
-			                       const unsigned int version,
+			                       const unsigned int  version,
 			                       const unsigned long tagSize);
 			
 			/**
@@ -197,9 +227,9 @@ namespace ID3 {
 			 * @return A FramePair, with the Frame ID in the first slot and the
 			 *         FramePtr in the second slot.
 			 */
-			static FramePair createPair(std::ifstream& file,
+			static FramePair createPair(std::ifstream&      file,
 			                            const unsigned long readpos,
-			                            const unsigned int version,
+			                            const unsigned int  version,
 			                            const unsigned long tagSize);
 			
 			/**
@@ -215,11 +245,11 @@ namespace ID3 {
 			 * @param language The frame language. Only applied to text frames with languages. 
 			 * @return A FramePtr containing a relevant Frame object.
 			 */
-			static FramePtr create(const std::string& frameName,
+			static FramePtr create(const std::string&  frameName,
 			                       const unsigned long version,
-			                       const std::string& textContent="",
-			                       const std::string& description="",
-			                       const std::string& language="");
+			                       const std::string&  textContent="",
+			                       const std::string&  description="",
+			                       const std::string&  language="");
 			
 			/**
 			 * Creates a relevant FramePair object.
@@ -236,11 +266,11 @@ namespace ID3 {
 			 * @param language The frame language. Only applied to text frames with languages. 
 			 * @return A FramePtr containing a relevant Frame object.
 			 */
-			static FramePtr create(const Frames frameName,
+			static FramePtr create(const Frames        frameName,
 			                       const unsigned long version,
-			                       const std::string& textContent="",
-			                       const std::string& description="",
-			                       const std::string& language="");
+			                       const std::string&  textContent="",
+			                       const std::string&  description="",
+			                       const std::string&  language="");
 			
 			/**
 			 * Creates a relevant FramePair object.
@@ -258,11 +288,11 @@ namespace ID3 {
 			 * @return A FramePair, with the Frame ID in the first slot
 			 *         and the FramePtr in the second slot.
 			 */
-			static FramePair createPair(const std::string& frameName,
+			static FramePair createPair(const std::string&  frameName,
 			                            const unsigned long version,
-			                            const std::string& textContent="",
-			                            const std::string& description="",
-			                            const std::string& language="");
+			                            const std::string&  textContent="",
+			                            const std::string&  description="",
+			                            const std::string&  language="");
 			
 			/**
 			 * @see ID3::FrameFactory::create(std::string&,
@@ -278,11 +308,42 @@ namespace ID3 {
 			 * @return A FramePair, with the Frame ID in the first slot
 			 *         and the FramePtr in the second slot.
 			 */
-			static FramePair createPair(const Frames frameName,
+			static FramePair createPair(const Frames        frameName,
 			                            const unsigned long version,
-			                            const std::string& textContent="",
-			                            const std::string& description="",
-			                            const std::string& language="");
+			                            const std::string&  textContent="",
+			                            const std::string&  description="",
+			                            const std::string&  language="");
+			
+			/**
+			 * Create a picture Frame.
+			 * 
+			 * @param pictureByteArray A char vector of the picture's bytes.
+			 * @param mimeType The MIME type of the image (PNG or JPEG only).
+			 * @param description The image description (optional).
+			 * @param type The ID3v2 APIC type (optional, defaults to front cover).
+			 * @return A FramePtr with the relevant PictureFrame object.
+			 */
+			static FramePtr createPicture(const unsigned long version,
+			                              const ByteArray&    pictureByteArray,
+			                              const std::string&  mimeType,
+			                              const std::string&  description="",
+			                              const PictureType   type=PictureType::FRONT_COVER);
+			
+			/**
+			 * Create a picture Frame pair.
+			 * 
+			 * @param pictureByteArray A char vector of the picture's bytes.
+			 * @param mimeType The MIME type of the image (PNG or JPEG only).
+			 * @param description The image description (optional).
+			 * @param type The ID3v2 APIC type (optional, defaults to front cover).
+			 * @return A FramePair, with the Frame ID in the first slot and the
+			 *         FramePtr in the second slot.
+			 */
+			static FramePair createPicturePair(const unsigned long version,
+			                                   const ByteArray&    pictureByteArray,
+			                                   const std::string&  mimeType,
+			                                   const std::string&  description="",
+			                                   const PictureType   type=PictureType::FRONT_COVER);
 		
 		protected:
 			/**

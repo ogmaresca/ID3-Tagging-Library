@@ -10,9 +10,7 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <vector> //For std::vector
-
-#include "ID3.h"
+#include "ID3Constants.h"
 
 using namespace ID3;
 
@@ -192,5 +190,49 @@ const std::vector<std::string> ID3::V1::GENRES = {
 	"Thrash Metal",
 	"Anime",
 	"JPop",
-	"SynthPop"
+	"SynthPop",
+	"Abstract",
+	"Art Rock",
+	"Baroque",
+	"Bhangra",
+	"Big Beat",
+	"Breakbeat",
+	"Chillout",
+	"Downtempo",
+	"Dub",
+	"EBM",
+	"Eclectic",
+	"Electro",
+	"Electroclash",
+	"Emo",
+	"Experimental",
+	"Garage",
+	"Global",
+	"IDM",
+	"Illbient",
+	"Industro-Goth",
+	"Jam Band",
+	"Krautrock",
+	"Leftfield",
+	"Lounge",
+	"Math Rock",
+	"New Romantic",
+	"Nu-Breakz",
+	"Post-Punk",
+	"Post-Rock",
+	"Psytrance",
+	"Shoegaze",
+	"Space Rock",
+	"Trop Rock",
+	"World Music",
+	"Neoclassical",
+	"Audiobook",
+	"Audio Theatre",
+	"Neue Deutsche Welle",
+	"Podcast",
+	"Indie Rock",
+	"G-Funk",
+	"Dubstep",
+	"Garage Rock",
+	"Psybient"
 };

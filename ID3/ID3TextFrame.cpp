@@ -14,7 +14,7 @@
 #include <algorithm> //For std::all_of
 
 #include "ID3.h"
-#include "ID3Frame.h"
+#include "ID3TextFrame.h"
 #include "ID3Functions.h"
 
 using namespace ID3;
@@ -25,10 +25,10 @@ using namespace ID3;
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 TextFrame::TextFrame(const std::string& frameName,
                      const unsigned short version,
-                     ByteArray& frameBytes) : Frame::Frame(frameName,
+                     const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                            version,
                                                            frameBytes) {
 	//If the frame content isn't null, then get the text content
@@ -36,7 +36,7 @@ TextFrame::TextFrame(const std::string& frameName,
 		read();
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 TextFrame::TextFrame(const std::string& frameName,
                      const unsigned short version,
                      const std::string& value) : Frame::Frame() {
@@ -46,21 +46,21 @@ TextFrame::TextFrame(const std::string& frameName,
 	isNull = false;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 TextFrame::TextFrame() noexcept : Frame::Frame() {}
 
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 FrameClass TextFrame::type() const noexcept {
 	return FrameClass::CLASS_TEXT;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 bool TextFrame::empty() const {
 	return textContent == "";
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 ByteArray TextFrame::write(unsigned short version, bool minimize) {
 	if(version >= MIN_SUPPORTED_VERSION && version <= MAX_SUPPORTED_VERSION)
 		ID3Ver = version;
@@ -71,15 +71,15 @@ ByteArray TextFrame::write(unsigned short version, bool minimize) {
 	return frameContent;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void TextFrame::read() {
 	const unsigned short HEADER_SIZE = headerSize();
 	
 	//Make sure that there is enough room for text before reading the frame bytes
 	if(frameContent.size() > HEADER_SIZE) {
-		textContent = readStringAsUTF8(frameContent[HEADER_SIZE], //Get the encoding byte
-		                               frameContent,
-		                               HEADER_SIZE+1);
+		textContent = getUTF8String(frameContent[HEADER_SIZE], //Get the encoding byte
+		                            frameContent,
+		                            HEADER_SIZE+1);
 	} else {
 		isNull = true;
 		textContent = "";
@@ -88,10 +88,10 @@ void TextFrame::read() {
 	std::cout << "Content for TextFrame " << id << " " << frameContent.size() << ": " << textContent << std::endl;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 std::string TextFrame::content() const { return textContent; }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void TextFrame::content(const std::string& newContent) {
 	if(!readOnly()) {
 		textContent = newContent;
@@ -99,39 +99,7 @@ void TextFrame::content(const std::string& newContent) {
 	}
 }
 
-///@pkg ID3Frame.h
-///@static
-std::string TextFrame::readStringAsUTF8(char encoding,
-                                        const ByteArray& bytes,
-                                        long start,
-                                        long end) {
-	//Set the start
-	if(start < 0)
-		start = 0;
-	
-	//Set the end 
-	if(end < 0 || static_cast<unsigned long>(end) > bytes.size())
-		end = bytes.size();
-	
-	//Empty string base case
-	if(end <= start)
-		return "";
-	
-	switch(encoding) {
-		//UTF-16 case
-		case FrameEncoding::ENCODING_UTF16BOM:
-		case FrameEncoding::ENCODING_UTF16: return utf16toutf8(bytes, start, end);
-		//UTF-8 case
-		case FrameEncoding::ENCODING_UTF8: return std::string(bytes.begin()+start,
-		                                                      bytes.begin()+end);
-		//LATIN-1 case
-		case FrameEncoding::ENCODING_LATIN1: default: return latin1toutf8(bytes,
-		                                                                  start,
-		                                                                  end);
-	}
-}
-
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 bool TextFrame::operator==(const Frame* const frame) const noexcept {
 	//Check if the frame IDs or "null" statuses match
 	if(frame == nullptr || frame->frame() != id || isNull != frame->null())
@@ -143,17 +111,17 @@ bool TextFrame::operator==(const Frame* const frame) const noexcept {
 	return isNull ? true : textContent == castFrame->content();
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 bool TextFrame::operator==(const std::string& str) const noexcept {
 	return textContent == str;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 TextFrame::operator std::string() const noexcept {
 	return textContent;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 TextFrame& TextFrame::operator+=(const std::string& str) noexcept {
 	textContent += str;
 	isEdited = true;
@@ -166,10 +134,10 @@ TextFrame& TextFrame::operator+=(const std::string& str) noexcept {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
                                        const unsigned short version,
-                                       ByteArray& frameBytes) : Frame::Frame(frameName,
+                                       const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                                              version,
                                                                              frameBytes) {
 	//If the frame content is not null
@@ -177,7 +145,7 @@ NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
 		read();
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
                                        const unsigned short version,
                                        const std::string& value) : TextFrame::TextFrame(frameName,
@@ -187,23 +155,23 @@ NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
 		textContent = "";
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
                                        const unsigned short version,
                                        const long value) : TextFrame::TextFrame(frameName,
                                                                                 version,
                                                                                 std::to_string(value)) {}
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame::NumericalTextFrame() noexcept : TextFrame::TextFrame() {}
 
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 FrameClass NumericalTextFrame::type() const noexcept {
 	return FrameClass::CLASS_NUMERICAL;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void NumericalTextFrame::content(const std::string& newContent) {
 	if(!readOnly()) {
 		if(std::all_of(newContent.begin(), newContent.end(), ::isdigit))
@@ -214,19 +182,19 @@ void NumericalTextFrame::content(const std::string& newContent) {
 	}
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void NumericalTextFrame::content(long newContent) {
 	TextFrame::content(std::to_string(newContent));
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void NumericalTextFrame::read() {
 	TextFrame::read();
 	if(!std::all_of(textContent.begin(), textContent.end(), ::isdigit))
 		textContent = "";
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 bool NumericalTextFrame::operator==(const Frame* const frame) const noexcept {
 	//Check if the frame IDs or "null" statuses match
 	if(frame == nullptr || frame->frame() != id || isNull != frame->null())
@@ -238,52 +206,52 @@ bool NumericalTextFrame::operator==(const Frame* const frame) const noexcept {
 	return isNull ? true : textContent == castFrame->TextFrame::content();
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 bool NumericalTextFrame::operator==(long val) const noexcept {
 	return textContent == std::to_string(val);
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame::operator long() const noexcept {
 	return atoi(textContent.c_str());
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator+=(long val) noexcept {
 	textContent += std::to_string(atoi(textContent.c_str()) + val);
 	isEdited = true;
 	return *this;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator-=(long val) noexcept {
 	textContent += std::to_string(atoi(textContent.c_str()) - val);
 	isEdited = true;
 	return *this;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator*=(long val) noexcept {
 	textContent += std::to_string(atoi(textContent.c_str()) * val);
 	isEdited = true;
 	return *this;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator/=(long val) noexcept {
 	textContent += std::to_string(atoi(textContent.c_str()) / val);
 	isEdited = true;
 	return *this;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator%=(long val) noexcept {
 	textContent += std::to_string(atoi(textContent.c_str()) % val);
 	isEdited = true;
 	return *this;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator+=(const std::string& str) noexcept {
 	if(std::all_of(str.begin(), str.end(), ::isdigit)) {
 		textContent += str;
@@ -298,10 +266,10 @@ NumericalTextFrame& NumericalTextFrame::operator+=(const std::string& str) noexc
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 DescriptiveTextFrame::DescriptiveTextFrame(const std::string& frameName,
                                            const unsigned short version,
-                                           ByteArray& frameBytes,
+                                           const ByteArray& frameBytes,
                                            const short options) : Frame::Frame(frameName,
                                                                                version,
                                                                                frameBytes),
@@ -311,7 +279,7 @@ DescriptiveTextFrame::DescriptiveTextFrame(const std::string& frameName,
 		read();
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 DescriptiveTextFrame::DescriptiveTextFrame(const std::string& frameName,
                                            const unsigned short version,
                                            const std::string& value,
@@ -328,17 +296,17 @@ DescriptiveTextFrame::DescriptiveTextFrame(const std::string& frameName,
 	isEdited = false;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 DescriptiveTextFrame::DescriptiveTextFrame() noexcept : TextFrame::TextFrame(),
                                                         frameOptions(0) {}
 
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 FrameClass DescriptiveTextFrame::type() const noexcept {
 	return FrameClass::CLASS_DESCRIPTIVE;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 ByteArray DescriptiveTextFrame::write(unsigned short version, bool minimize) {
 	if(version >= MIN_SUPPORTED_VERSION && version <= MAX_SUPPORTED_VERSION)
 		ID3Ver = version;
@@ -349,17 +317,17 @@ ByteArray DescriptiveTextFrame::write(unsigned short version, bool minimize) {
 	return frameContent;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::content(const std::string& newContent,
                                    const std::string& newDescription) {
 	TextFrame::content(newContent);
 	description(newDescription);
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 std::string DescriptiveTextFrame::description() const { return textDescription; }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::description(const std::string& newDescription) {
 	if(!readOnly()) {
 		textDescription = newDescription;
@@ -367,10 +335,10 @@ void DescriptiveTextFrame::description(const std::string& newDescription) {
 	}
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 std::string DescriptiveTextFrame::language() const { return textLanguage; }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::language(const std::string& newLanguage) {
 	if(!readOnly() &&
 	   (frameOptions & OPTION_LANGUAGE) == OPTION_LANGUAGE &&
@@ -380,7 +348,7 @@ void DescriptiveTextFrame::language(const std::string& newLanguage) {
 	}
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::read() {
 	const bool hasLanguage = (frameOptions & OPTION_LANGUAGE) == OPTION_LANGUAGE;
 	const unsigned short HEADER_SIZE = headerSize();
@@ -399,9 +367,9 @@ void DescriptiveTextFrame::read() {
 		                                                  //gap between the description
 		                                                  //and the text content
 		//The encoding
-		char encoding = frameContent[HEADER_SIZE];
+		const char encoding = frameContent[HEADER_SIZE];
 		//If the encoding uses 16-byte or 8-byte characters
-		bool wideChars = encoding == ENCODING_UTF16BOM || encoding == ENCODING_UTF16;
+		const bool wideChars = encoding == ENCODING_UTF16BOM || encoding == ENCODING_UTF16;
 		//If wide characters are used, then the gap will be 2 bytes long
 		if(wideChars) descriptionGap++;
 		//If the frame has a language set, then save it and increment the
@@ -414,7 +382,7 @@ void DescriptiveTextFrame::read() {
 			textLanguage = "";
 		}
 		//Find the description end
-		for(unsigned long i = descriptionStart; i + descriptionGap < frameContent.size(); i+= descriptionGap) {
+		for(unsigned long i = descriptionStart; i + descriptionGap <= frameContent.size(); i+= descriptionGap) {
 			if(frameContent[i] == '\0') {
 				if(wideChars && frameContent[i+1] != '\0')
 					continue;
@@ -427,22 +395,22 @@ void DescriptiveTextFrame::read() {
 			descriptionEnd = descriptionStart;
 			textDescription = "";
 		} else { //Save the description
-			textDescription = readStringAsUTF8(encoding,
-		                                      frameContent,
-		                                      descriptionStart,
-		                                      descriptionEnd);
+			textDescription = getUTF8String(encoding,
+		                                   frameContent,
+		                                   descriptionStart,
+		                                   descriptionEnd);
 		}
 		//Save the text content, taking care of the LATIN1_TEXT option
-		textContent = readStringAsUTF8((frameOptions & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT ?
-			                            ENCODING_LATIN1 : encoding,
-		                               frameContent,
-		                               descriptionEnd + descriptionGap);
+		textContent = getUTF8String((frameOptions & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT ?
+			                         ENCODING_LATIN1 : encoding,
+		                            frameContent,
+		                            descriptionEnd + descriptionGap);
 	}
 	
 	std::cout << "Content for DescriptiveTextFrame " << id << " " << textDescription << " (" << textLanguage << "): " << textContent << std::endl;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 bool DescriptiveTextFrame::operator==(const Frame* const frame) const noexcept {
 	//Check if the frame IDs or "null" statuses match
 	if(frame == nullptr || frame->frame() != id || isNull != frame->null())
@@ -463,10 +431,10 @@ bool DescriptiveTextFrame::operator==(const Frame* const frame) const noexcept {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 URLTextFrame::URLTextFrame(const std::string& frameName,
                            const unsigned short version,
-                           ByteArray& frameBytes) : Frame::Frame(frameName,
+                           const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                                  version,
                                                                  frameBytes) {
 	//If the frame content is not null
@@ -474,21 +442,21 @@ URLTextFrame::URLTextFrame(const std::string& frameName,
 		read();
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 URLTextFrame::URLTextFrame(const std::string& frameName,
                            const unsigned short version,
                            const std::string& value) : TextFrame::TextFrame() {}
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 URLTextFrame::URLTextFrame() noexcept : TextFrame::TextFrame() {}
 
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 FrameClass URLTextFrame::type() const noexcept {
 	return FrameClass::CLASS_URL;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 ByteArray URLTextFrame::write(unsigned short version, bool minimize) {
 	if(version >= MIN_SUPPORTED_VERSION && version <= MAX_SUPPORTED_VERSION)
 		ID3Ver = version;
@@ -499,22 +467,22 @@ ByteArray URLTextFrame::write(unsigned short version, bool minimize) {
 	return frameContent;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 void URLTextFrame::read() {
 	const unsigned short HEADER_SIZE = headerSize();
 	
 	//Make sure that there is enough room for text before reading the frame bytes
 	if(frameContent.size() - 1 > HEADER_SIZE)
-		textContent = readStringAsUTF8(ENCODING_LATIN1, //URL frames are in LATIN-1, no encoding byte
-		                               frameContent,
-		                               HEADER_SIZE);
+		textContent = getUTF8String(ENCODING_LATIN1, //URL frames are in LATIN-1, no encoding byte
+		                            frameContent,
+		                            HEADER_SIZE);
 	else
 		textContent = "";
 	
 	std::cout << "Content for URLTextFrame " << id << ": " << textContent << std::endl;
 }
 
-///@pkg ID3Frame.h
+///@pkg ID3TextFrame.h
 bool URLTextFrame::operator==(const Frame* const frame) const noexcept {
 	//Check if the frame IDs or "null" statuses match
 	if(frame == nullptr || frame->frame() != id || isNull != frame->null())
