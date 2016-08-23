@@ -63,7 +63,7 @@ namespace ID3 {
 	/////////////////////////////////////////////////////////////////////////////
 	typedef std::vector<uint8_t> ByteArray;
 	typedef std::shared_ptr<Frame> FramePtr;
-	typedef std::unordered_map<std::string, FramePtr> FrameMap;
+	typedef std::unordered_multimap<std::string, FramePtr> FrameMap;
 	typedef std::pair<std::string, FramePtr> FramePair;
 	
 	/////////////////////////////////////////////////////////////////////////////

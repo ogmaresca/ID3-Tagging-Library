@@ -107,14 +107,7 @@ Tag::Tag() : isNull(true) {}
 
 ///@pkg ID3.h
 bool Tag::frameExists(Frames frameName) const {
-	//Try to get the FramePtr at the given frame ID. If it is not in the map,
-	//then an out_of_range exception is thrown that can be caught.
-	try {
-		frames.at(getFrameName(frameName));
-	} catch(std::out_of_range) {
-		return false;
-	}
-	return true;
+	return frames.count(getFrameName(frameName)) > 0;
 }
 
 ///@pkg ID3.h
@@ -145,11 +138,8 @@ std::vector<std::string> Tag::textContents(Frames frameName) const {
 	//content.
 	static std::vector<std::string> emptyString(1, "");
 	
-	//Get the frame ID
-	const std::string frameIDStr = getFrameName(frameName);
-	
 	//Check if the Frame is in the map
-	const FrameMap::const_iterator result = frames.find(frameIDStr);
+	const FrameMap::const_iterator result = frames.find(getFrameName(frameName));
 	if(result == frames.end()) return emptyString;
 	
 	//If the frame is in the map, get it
@@ -343,8 +333,14 @@ std::string Tag::bpm() const {
 ///@pkg ID3.h
 Picture Tag::picture() const {
 	try {
+		//Get an iterator from the FrameMap
+		FrameMap::const_iterator pictureItr = frames.find(getFrameName(FRAME_PICTURE));
+		
+		//If the Frame does not exist in the FrameMap
+		if(pictureItr == frames.end()) return Picture();
+		
 		//Get the FramePtr
-		FramePtr pictureFrameBase = frames.at(getFrameName(FRAME_PICTURE));
+		FramePtr pictureFrameBase = pictureItr->second;
 		
 		//Cast it as a PictureFrame
 		PictureFrame* picture = dynamic_cast<PictureFrame*>(pictureFrameBase.get());
@@ -461,8 +457,8 @@ void Tag::readFileV1(std::ifstream& file) {
 			extTagsSet = memcmp(extTags.header, "TAG+", 4) == 0;
 		}
 		
-		setTags(tags);
 		if(extTagsSet) setTags(extTags);
+		setTags(tags);
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::getFileV1(std::ifstream&): " << e.what() << std::endl;
 	}
