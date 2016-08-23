@@ -90,27 +90,30 @@ ByteArray TextFrame::write(ushort version, bool minimize) {
 	if(version >= MIN_SUPPORTED_VERSION && version <= MAX_SUPPORTED_VERSION)
 		ID3Ver = version;
 	
-	isEdited = false;
-	
-	//Create a ByteArray that fits the header, encoding, and size
-	const ulong NEW_FRAME_SIZE = HEADER_BYTE_SIZE + 1 + textContent.size();
-	frameContent = ByteArray(NEW_FRAME_SIZE);
-	
-	//Save the frame name
-	for(ushort i = 0; i < 4 && i < id.size(); i++)
-		frameContent[i] = id[i];
-	
-	ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, ID3Ver >= 4);
-	
-	//Save the frame size
-	for(ushort i = 0; i < 4 && i < id.size(); i++)
-		frameContent[i+4] = size[i];
-	
-	//Set the encoding to UTF-8
-	frameContent[HEADER_BYTE_SIZE] = FrameEncoding::ENCODING_UTF8;
-	
-	for(ulong i = 0; i < textContent.size() && i < NEW_FRAME_SIZE; i++)
-		frameContent[i + HEADER_BYTE_SIZE + 1] = textContent[i];
+	if(isEdited || frameContent.size() < headerSize()) {
+		isEdited = false;
+		
+		//Create a ByteArray that fits the header, encoding, and size
+		const ulong NEW_FRAME_SIZE = HEADER_BYTE_SIZE + 1 + textContent.size();
+		frameContent = ByteArray(NEW_FRAME_SIZE);
+		
+		//Save the frame name
+		for(ushort i = 0; i < 4 && i < id.size(); i++)
+			frameContent[i] = id[i];
+		
+		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, ID3Ver >= 4);
+		
+		//Save the frame size
+		for(ushort i = 0; i < 4 && i < id.size(); i++)
+			frameContent[i+4] = size[i];
+		
+		//Set the encoding to UTF-8
+		frameContent[HEADER_BYTE_SIZE] = FrameEncoding::ENCODING_UTF8;
+		
+		//Write the text string to file
+		for(ulong i = 0; i < textContent.size() && i < NEW_FRAME_SIZE; i++)
+			frameContent[i + HEADER_BYTE_SIZE + 1] = textContent[i];
+	}
 		
 	//TODO: Encode the frame ID and textContent contents into a ByteArray
 	return frameContent;

@@ -11,17 +11,18 @@
  **********************************************************************/
 
 #include "ID3Constants.h"
+#include "ID3.h"
 
 using namespace ID3;
 
 ///@pkg ID3.h
-const ushort ID3::V1::BYTE_SIZE = 128;
+const ushort ID3::V1::BYTE_SIZE = sizeof(V1::Tag);
 
 ///@pkg ID3.h
-const ushort ID3::V1::EXTENDED_BYTE_SIZE = 227;
+const ushort ID3::V1::EXTENDED_BYTE_SIZE = sizeof(V1::ExtendedTag);
 
 ///@pkg ID3.h
-const ushort ID3::HEADER_BYTE_SIZE = 10;
+const ushort ID3::HEADER_BYTE_SIZE = sizeof(Header);
 
 ///@pkg ID3.h
 const ushort ID3::MIN_SUPPORTED_VERSION = 3;
@@ -39,35 +40,35 @@ const uint8_t ID3::FLAG_EXPERIMENTAL =      0b00100000;
 const uint8_t ID3::FLAG_FOOTER =            0b00010000;
 
 ///@pkg ID3.h
-const ulong ID3::MAX_TAG_SIZE = (1 << 28) - 1;
+const ulong ID3::MAX_TAG_SIZE = (1UL << 28) - 1;
 
 ///@pkg ID3.h
 const std::vector<std::string> ID3::V1::GENRES = {
-	"Blues",
-	"Classic Rock",
-	"Country",
-	"Dance",
-	"Disco",
-	"Funk",
-	"Grunge",
-	"Hip-Hop",
-	"Jazz",
-	"Metal",
-	"New Age",
-	"Oldies",
-	"Other",
-	"Pop",
-	"R&B",
-	"Rap",
-	"Reggae",
-	"Rock",
-	"Techno",
-	"Industrial",
-	"Alternative",
-	"Ska",
-	"Death Metal",
-	"Pranks",
-	"Soundtrack",
+	"Blues",               //0
+	"Classic Rock",        //1
+	"Country",             //2
+	"Dance",               //3
+	"Disco",               //4
+	"Funk",                //5
+	"Grunge",              //6
+	"Hip-Hop",             //7
+	"Jazz",                //8
+	"Metal",               //9
+	"New Age",             //10
+	"Oldies",              //11
+	"Other",               //12
+	"Pop",                 //13
+	"R&B",                 //14
+	"Rap",                 //15
+	"Reggae",              //16
+	"Rock",                //17
+	"Techno",              //18
+	"Industrial",          //19
+	"Alternative",         //20
+	"Ska",                 //21
+	"Death Metal",         //22
+	"Pranks",              //23
+	"Soundtrack",          //24
 	"Euro-Techno",
 	"Ambient",
 	"Trip-Hop",
@@ -228,7 +229,7 @@ const std::vector<std::string> ID3::V1::GENRES = {
 	"Neoclassical",
 	"Audiobook",
 	"Audio Theatre",
-	"Neue Deutsche Welle",
+	"Neue Deutsche Welle", //
 	"Podcast",
 	"Indie Rock",
 	"G-Funk",

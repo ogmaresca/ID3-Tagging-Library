@@ -25,6 +25,43 @@
 
 using namespace ID3;
 
+//Private namespace
+namespace {
+	static std::string processGenre(const std::string& genre) {
+		if(genre == "")
+			return "";
+		
+		std::string genreString;
+		
+		if(std::all_of(genre.begin(), genre.end(), ::isdigit)) {
+			genreString = V1::getGenreString(atoi(genre.c_str()));
+		} else {
+			//This regex matches any digit surrounded by a single pair of
+			//parenthesis at the start of a string
+			std::regex findV1Genre("^\\(\\d+\\)");
+			std::smatch v1Genre;
+			
+			//If a ID3v1 genre is found
+			if(std::regex_search(genre, v1Genre, findV1Genre)) {
+				//Get the match
+				std::string genreIntStr = v1Genre.str();
+				//Get the int value of the ID3v1 genre
+				int genreInt = atoi(genreIntStr.substr(1, genreIntStr.length() - 1).c_str());
+				//Remove the string from the tag string
+				genreString = std::regex_replace(genre, findV1Genre, "");
+				//If there's nothing else in the tag string, then return
+				//the ID3v1 genre
+				if(genreString == "")
+					genreString = V1::getGenreString(genreInt);
+			} else {
+				genreString = genre;
+			}
+		}
+		
+		return genreString;
+	}
+}
+
 ///@pkg ID3.h
 Tag::Tag(std::ifstream& file) : isNull(true) {
 	if(!file.is_open())
@@ -92,7 +129,7 @@ std::string Tag::textContent(Frames frameName) const {
 	//If the frame is in the map, get it
 	FramePtr frameObj = result->second;
 	
-	//If the frame is "null" or not a TextFrame then return an empty string
+	//If the frame is "null" then return an empty string
 	if(frameObj->null())
 		return "";
 	
@@ -103,6 +140,83 @@ std::string Tag::textContent(Frames frameName) const {
 }
 
 ///@pkg ID3.h
+std::vector<std::string> Tag::textContents(Frames frameName) const {
+	//A vector that contains a single string, for cases where there is no text
+	//content.
+	static std::vector<std::string> emptyString(1, "");
+	
+	//Get the frame ID
+	const std::string frameIDStr = getFrameName(frameName);
+	
+	//Check if the Frame is in the map
+	const FrameMap::const_iterator result = frames.find(frameIDStr);
+	if(result == frames.end()) return emptyString;
+	
+	//If the frame is in the map, get it
+	FramePtr frameObj = result->second;
+	
+	//If the frame is "null then return emptyString
+	if(frameObj->null()) return emptyString;
+	
+	//Get the text frame
+	TextFrame* textFrameObj = dynamic_cast<TextFrame*>(frameObj.get());
+	
+	//If the Frame is not a TextFrame then return an empty vector
+	if(textFrameObj == nullptr) return emptyString;
+	
+	//The content string
+	std::string textContent = textFrameObj->content();
+	
+	//If the string is empty, no use continuing
+	if(textContent == "") return emptyString;
+	
+	//A vector of strings to return
+	std::vector<std::string> tokens;
+	
+	//In ID3v2.3, only some frames are allowed to have multiple values. If the
+	//requested value does not belong to one of those frames, then do not split
+	//the text content.
+	if(v2TagInfo.majorVer < 4) {
+		switch(frameName) {
+			case FRAME_COMPOSER:
+			case FRAME_LYRICIST:
+			case FRAME_ORIGINAL_LYRICIST:
+			case FRAME_ORIGINAL_ARTIST:
+			case FRAME_ARTIST: {
+				break;
+			} default: {
+				tokens.push_back(textContent);
+				return tokens;
+			}
+		}
+	}
+	
+	//The string divider char
+	const char DIVIDER = v2TagInfo.majorVer >= 4 ? '\0' : '/';
+	
+	//Loop variables
+	std::size_t tokenStart = 0, tokenEnd = textContent.find(DIVIDER, 0);
+	
+	while((tokenEnd = textContent.find(DIVIDER, tokenStart)) != std::string::npos) {
+		//If the substring isn't an empty string
+		if(tokenEnd > tokenStart)
+			tokens.push_back(textContent.substr(tokenStart, tokenEnd - tokenStart));
+		tokenStart = tokenEnd + 1;
+	}
+	
+	//Add the last string token, if it isn't an empty string
+	if(tokenStart < textContent.size())
+		tokens.push_back(textContent.substr(tokenStart));
+	
+	//In the edge case that the string contains only divider characters, then
+	//also return the empty string vector
+	if(tokens.size() == 0)
+		return emptyString;
+	
+	return tokens;
+}
+
+///@pkg ID3.h
 std::string Tag::title() const {
 	return textContent(Frames::FRAME_TITLE);
 }
@@ -110,31 +224,18 @@ std::string Tag::title() const {
 ///@pkg ID3.h
 std::string Tag::genre(bool process) const {
 	std::string genreString = textContent(Frames::FRAME_GENRE);
-	if(process && genreString != "") {
-		if(std::all_of(genreString.begin(), genreString.end(), ::isdigit)) {
-			genreString = V1::getGenreString(atoi(genreString.c_str()));
-		} else {
-			//This regex matches any digit surrounded by a single pair of
-			//parenthesis at the start of a string
-			std::regex findV1Genre("^\\(\\d+\\)");
-			std::smatch v1Genre;
-			
-			//If a ID3v1 genre is found
-			if(std::regex_search(genreString, v1Genre, findV1Genre)) {
-				//Get the match
-				std::string genreIntStr = v1Genre.str();
-				//Get the int value of the ID3v1 genre
-				int genreInt = atoi(genreIntStr.substr(1, genreIntStr.length() - 1).c_str());
-				//Remove the string from the tag string
-				genreString = std::regex_replace(genreString, findV1Genre, "");
-				//If there's nothing else in the tag string, then return
-				//the ID3v1 genre
-				if(genreString.length() <= 0)
-					genreString = V1::getGenreString(genreInt);
-			}
-		}
-	}
+	if(process)
+		genreString = processGenre(genreString);
 	return genreString;
+}
+
+///@pkg ID3.h
+std::vector<std::string> Tag::genres(bool process) const {
+	std::vector<std::string> genreStrings = textContents(Frames::FRAME_GENRE);
+	if(process)
+		for(std::size_t i = 0; i < genreStrings.size(); i++)
+			genreStrings[i] = processGenre(genreStrings[i]);
+	return genreStrings;
 }
 
 ///@pkg ID3.h
@@ -143,13 +244,28 @@ std::string Tag::artist() const {
 }
 
 ///@pkg ID3.h
+std::vector<std::string> Tag::artists() const {
+	return textContents(Frames::FRAME_ARTIST);
+}
+
+///@pkg ID3.h
 std::string Tag::albumArtist() const {
 	return textContent(Frames::FRAME_ALBUM_ARTIST);
 }
 
 ///@pkg ID3.h
+std::vector<std::string> Tag::albumArtists() const {
+	return textContents(Frames::FRAME_ALBUM_ARTIST);
+}
+
+///@pkg ID3.h
 std::string Tag::album() const {
 	return textContent(Frames::FRAME_ALBUM);
+}
+
+///@pkg ID3.h
+std::vector<std::string> Tag::albums() const {
+	return textContents(Frames::FRAME_ALBUM);
 }
 
 ///@pkg ID3.h
@@ -215,6 +331,11 @@ std::string Tag::composer() const {
 }
 
 ///@pkg ID3.h
+std::vector<std::string> Tag::composers() const {
+	return textContents(Frames::FRAME_COMPOSER);
+}
+
+///@pkg ID3.h
 std::string Tag::bpm() const {
 	return textContent(Frames::FRAME_BPM);
 }
@@ -235,6 +356,8 @@ Picture Tag::picture() const {
 		                                    picture->description(),
 		                                    picture->pictureType());
 	} catch(std::out_of_range) {
+		//If there is no Frames::FRAME_PICTURE Frame stored, then return an empty
+		//Picture
 		return Picture();
 	}
 }
@@ -381,44 +504,61 @@ void Tag::readFileV2(std::ifstream& file) {
 			v2TagInfo.flagExperimental = true;
 		if((tagsHeader.flags & FLAG_FOOTER) == FLAG_FOOTER)
 			v2TagInfo.flagFooter = true;
-			
+		
+		//Unsynchronization is not currently supported.
 		if(v2TagInfo.size > filesize || v2TagInfo.flagUnsynchronisation)
 			return;
-			
-		tagsSet.v2 = true;
 		
 		//The position to start reading from the file
 		ulong frameStartPos = HEADER_BYTE_SIZE;
 		
 		//Skip over the extended header
 		if(v2TagInfo.flagExtHeader) {
-			//Verify that there space in the file for an extended header
-			if(frameStartPos + HEADER_BYTE_SIZE > filesize)
-				return;
-			
-			ExtHeader extHeader;
+			//Seek to the position to read the extended header
 			file.seekg(frameStartPos, std::ifstream::beg);
-			if(!file.fail()) {
-				file.read(reinterpret_cast<char*>(&extHeader), HEADER_BYTE_SIZE);
-				//Only the ID3v2.4.0 standard page says that the extended header's size is synchsafe.
-				//I do not know if that is accurate or not, but I will take their word for it.
-				frameStartPos += HEADER_BYTE_SIZE + byteIntVal(extHeader.size, 4, v2TagInfo.majorVer >= 4);
+			if(file.fail()) return;
+			
+			//The extended header is different from ID3v2.3 and ID3v2.4.
+			if(v2TagInfo.majorVer >= 4) {
+				V4ExtHeader extHeader;
+				
+				//Verify that there's enough space
+				if(frameStartPos + sizeof(V4ExtHeader) > filesize) return;
+				
+				//Get the extended header
+				file.read(reinterpret_cast<char*>(&extHeader), sizeof(V4ExtHeader));
+				
+				//Increment the start position. The extended header size is synchsafe in ID3v2.4
+				frameStartPos += sizeof(V4ExtHeader) + byteIntVal(extHeader.size, 4, true);
+			} else {
+				V3ExtHeader extHeader;
+				
+				//Verify that there's enough space
+				if(frameStartPos + sizeof(V3ExtHeader) > filesize) return;
+				
+				//Get the extended header
+				file.read(reinterpret_cast<char*>(&extHeader), sizeof(V3ExtHeader));
+				
+				//Increment the start position. The extended header size is not synchsafe in ID3v2.3
+				frameStartPos += sizeof(V3ExtHeader) + byteIntVal(extHeader.size, 4, false);
 			}
 		}
 		
-		//The byte position on the file when the ID3v2 tags end
-		const ulong ID3_END_POS = frameStartPos + v2TagInfo.size;
+		//The tag size
+		v2TagInfo.totalSize = frameStartPos + v2TagInfo.size + (v2TagInfo.flagFooter ? HEADER_BYTE_SIZE : 0);
 		
-		//Validate the size of the ID3v2 tag
-		if(ID3_END_POS > filesize)
-			return;
-			
+		//The final size check
+		if(filesize < v2TagInfo.totalSize) return;
+		
+		//The file has correctly formatted ID3v2 tags
+		tagsSet.v2 = true;
+		
 		//A FrameFactory to read the frames off the file
-		FrameFactory factory(file, v2TagInfo.majorVer, ID3_END_POS);
+		FrameFactory factory(file, v2TagInfo.majorVer, v2TagInfo.totalSize);
 		
 		//Loop over the ID3 tags, and stop once all ID3 frames have been
 		//reached or a frame is null. Add every frame to the frames map.
-		while(frameStartPos + HEADER_BYTE_SIZE < ID3_END_POS) {
+		while(frameStartPos + HEADER_BYTE_SIZE < v2TagInfo.totalSize) {
 			//Create a new Frame at this position
 			FramePtr frame = factory.create(frameStartPos);
 			//Add the Frame to the map if it's not null
@@ -428,8 +568,11 @@ void Tag::readFileV2(std::ifstream& file) {
 			//then continue on to the next frame. If not, then stop the loop.
 			if(frame->size(true) > HEADER_BYTE_SIZE && frame->frame() != "")
 				frameStartPos += frame->size(true);
-			else
+			else {
+				//Get the start of padding and exit the loop
+				v2TagInfo.paddingStart = frameStartPos;
 				break;
+			}
 		}
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::getFileV2(std::ifstream&): " << e.what() << std::endl;
@@ -570,4 +713,6 @@ Tag::TagInfo::TagInfo() : majorVer(-1),
                           flagExtHeader(false),
                           flagExperimental(false),
                           flagFooter(false),
-                          size(-1) {}
+                          size(0),
+                          totalSize(0),
+                          paddingStart(0) {}

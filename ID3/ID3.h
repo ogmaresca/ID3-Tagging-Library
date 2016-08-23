@@ -52,9 +52,7 @@
  * 
  * @todo Add write support.
  * @todo Test it on a greater variety of ID3 files, and unit tests.
- * @todo Add support for saving multiple Frames on the same file.
- * @todo Add support for multiple values.
- * @todo Add support for non-text frames.
+ * @todo Add support for saving multiple Frames from the same file.
  * @todo Read the ID3v2 Extended Header.
  */
 namespace ID3 {
@@ -367,10 +365,13 @@ namespace ID3 {
 		FRAME_LICENSEE  = 58,
 		FRAMEID_TOWN    = 58,
 		
-		FRAME_ARTIST         = 59,
-		FRAME_LEAD_PERFORMER = 59,
-		FRAME_SOLOIST        = 59,
-		FRAMEID_TPE1         = 59, //ID3::Tag::artist()
+		FRAME_ARTIST           = 59,
+		FRAME_LEAD_ARTIST      = 59,
+		FRAME_LEAD_PERFORMER   = 59,
+		FRAME_PERFORMER        = 59,
+		FRAME_PERFORMING_GROUP = 59,
+		FRAME_SOLOIST          = 59,
+		FRAMEID_TPE1           = 59, //ID3::Tag::artist()
 		
 		FRAME_ACCOMPANIEMENT = 60,
 		FRAME_ALBUM_ARTIST   = 60,
@@ -592,16 +593,25 @@ namespace ID3 {
 		uint8_t majorVer;
 		uint8_t minorVer;
 		uint8_t flags;
-		uint8_t size[4]; //A synchsafe integer
+		uint8_t size[4]; //A synchsafe integer in ID3v2.4+
 	};
 	
 	/**
-	 * A 10-bit struct that captures the structure of the ID3v2 extended header.
+	 * A 10-bit struct that captures the structure of the ID3v2.3 extended header.
 	 */
-	struct ExtHeader {
-		uint8_t size[4]; //A synchsafe integer
+	struct V3ExtHeader {
+		uint8_t size[4];
 		uint8_t flags[2];
 		uint8_t paddingSize[4];
+	};
+	
+	/**
+	 * An 8-bit struct that captures the structure of the ID3v2.4 extended header.
+	 */
+	struct V4ExtHeader {
+		uint8_t size[4]; //A synchsafe integer
+		uint8_t flagBytes;
+		uint8_t flags;
 	};
 	
 	/**
@@ -711,6 +721,37 @@ namespace ID3 {
 			std::string textContent(Frames frameName) const;
 			
 			/**
+			 * Get the text content of a frame, split up into a vector for each
+			 * individual string in the frame.
+			 * 
+			 * NOTE: Not all frames support text content. If the given frame name
+			 *       does not, or the music file does not contain an ID3v2 frame of
+			 *       that type, the vector will contain just an empty string. Also,
+			 *       multiple values do not make sense for all text frames. For
+			 *       those frames, use ID3::Tag::textContent(Frames) instead.
+			 * 
+			 * NOTE: No formatting will be done, so if the frame has special
+			 *       formatting then you should call the relevant method instead.
+			 * 
+			 * NOTE: If the file uses ID3v2.3, then the multiple value separator
+			 *       is a slash instead of a null character, and is only supported
+			 *       in the Composer, Lyricist, Original Lyricist, Original Artist,
+			 *       and Artist frames. If requesting another frame from an ID3v2.3
+			 *       file, then the vector will not separate the text content by
+			 *       the slash separator.
+			 * 
+			 * NOTE: The returned vector will always hold at least one string that
+			 *       is either an empty string or the frame text content.
+			 * 
+			 * @param frameName A Frames enum variable that represents
+			 *                  an ID3v2 frame ID.
+			 * @return A string vector of the text content split by the multiple
+			 *         value separator. The vector will not contain empty strings,
+			 *         unless there isn't a text value or it is empty.
+			 */
+			std::vector<std::string> textContents(Frames frameName) const;
+			
+			/**
 			 * Get the title tag.
 			 * 
 			 * @return The title of the music file, or "" if there is
@@ -721,19 +762,26 @@ namespace ID3 {
 			/**
 			 * Get the genre tag.
 			 * 
-			 * @param process If true, this will process the genre string
-			 *                according to the specification of the TCOM
-			 *                frame. It will look for a number surrounded
-			 *                by parenthesis. If found the substring will
-			 *                be removed, and if the no text follows the
-			 *                substring, the number will be parsed and
-			 *                the corresponding ID3v1 genre will be returned.
-			 *                If false, the raw genre string as it
-			 *                appears on file will be returned.
+			 * @param process If true, this will process the genre string according
+			 *                to the specification of the TCOM frame. It will look
+			 *                for a number surrounded by parenthesis. If found, the
+			 *                substring will be removed, and if no text follows the
+			 *                substring, the number will be parsed and the
+			 *                corresponding ID3v1 genre will be returned.
+			 *                If false, the raw genre string as it appears on file
+			 *                will be returned.
 			 * @return The genre of the music file, or "" if there is
 			 *         no title set.
 			 */
 			std::string genre(bool process=true) const;
+			
+			/**
+			 * Get the genre tag as a vector of genre string(s).
+			 * 
+			 * @see ID3::Tag::genre(bool)
+			 * @see ID3::Tag::textContents(Frames)
+			 */
+			std::vector<std::string> genres(bool process=true) const;
 			
 			/**
 			 * Get the artist tag.
@@ -744,6 +792,14 @@ namespace ID3 {
 			std::string artist() const;
 			
 			/**
+			 * Get the artist tag as a vector of artist string(s).
+			 * 
+			 * @see ID3::Tag::artist()
+			 * @see ID3::Tag::textContents(Frames)
+			 */
+			std::vector<std::string> artists() const;
+			
+			/**
 			 * Get the album tag.
 			 * 
 			 * @return The album of the music file, or "" if there is
@@ -752,12 +808,29 @@ namespace ID3 {
 			std::string album() const;
 			
 			/**
+			 * Get the album tag as a vector of album string(s).
+			 * 
+			 * @see ID3::Tag::album()
+			 * @see ID3::Tag::textContents(Frames)
+			 */
+			std::vector<std::string> albums() const;
+			
+			/**
 			 * Get the album artist/band/orchestra/accompaniment tag.
 			 * 
 			 * @return The Album artist of the music file, or "" if
 			 *         there is no tag set.
 			 */
 			std::string albumArtist() const;
+			
+			/**
+			 * Get the album artist/band/orchestra/accompaniment tag as a vector of
+			 * album artist string(s).
+			 * 
+			 * @see ID3::Tag::albumArtist()
+			 * @see ID3::Tag::textContents(Frames)
+			 */
+			std::vector<std::string> albumArtists() const;
 			
 			/**
 			 * Get the year tag.
@@ -838,6 +911,14 @@ namespace ID3 {
 			std::string composer() const;
 			
 			/**
+			 * Get the composer tag as a vector of composer string(s).
+			 * 
+			 * @see ID3::Tag::composer()
+			 * @see ID3::Tag::textContents(Frames)
+			 */
+			std::vector<std::string> composers() const;
+			
+			/**
 			 * Get the BPM tag.
 			 * 
 			 * @return The bpm of the music file, or "" if there is
@@ -896,14 +977,17 @@ namespace ID3 {
 			 * A struct that records the ID3v2 information.
 			 */
 			struct TagInfo {
-				TagInfo();
-				short majorVer;
-				short minorVer;
-				bool flagUnsynchronisation;
-				bool flagExtHeader;
-				bool flagExperimental;
-				bool flagFooter;
-				ulong size;
+				TagInfo();                  //Constructor
+				ushort majorVer;             //ID3v2 major version
+				ushort minorVer;             //ID3v2 minor version
+				bool flagUnsynchronisation; //Unsynchronization flag
+				bool flagExtHeader;         //Extended header flag
+				bool flagExperimental;      //Experimental flag
+				bool flagFooter;            //Footer flag
+				ulong size;                 //Tag size
+				ulong totalSize;            //Total tag size (tag size + header size
+				                            // + extended header size + footer size)
+				ulong paddingStart;         //The byte in which padding starts
 			};
 			
 			/**
