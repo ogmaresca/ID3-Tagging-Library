@@ -27,6 +27,80 @@ using namespace ID3;
 
 //Private namespace
 namespace {
+	/**
+	 * Split a text along its ID3v2 separating character.
+	 * 
+	 * If the ID3v2 version is 3 or below, then only the Composer, Lyricist,
+	 * Original Lyricist, Original Artist, and Artist will be split, and by a
+	 * slash instead of a null character. The returned vector will always contain
+	 * at least one string.
+	 * 
+	 * @param frameName The frame that the text belongs to.
+	 * @param text      The frame text.
+	 * @param version   The ID3v2 major version.
+	 * @return The string, split into a vector.
+	 */
+	static std::vector<std::string> splitTextContent(const Frames       frameName,
+	                                                 const std::string& text,
+	                                                 const ushort       version) {
+		//A vector that contains a single string, for cases where there is no text
+		//content.
+		static std::vector<std::string> emptyString(1, "");
+		
+		//A vector of strings to return
+		std::vector<std::string> tokens;
+		
+		//If the string is empty, no use continuing
+		if(text == "") return emptyString;
+		
+		//In ID3v2.3, only some frames are allowed to have multiple values. If the
+		//requested value does not belong to one of those frames, then do not split
+		//the text content.
+		if(version < 4) {
+			switch(frameName) {
+				case FRAME_COMPOSER:
+				case FRAME_LYRICIST:
+				case FRAME_ORIGINAL_LYRICIST:
+				case FRAME_ORIGINAL_ARTIST:
+				case FRAME_ARTIST: {
+					break;
+				} default: {
+					tokens.push_back(text);
+					return tokens;
+				}
+			}
+		}
+		
+		//The string divider char
+		const char DIVIDER = version >= 4 ? '\0' : '/';
+		
+		//Loop variables
+		std::size_t tokenStart = 0, tokenEnd = text.find(DIVIDER, 0);
+		
+		while((tokenEnd = text.find(DIVIDER, tokenStart)) != std::string::npos) {
+			//If the substring isn't an empty string
+			if(tokenEnd > tokenStart)
+				tokens.push_back(text.substr(tokenStart, tokenEnd - tokenStart));
+			tokenStart = tokenEnd + 1;
+		}
+		
+		//Add the last string token, if it isn't an empty string
+		if(tokenStart < text.size())
+			tokens.push_back(text.substr(tokenStart));
+		
+		//In the edge case that the string contains only divider characters, then
+		//also return the empty string vector
+		if(tokens.size() == 0)
+			return emptyString;
+		
+		return tokens;
+	}
+	
+	/**
+	 * Process a genre tag string.
+	 * 
+	 * @see ID3::Tag::genre(bool)
+	 */
 	static std::string processGenre(const std::string& genre) {
 		if(genre == "")
 			return "";
@@ -111,99 +185,45 @@ bool Tag::frameExists(Frames frameName) const {
 }
 
 ///@pkg ID3.h
+bool Tag::frameExists(const std::string& frameName) const {
+	return frames.count(frameName) > 0;
+}
+
+///@pkg ID3.h
 std::string Tag::textContent(Frames frameName) const {
-	//Get the frame ID
-	const std::string frameIDStr = getFrameName(frameName);
+	//Get the frame
+	TextFrame* textFrameObj = getFrame<TextFrame>(frameName);
 	
-	//Check if the Frame is in the map
-	const FrameMap::const_iterator result = frames.find(frameIDStr);
-	if(result == frames.end()) return "";
-	
-	//If the frame is in the map, get it
-	FramePtr frameObj = result->second;
-	
-	//If the frame is "null" then return an empty string
-	if(frameObj->null())
-		return "";
-	
-	//Get the text frame
-	TextFrame* textFrameObj = dynamic_cast<TextFrame*>(frameObj.get());
-	
+	//If the Frame object isn't valid and thus a null pointer, then return an
+	//empty string. Else, return the text content.
 	return textFrameObj == nullptr ? "" : textFrameObj->content();
 }
 
 ///@pkg ID3.h
 std::vector<std::string> Tag::textContents(Frames frameName) const {
-	//A vector that contains a single string, for cases where there is no text
-	//content.
-	static std::vector<std::string> emptyString(1, "");
-	
-	//Check if the Frame is in the map
-	const FrameMap::const_iterator result = frames.find(getFrameName(frameName));
-	if(result == frames.end()) return emptyString;
-	
-	//If the frame is in the map, get it
-	FramePtr frameObj = result->second;
-	
-	//If the frame is "null then return emptyString
-	if(frameObj->null()) return emptyString;
-	
-	//Get the text frame
-	TextFrame* textFrameObj = dynamic_cast<TextFrame*>(frameObj.get());
-	
-	//If the Frame is not a TextFrame then return an empty vector
-	if(textFrameObj == nullptr) return emptyString;
-	
-	//The content string
-	std::string textContent = textFrameObj->content();
-	
-	//If the string is empty, no use continuing
-	if(textContent == "") return emptyString;
-	
-	//A vector of strings to return
-	std::vector<std::string> tokens;
-	
-	//In ID3v2.3, only some frames are allowed to have multiple values. If the
-	//requested value does not belong to one of those frames, then do not split
-	//the text content.
-	if(v2TagInfo.majorVer < 4) {
-		switch(frameName) {
-			case FRAME_COMPOSER:
-			case FRAME_LYRICIST:
-			case FRAME_ORIGINAL_LYRICIST:
-			case FRAME_ORIGINAL_ARTIST:
-			case FRAME_ARTIST: {
-				break;
-			} default: {
-				tokens.push_back(textContent);
-				return tokens;
-			}
+	if(allowsMultipleFrames(frameName)) {
+		//Get the text frames
+		std::vector<TextFrame*> textFrames = getFrames<TextFrame>(frameName);
+		
+		//The vector to return
+		std::vector<std::string> textStrings;
+		
+		if(textFrames.size() == 0) {
+			//If no frames were returned
+			textStrings.push_back("");
+		} else {
+			//Prevent vector reallocations by making it as big as textFrames
+			textStrings.reserve(textFrames.size());
+			//Add the frame contents to textStrings
+			for(TextFrame* currentFrame : textFrames)
+				textStrings.push_back(currentFrame->content());
 		}
+		
+		return textStrings;
+	} else {
+		std::string text = textContent(frameName);
+		return splitTextContent(frameName, text, v2TagInfo.majorVer);
 	}
-	
-	//The string divider char
-	const char DIVIDER = v2TagInfo.majorVer >= 4 ? '\0' : '/';
-	
-	//Loop variables
-	std::size_t tokenStart = 0, tokenEnd = textContent.find(DIVIDER, 0);
-	
-	while((tokenEnd = textContent.find(DIVIDER, tokenStart)) != std::string::npos) {
-		//If the substring isn't an empty string
-		if(tokenEnd > tokenStart)
-			tokens.push_back(textContent.substr(tokenStart, tokenEnd - tokenStart));
-		tokenStart = tokenEnd + 1;
-	}
-	
-	//Add the last string token, if it isn't an empty string
-	if(tokenStart < textContent.size())
-		tokens.push_back(textContent.substr(tokenStart));
-	
-	//In the edge case that the string contains only divider characters, then
-	//also return the empty string vector
-	if(tokens.size() == 0)
-		return emptyString;
-	
-	return tokens;
 }
 
 ///@pkg ID3.h
@@ -420,6 +440,72 @@ void Tag::print() const {
 }
 
 ///@pkg ID3.h
+bool Tag::addFrame(const std::string& frameName, FramePtr frame) {
+	//Check if the Frame is valid
+	if((frameExists(frameName) && !allowsMultipleFrames(frameName)) ||
+	   frame.get() == nullptr || frame->null() || frame->empty())
+		return false;
+	frames.emplace(frameName, frame);
+	return true;
+}
+
+///@pkg ID3.h
+bool Tag::addFrame(const FramePair& frameMapPair) {
+	//Check if the Frame is valid
+	if((frameExists(frameMapPair.first) && !allowsMultipleFrames(frameMapPair.first)) ||
+	   frameMapPair.second.get() == nullptr || frameMapPair.second->null() || frameMapPair.second->empty())
+		return false;
+	frames.emplace(frameMapPair);
+	return true;
+}
+
+///@pkg ID3.h
+template<typename DerivedFrame>
+DerivedFrame* Tag::getFrame(Frames frameName) const {
+	//Check if the Frame is in the map
+	const FrameMap::const_iterator result = frames.find(getFrameName(frameName));
+	if(result == frames.end()) return nullptr;
+	
+	//If the frame is in the map, get it
+	FramePtr frameObj = result->second;
+	
+	//If the frame is "null" then return nullptr
+	if(frameObj->null()) return nullptr;
+	
+	//Get the requested frame class
+	DerivedFrame* derivedFrameObj = dynamic_cast<DerivedFrame*>(frameObj.get());
+	
+	//If the Frame is not a DerivedFrame then nullptr will be returned
+	return derivedFrameObj;
+}
+
+///@pkg ID3.h
+template<typename DerivedFrame>
+std::vector<DerivedFrame*> Tag::getFrames(Frames frameName) const {
+	//Get the range.
+	//Each const_iterator has a first variable, which stores the Frames value,
+	//and a second variable, which stores the FramePtr object.
+	std::pair<FrameMap::const_iterator, FrameMap::const_iterator> range = frames.equal_range(getFrameName(frameName));
+	
+	//The vector to return
+	std::vector<DerivedFrame*> derivedFrameVector;
+	
+	//Loop through the range
+	for(auto start = range.first; start != range.second; start++) {
+		//Get the Frame object from the FramePtr, and cast it to DerivedFrame
+		DerivedFrame* derivedFrameObj = dynamic_cast<DerivedFrame*>(start->second.get());
+		
+		//Only append the Frame if it casted correctly and it's not null
+		if(derivedFrameObj != nullptr && !derivedFrameObj->null())
+			derivedFrameVector.push_back(derivedFrameObj);
+	}
+	
+	
+	//Return the vector
+	return derivedFrameVector;
+}
+
+///@pkg ID3.h
 void Tag::readFile(std::ifstream& file) {
 	if(!file.good())
 		return;
@@ -559,7 +645,7 @@ void Tag::readFileV2(std::ifstream& file) {
 			FramePtr frame = factory.create(frameStartPos);
 			//Add the Frame to the map if it's not null
 			if(!frame->null())
-				frames.emplace(frame->frame(), frame);
+				addFrame(frame->frame(), frame);
 			//If the frame content is a valid size (bigger than an ID3v2 header)
 			//then continue on to the next frame. If not, then stop the loop.
 			if(frame->size(true) > HEADER_BYTE_SIZE && frame->frame() != "")
@@ -588,27 +674,30 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 	tagsSet.v1 = true;
 	
 	//Save the V1 tags as Frame objects.
-	//Since I'm using std::unordered_map.emplace(), these will not
-	//overwrite any V2 tags.
+	//If ID3v2 frame equivalents were previously read, then addFrame() will not
+	//add the ID3v1 tags. The only exception is the comment. Since ID3v1 comments
+	//are not really equivalent to ID3v2 comments, don't add an ID3v1 comment if
+	//there's already a read comment frame.
 	try {
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_TITLE,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.title, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_ARTIST,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.artist, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_ALBUM,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.album, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_YEAR,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.year, 4)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_COMMENT,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.comment, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_GENRE,
-		                                        v2TagInfo.majorVer,
-		                                        V1::getGenreString(tags.genre)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_TITLE,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.title, 30)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_ARTIST,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.artist, 30)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_ALBUM,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.album, 30)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_YEAR,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.year, 4)));
+		if(!frameExists(Frames::FRAME_COMMENT))
+			addFrame(FrameFactory::createPair(Frames::FRAME_COMMENT,
+			                                  v2TagInfo.majorVer,
+			                                  terminatedstring(tags.comment, 30)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_GENRE,
+		                                  v2TagInfo.majorVer,
+		                                  V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::Tag&, bool): " << e.what() << std::endl;
 	}
@@ -626,31 +715,34 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 	
 	tagsSet.v1_1 = true;
 	
-	//Save the V1.1 tags as Frame objects.
-	//Since I'm using std::unordered_map.emplace(), these will not
-	//overwrite any V2 tags.
+	//Save the V1 tags as Frame objects.
+	//If ID3v2 frame equivalents were previously read, then addFrame() will not
+	//add the ID3v1 tags. The only exception is the comment. Since ID3v1 comments
+	//are not really equivalent to ID3v2 comments, don't add an ID3v1 comment if
+	//there's already a read comment frame.
 	try {
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_TITLE,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.title, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_ARTIST,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.artist, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_ALBUM,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.album, 30)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_YEAR,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.year, 4)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_COMMENT,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.comment, 28)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_TRACK,
-		                                        v2TagInfo.majorVer,
-		                                        std::to_string(tags.trackNum)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_GENRE,
-		                                        v2TagInfo.majorVer,
-		                                        V1::getGenreString(tags.genre)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_TITLE,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.title, 30)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_ARTIST,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.artist, 30)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_ALBUM,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.album, 30)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_YEAR,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.year, 4)));
+		if(!frameExists(Frames::FRAME_COMMENT))
+			addFrame(FrameFactory::createPair(Frames::FRAME_COMMENT,
+			                                  v2TagInfo.majorVer,
+			                                  terminatedstring(tags.comment, 28)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_TRACK,
+		                                  v2TagInfo.majorVer,
+		                                  std::to_string(tags.trackNum)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_GENRE,
+		                                  v2TagInfo.majorVer,
+		                                  V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::P1Tag&, bool): " << e.what() << std::endl;
 	}
@@ -664,18 +756,18 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 	try {
 		tagsSet.v1Extended = true;
 		
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_TITLE,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.title, 60)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_ARTIST,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.artist, 60)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_ALBUM,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.album, 60)));
-		frames.emplace(FrameFactory::createPair(Frames::FRAME_GENRE,
-		                                        v2TagInfo.majorVer,
-		                                        terminatedstring(tags.genre, 30)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_TITLE,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.title, 60)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_ARTIST,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.artist, 60)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_ALBUM,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.album, 60)));
+		addFrame(FrameFactory::createPair(Frames::FRAME_GENRE,
+		                                  v2TagInfo.majorVer,
+		                                  terminatedstring(tags.genre, 30)));
 		/*
 		 * Placeholder comment for when I add playback speed support and
 		 * support for start and end times.

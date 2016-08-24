@@ -218,9 +218,9 @@ void Frame::print() const {
 			std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
 		std::cout << std::endl;
 		
+		std::cout << "Empty:          " << std::boolalpha << empty() << std::endl;
 		std::cout << "Body size:      " << std::dec << BODY_SIZE << std::endl;
 	}
-	std::cout << "Empty:          " << std::boolalpha << empty() << std::endl;
 	std::cout << "Body bytes:    ";
 	if(BODY_SIZE <= 100) {
 		for(ulong i = HEADER_SIZE; i < FRAME_SIZE; i++)

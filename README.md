@@ -18,12 +18,11 @@ ID3-Tagging-Library requires the icu-uc package. Add "\`pkg-config icu-uc --cfla
 - Read ID3v1, ID3v1.1, and ID3v1 Extended tags.
 - Support 148 ID3v1 and ID3v1.1 genres.
 - Support reading the ID3v2 text frames.
+- Support reading the ID3v2 attached picture frame.
 
 ##What ID3-Tagging-Library does not do (yet)
 - Extensive testing.
-- Give documentation.
 - Have support for editing/adding new tags.
-- Support non-text frames.
 - Process the ID3v2 extended header.
 - Support compressed and unsynchronized frames.
 

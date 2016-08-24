@@ -149,6 +149,20 @@ namespace ID3 {
 	 * @return The ID3v2 frame ID string.
 	 */
 	std::string getFrameName(const Frames frameID);
+	
+	/**
+	 * Check if the ID3v2 standard supports multiple instances of a given frame
+	 * in the flag.
+	 * 
+	 * @param frameID The frame to check.
+	 * @return true if multiple instances of the frame are allowed, false otherwise.
+	 */
+	bool allowsMultipleFrames(const Frames frameID);
+	
+	/**
+	 * @see ID3::allowsMultipleFrames(Frames)
+	 */
+	bool allowsMultipleFrames(const std::string& frameID);
 }
 
 #endif

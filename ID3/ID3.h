@@ -52,7 +52,6 @@
  * 
  * @todo Add write support.
  * @todo Test it on a greater variety of ID3 files, and unit tests.
- * @todo Add support for saving multiple Frames from the same file.
  * @todo Read the ID3v2 Extended Header.
  */
 namespace ID3 {
@@ -143,6 +142,7 @@ namespace ID3 {
 		FRAME_COMMERCIAL = 4,
 		FRAMEID_COMR     = 4,
 		
+		FRAME_ENCRYPTION_METHOD              = 5,
 		FRAME_ENCRYPTION_METHOD_REGISTRATION = 5,
 		FRAMEID_ENCR                         = 5,
 		
@@ -322,213 +322,217 @@ namespace ID3 {
 		FRAME_MUSICAL_KEY         = 48,
 		FRAMEID_TKEY              = 48,
 		
-		FRAME_LENGTH = 49,
-		FRAMEID_TLEN = 49,
+		FRAME_LANGUAGE = 49,
+		FRAMEID_TLAN   = 49,
 		
-		FRAME_MUSICIAN_CREDIT_LIST = 50,
-		V4FRAMEID_TMCL             = 50,
-		FRAMEID_TMCL               = 50,
+		FRAME_LENGTH = 50,
+		FRAMEID_TLEN = 50,
 		
-		FRAME_MEDIA_TYPE = 51,
-		FRAMEID_TMED     = 51,
+		FRAME_MUSICIAN_CREDIT_LIST = 51,
+		V4FRAMEID_TMCL             = 51,
+		FRAMEID_TMCL               = 51,
 		
-		FRAME_MOOD     = 52,
-		V4FRAMEID_TMOO = 52,
-		FRAMEID_TMOO   = 52,
+		FRAME_MEDIA_TYPE = 52,
+		FRAMEID_TMED     = 52,
 		
-		FRAME_ORIGINAL_ALBUM       = 53,
-		FRAME_ORIGINAL_MOVIE_TITLE = 53,
-		FRAME_ORIGINAL_SHOW_TITLE  = 53,
-		FRAME_ORIGINAL_TALB        = 53,
-		FRAMEID_TOAL               = 53,
+		FRAME_MOOD     = 53,
+		V4FRAMEID_TMOO = 53,
+		FRAMEID_TMOO   = 53,
 		
-		FRAME_ORIGINAL_FILENAME = 54,
-		FRAMEID_TOFN            = 54,
+		FRAME_ORIGINAL_ALBUM       = 54,
+		FRAME_ORIGINAL_MOVIE_TITLE = 54,
+		FRAME_ORIGINAL_SHOW_TITLE  = 54,
+		FRAME_ORIGINAL_TALB        = 54,
+		FRAMEID_TOAL               = 54,
 		
-		FRAME_ORIGINAL_LYRICIST    = 55,
-		FRAME_ORIGINAL_TEXT_WRITER = 55,
-		FRAME_ORIGINAL_TEXT        = 55,
-		FRAMEID_TOLY               = 55,
+		FRAME_ORIGINAL_FILENAME = 55,
+		FRAMEID_TOFN            = 55,
 		
-		FRAME_ORIGINAL_ARTIST    = 56,
-		FRAME_ORIGINAL_PERFORMER = 56,
-		FRAME_ORIGINAL_TPE1      = 56,
-		FRAMEID_TOPE             = 56,
+		FRAME_ORIGINAL_LYRICIST    = 56,
+		FRAME_ORIGINAL_TEXT_WRITER = 56,
+		FRAME_ORIGINAL_TEXT        = 56,
+		FRAMEID_TOLY               = 56,
 		
-		FRAME_ORIGINAL_RELEASE_YEAR = 57,
-		FRAME_ORIGINAL_YEAR         = 57,
-		FRAME_ORIGINAL_TYER         = 57,
-		V3FRAMEID_TORY_SEE_TDOR     = 57,
-		FRAMEID_TORY                = 57,
+		FRAME_ORIGINAL_ARTIST    = 57,
+		FRAME_ORIGINAL_PERFORMER = 57,
+		FRAME_ORIGINAL_TPE1      = 57,
+		FRAMEID_TOPE             = 57,
 		
-		FRAME_FILEOWNER = 58,
-		FRAME_LICENSEE  = 58,
-		FRAMEID_TOWN    = 58,
+		FRAME_ORIGINAL_RELEASE_YEAR = 58,
+		FRAME_ORIGINAL_YEAR         = 58,
+		FRAME_ORIGINAL_TYER         = 58,
+		V3FRAMEID_TORY_SEE_TDOR     = 58,
+		FRAMEID_TORY                = 58,
 		
-		FRAME_ARTIST           = 59,
-		FRAME_LEAD_ARTIST      = 59,
-		FRAME_LEAD_PERFORMER   = 59,
-		FRAME_PERFORMER        = 59,
-		FRAME_PERFORMING_GROUP = 59,
-		FRAME_SOLOIST          = 59,
-		FRAMEID_TPE1           = 59, //ID3::Tag::artist()
+		FRAME_FILEOWNER = 59,
+		FRAME_LICENSEE  = 59,
+		FRAMEID_TOWN    = 59,
 		
-		FRAME_ACCOMPANIEMENT = 60,
-		FRAME_ALBUM_ARTIST   = 60,
-		FRAME_BAND           = 60,
-		FRAME_ORCHESTRA      = 60,
-		FRAMEID_TPE2         = 60, //ID3::Tag::albumArtist()
+		FRAME_ARTIST           = 60,
+		FRAME_LEAD_ARTIST      = 60,
+		FRAME_LEAD_PERFORMER   = 60,
+		FRAME_PERFORMER        = 60,
+		FRAME_PERFORMING_GROUP = 60,
+		FRAME_SOLOIST          = 60,
+		FRAMEID_TPE1           = 60, //ID3::Tag::artist()
 		
-		FRAME_CONDUCTOR = 61,
-		FRAMEID_TPE3    = 61,
+		FRAME_ACCOMPANIEMENT = 61,
+		FRAME_ALBUM_ARTIST   = 61,
+		FRAME_BAND           = 61,
+		FRAME_ORCHESTRA      = 61,
+		FRAMEID_TPE2         = 61, //ID3::Tag::albumArtist()
 		
-		FRAME_INTERPRETED_BY = 62,
-		FRAME_MODIFIED_BY    = 62,
-		FRAME_REMIXED_BY     = 62,
-		FRAMEID_TPE4         = 62,
+		FRAME_CONDUCTOR = 62,
+		FRAMEID_TPE3    = 62,
 		
-		FRAME_DISC     = 63,
-		FRAME_SET_PART = 63,
-		FRAMEID_TPOS   = 63, //ID3::Tag::disc(bool), ID3::Tag::discTotal(bool)
+		FRAME_INTERPRETED_BY = 63,
+		FRAME_MODIFIED_BY    = 63,
+		FRAME_REMIXED_BY     = 63,
+		FRAMEID_TPE4         = 63,
 		
-		FRAME_PRODUCED_NOTICE = 64,
-		V4FRAMEID_TPRO        = 64,
-		FRAMEID_TPRO          = 64,
+		FRAME_DISC     = 64,
+		FRAME_SET_PART = 64,
+		FRAMEID_TPOS   = 64, //ID3::Tag::disc(bool), ID3::Tag::discTotal(bool)
 		
-		FRAME_PUBLISHER = 65,
-		FRAMEID_TPUB    = 65,
+		FRAME_PRODUCED_NOTICE = 65,
+		V4FRAMEID_TPRO        = 65,
+		FRAMEID_TPRO          = 65,
 		
-		FRAME_SET_POSITION = 66,
-		FRAME_TRACK        = 66,
-		FRAME_TRACK_NUMBER = 66,
-		FRAMEID_TRCK       = 66, //ID3::Tag::track(bool), ID3::Tag::trackTotal(bool)
+		FRAME_PUBLISHER = 66,
+		FRAMEID_TPUB    = 66,
 		
-		FRAME_RECORDING_DATES      = 67,
-		FRAME_RECORDING_TIME_DATES = 67,
-		V3FRAMEID_TRDA_SEE_TDRC    = 67,
-		FRAMEID_TRDA               = 67,
+		FRAME_SET_POSITION = 67,
+		FRAME_TRACK        = 67,
+		FRAME_TRACK_NUMBER = 67,
+		FRAMEID_TRCK       = 67, //ID3::Tag::track(bool), ID3::Tag::trackTotal(bool)
 		
-		FRAME_RADIO_STATION               = 68,
-		FRAME_INTERNET_RADIO_STATION      = 68,
-		FRAME_INTERNET_RADIO_STATION_NAME = 68,
-		FRAMEID_TRSN                      = 68,
+		FRAME_RECORDING_DATES      = 68,
+		FRAME_RECORDING_TIME_DATES = 68,
+		V3FRAMEID_TRDA_SEE_TDRC    = 68,
+		FRAMEID_TRDA               = 68,
 		
-		FRAME_RADIO_STATION_OWNER          = 69,
-		FRAME_INTERNET_RADIO_STATION_OWNER = 69,
-		FRAMEID_TRSO                       = 69,
+		FRAME_RADIO_STATION               = 69,
+		FRAME_INTERNET_RADIO_STATION      = 69,
+		FRAME_INTERNET_RADIO_STATION_NAME = 69,
+		FRAMEID_TRSN                      = 69,
 		
-		FRAME_ACCOMPANIEMENT_SORT_ORDER = 70,
-		FRAME_ALBUM_ARTIST_SORT_ORDER   = 70,
-		FRAME_BAND_SORT_ORDER           = 70,
-		FRAME_ORCHESTRA_SORT_ORDER      = 70,
-		UNOFFICIAL_FRAMEID_TSO2         = 70,
-		FRAMEID_TSO2                    = 70,
+		FRAME_RADIO_STATION_OWNER          = 70,
+		FRAME_INTERNET_RADIO_STATION_OWNER = 70,
+		FRAMEID_TRSO                       = 70,
 		
-		FRAME_ALBUM_SORT_ORDER       = 71,
-		FRAME_MOVIE_TITLE_SORT_ORDER = 71,
-		FRAME_SHOW_TITLE_SORT_ORDER  = 71,
-		V4FRAMEID_TSOA               = 71,
-		FRAMEID_TSOA                 = 71,
+		FRAME_ACCOMPANIEMENT_SORT_ORDER = 71,
+		FRAME_ALBUM_ARTIST_SORT_ORDER   = 71,
+		FRAME_BAND_SORT_ORDER           = 71,
+		FRAME_ORCHESTRA_SORT_ORDER      = 71,
+		UNOFFICIAL_FRAMEID_TSO2         = 71,
+		FRAMEID_TSO2                    = 71,
 		
-		FRAME_COMPOSER_SORT_ORDER = 72,
-		UNOFFICIAL_FRAMEID_TSOC   = 72,
-		FRAMEID_TSOC              = 72,
+		FRAME_ALBUM_SORT_ORDER       = 72,
+		FRAME_MOVIE_TITLE_SORT_ORDER = 72,
+		FRAME_SHOW_TITLE_SORT_ORDER  = 72,
+		V4FRAMEID_TSOA               = 72,
+		FRAMEID_TSOA                 = 72,
 		
-		FRAME_ARTIST_SORT_ORDER    = 73,
-		FRAME_PERFORMER_SORT_ORDER = 73,
-		FRAME_SOLOIST_SORT_ORDER   = 73,
-		V4FRAMEID_TSOP             = 73,
-		FRAMEID_TSOP               = 73,
+		FRAME_COMPOSER_SORT_ORDER = 73,
+		UNOFFICIAL_FRAMEID_TSOC   = 73,
+		FRAMEID_TSOC              = 73,
 		
-		FRAME_CONTENT_DESCRIPTION_SORT_ORDER = 74,
-		FRAME_NAME_SORT_ORDER                = 74,
-		FRAME_TITLE_SORT_ORDER               = 74,
-		FRAME_SONG_NAME_SORT_ORDER           = 74,
-		V4FRAMEID_TSOT                       = 74,
-		FRAMEID_TSOT                         = 74,
+		FRAME_ARTIST_SORT_ORDER    = 74,
+		FRAME_PERFORMER_SORT_ORDER = 74,
+		FRAME_SOLOIST_SORT_ORDER   = 74,
+		V4FRAMEID_TSOP             = 74,
+		FRAMEID_TSOP               = 74,
 		
-		FRAME_SIZE                = 75,
-		V3FRAMEID_TSIZ_DEPRECATED = 75,
-		FRAMEID_TSIZ              = 75,
+		FRAME_CONTENT_DESCRIPTION_SORT_ORDER = 75,
+		FRAME_NAME_SORT_ORDER                = 75,
+		FRAME_TITLE_SORT_ORDER               = 75,
+		FRAME_SONG_NAME_SORT_ORDER           = 75,
+		V4FRAMEID_TSOT                       = 75,
+		FRAMEID_TSOT                         = 75,
 		
-		FRAME_ISRC   = 76,
-		FRAMEID_TSRC = 76,
+		FRAME_SIZE                = 76,
+		V3FRAMEID_TSIZ_DEPRECATED = 76,
+		FRAMEID_TSIZ              = 76,
 		
-		FRAME_ENCODING_SETTINGS = 77,
-		FRAMEID_TSSE            = 77,
+		FRAME_ISRC   = 77,
+		FRAMEID_TSRC = 77,
 		
-		FRAME_SET_SUBTITLE = 78,
-		V4FRAMEID_TSST     = 78,
-		FRAMEID_TSST       = 78,
+		FRAME_ENCODING_SETTINGS = 78,
+		FRAMEID_TSSE            = 78,
 		
-		FRAME_CUSTOM_USER_INFO = 79,
-		FRAME_USER_INFO        = 79,
-		FRAMEID_TXXX           = 79,
+		FRAME_SET_SUBTITLE = 79,
+		V4FRAMEID_TSST     = 79,
+		FRAMEID_TSST       = 79,
 		
-		FRAME_YEAR                = 80,
-		FRAME_RECORDING_TIME_YEAR = 80,
-		V3FRAMEID_TYER_SEE_TDRC   = 80,
-		FRAMEID_TYER              = 80, //ID3::Tag::year()
+		FRAME_CUSTOM_USER_INFO        = 80,
+		FRAME_CUSTOM_USER_INFORMATION = 80,
+		FRAME_USER_INFO               = 80,
+		FRAMEID_TXXX                  = 80,
 		
-		FRAME_UNIQUE_FILE_IDENTIFIER = 81,
-		FRAMEID_UFID                 = 81,
+		FRAME_YEAR                = 81,
+		FRAME_RECORDING_TIME_YEAR = 81,
+		V3FRAMEID_TYER_SEE_TDRC   = 81,
+		FRAMEID_TYER              = 81, //ID3::Tag::year()
 		
-		FRAME_TERMS_OF_USE = 82,
-		FRAME_TOU          = 82,
-		FRAMEID_USER       = 82,
+		FRAME_UNIQUE_FILE_IDENTIFIER = 82,
+		FRAMEID_UFID                 = 82,
 		
-		FRAME_LYRICS                = 83,
-		FRAME_TEXT_TRANSCRIPTION    = 83,
-		FRAME_TRANSCRIPTION         = 83,
-		FRAME_UNSYNCHED_LYRICS      = 83,
-		FRAME_UNSYNCHRONISED_LYRICS = 83,
-		FRAME_UNSYNCHRONIZED_LYRICS = 83,
-		FRAMEID_USLT                = 83,
+		FRAME_TERMS_OF_USE = 83,
+		FRAME_TOU          = 83,
+		FRAMEID_USER       = 83,
 		
-		FRAME_COMMERCIAL_INFO_URL        = 84,
-		FRAME_COMMERCIAL_INFORMATION_URL = 84,
-		FRAME_URL_COMMERCIAL_INFO        = 84,
-		FRAME_URL_COMMERCIAL_INFORMATION = 84,
-		FRAMEID_WCOM                     = 84,
+		FRAME_LYRICS                = 84,
+		FRAME_TEXT_TRANSCRIPTION    = 84,
+		FRAME_TRANSCRIPTION         = 84,
+		FRAME_UNSYNCHED_LYRICS      = 84,
+		FRAME_UNSYNCHRONISED_LYRICS = 84,
+		FRAME_UNSYNCHRONIZED_LYRICS = 84,
+		FRAMEID_USLT                = 84,
 		
-		FRAME_COPYRIGHT_URL         = 85,
-		FRAME_LEGAL_INFO_URL        = 85,
-		FRAME_LEGAL_INFORMATION_URL = 85,
-		FRAME_URL_COPYRIGHT         = 85,
-		FRAME_URL_LEGAL_INFO        = 85,
-		FRAME_URL_LEGAL_INFORMATION = 85,
-		FRAMEID_WCOP                = 85,
+		FRAME_COMMERCIAL_INFO_URL        = 85,
+		FRAME_COMMERCIAL_INFORMATION_URL = 85,
+		FRAME_URL_COMMERCIAL_INFO        = 85,
+		FRAME_URL_COMMERCIAL_INFORMATION = 85,
+		FRAMEID_WCOM                     = 85,
 		
-		FRAME_OFFICIAL_FILE_URL             = 86,
-		FRAME_URL_OFFICIAL_FILE_INFO        = 86, 
-		FRAME_URL_OFFICIAL_FILE_INFORMATION = 86,
-		FRAMEID_WOAF                        = 86,
+		FRAME_COPYRIGHT_URL         = 86,
+		FRAME_LEGAL_INFO_URL        = 86,
+		FRAME_LEGAL_INFORMATION_URL = 86,
+		FRAME_URL_COPYRIGHT         = 86,
+		FRAME_URL_LEGAL_INFO        = 86,
+		FRAME_URL_LEGAL_INFORMATION = 86,
+		FRAMEID_WCOP                = 86,
 		
-		FRAME_OFFICIAL_ARTIST_URL    = 87,
-		FRAME_OFFICIAL_PERFORMER_URL = 87,
-		FRAME_URL_OFFICIAL_ARTIST    = 87,
-		FRAME_URL_OFFICIAL_PERFORMER = 87,
-		FRAMEID_WOAR                 = 87,
+		FRAME_OFFICIAL_FILE_URL             = 87,
+		FRAME_URL_OFFICIAL_FILE_INFO        = 87, 
+		FRAME_URL_OFFICIAL_FILE_INFORMATION = 87,
+		FRAMEID_WOAF                        = 87,
 		
-		FRAME_OFFICIAL_AUDIO_SOURCE_URL = 88,
-		FRAME_URL_OFFICIAL_AUDIO_SOURCE = 88,
-		FRAMEID_WOAS                    = 88,
+		FRAME_OFFICIAL_ARTIST_URL    = 88,
+		FRAME_OFFICIAL_PERFORMER_URL = 88,
+		FRAME_URL_OFFICIAL_ARTIST    = 88,
+		FRAME_URL_OFFICIAL_PERFORMER = 88,
+		FRAMEID_WOAR                 = 88,
 		
-		FRAME_OFFICIAL_INTERNET_RADIO_STATION_URL = 89,
-		FRAME_URL_OFFICIAL_INTERNET_RADIO_STATION = 89,
-		FRAMEID_WORS                              = 89,
+		FRAME_OFFICIAL_AUDIO_SOURCE_URL = 89,
+		FRAME_URL_OFFICIAL_AUDIO_SOURCE = 89,
+		FRAMEID_WOAS                    = 89,
 		
-		FRAME_PAYMENT_URL = 90,
-		FRAME_URL_PAYMENT = 90,
-		FRAMEID_WPAY      = 90,
+		FRAME_OFFICIAL_INTERNET_RADIO_STATION_URL = 90,
+		FRAME_URL_OFFICIAL_INTERNET_RADIO_STATION = 90,
+		FRAMEID_WORS                              = 90,
 		
-		FRAME_OFFICIAL_PUBLISHER_URL = 91,
-		FRAME_URL_OFFICIAL_PUBLISHER = 91,
-		FRAMEID_WPUB                 = 91,
+		FRAME_PAYMENT_URL = 91,
+		FRAME_URL_PAYMENT = 91,
+		FRAMEID_WPAY      = 91,
 		
-		FRAME_USER_DEFINED_URL = 92,
-		FRAME_URL_USER_DEFINED = 92,
-		FRAMEID_WXXX           = 92
+		FRAME_OFFICIAL_PUBLISHER_URL = 92,
+		FRAME_URL_OFFICIAL_PUBLISHER = 92,
+		FRAMEID_WPUB                 = 92,
+		
+		FRAME_USER_DEFINED_URL = 93,
+		FRAME_URL_USER_DEFINED = 93,
+		FRAMEID_WXXX           = 93
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -703,6 +707,11 @@ namespace ID3 {
 			bool frameExists(Frames frameName) const;
 			
 			/**
+			 * @see ID3::Tag::frameExists(Frames);
+			 */
+			bool frameExists(const std::string& frameName) const;
+			
+			/**
 			 * Get the text content of a frame.
 			 * 
 			 * NOTE: Not all frames support text content. If the given
@@ -723,6 +732,10 @@ namespace ID3 {
 			/**
 			 * Get the text content of a frame, split up into a vector for each
 			 * individual string in the frame.
+			 * 
+			 * If the frame ID supports multiple instances of the frame, the vector
+			 * will instead hold a string of each text value of every instance of
+			 * each frame unsplit.
 			 * 
 			 * NOTE: Not all frames support text content. If the given frame name
 			 *       does not, or the music file does not contain an ID3v2 frame of
@@ -745,9 +758,7 @@ namespace ID3 {
 			 * 
 			 * @param frameName A Frames enum variable that represents
 			 *                  an ID3v2 frame ID.
-			 * @return A string vector of the text content split by the multiple
-			 *         value separator. The vector will not contain empty strings,
-			 *         unless there isn't a text value or it is empty.
+			 * @return A string vector of the text content.
 			 */
 			std::vector<std::string> textContents(Frames frameName) const;
 			
@@ -999,6 +1010,55 @@ namespace ID3 {
 			 * The filename (if not getting the file via an ifstream object).			 
 			 */
 			std::string filename;
+			
+			/**
+			 * Add a frame to the FrameMap. If there already exists a frame with
+			 * the same ID, and ID3::allowsMulipleFrames(frameName) returns false,
+			 * then the frame will not be added. Frames will also not be added if
+			 * they are "null", empty, or if the FramePtr holds a null pointer.
+			 * 
+			 * @param frameName The 4-letter ID3v2 frame ID.
+			 * @param frame     The shared pointer holding a Frame object.
+			 * @return true if the frame was succesfully added, false otherwise.
+			 */
+			bool addFrame(const std::string& frameName, FramePtr frame);
+			
+			/**
+			 * @see ID3::Tag::addFrame(std::string&, FramePtr)
+			 */
+			bool addFrame(const FramePair& frameMapPair);
+			
+			/**
+			 * A protected method to get a Frame from the FrameMap.
+			 * If the requested frame is not in the map, "null", or if it's not the
+			 * same class as the template class, then a null pointer will be
+			 * returned. This method uses dynamic_cast() to cast the Frame to the
+			 * derived Frame class.
+			 * 
+			 * If there is more than one Frame with the same frame name in the
+			 * map, only the first Frame in the map will be returned.
+			 * 
+			 * @param frameName The name of the frame.
+			 * @return The Frame in the map, or nullptr.
+			 */
+			template<typename DerivedFrame>
+			DerivedFrame* getFrame(Frames frameName) const;
+			
+			/**
+			 * A protected method to get a Frame* vector from the FrameMap.
+			 * If the requested frame is not in the map, then an empty vector will
+			 * be returned. Additionally, in the range of Frames within the
+			 * FrameMap, if the Frame cannot be dynamic_cast-ed to DerivedFrame or
+			 * it is "null", then it will not be added to the vector.
+			 * 
+			 * Not all frames support multiple instances of the frame. For frames
+			 * that do not, ID3::Tag::getFrame(Frames) is better to use.
+			 * 
+			 * @param frameName The name of the frame.
+			 * @return A Frame vector of all Frames that were found.
+			 */
+			template<typename DerivedFrame>
+			std::vector<DerivedFrame*> getFrames(Frames frameName) const;
 			
 			/**
 			 * A constructor helper method that gets the tag information from the given file.

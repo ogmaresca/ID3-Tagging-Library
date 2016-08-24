@@ -289,50 +289,51 @@ std::string ID3::getFrameName(const Frames frameID) {
 		"TIT2", //46
 		"TIT3", //47
 		"TKEY", //48
-		"TLEN", //49
-		"TMCL", //50
-		"TMED", //51
-		"TMOO", //52
-		"TOAL", //53
-		"TOFL", //54
-		"TOLY", //55
-		"TOPE", //56
-		"TORY", //57
-		"TOWN", //58
-		"TPE1", //59
-		"TPE2", //60
-		"TPE3", //61
-		"TPE4", //62
-		"TPOS", //63
-		"TPRO", //64
-		"TPUB", //65
-		"TRCK", //66
-		"TRDA", //67
-		"TRSN", //68
-		"TRSO", //69
-		"TSO2", //70
-		"TSOA", //71
-		"TSOC", //72
-		"TSOP", //73
-		"TSOT", //74
-		"TSIZ", //75
-		"TSRC", //76
-		"TSSE", //77
-		"TSST", //78
-		"TXXX", //79
-		"TYER", //80
-		"UFID", //81
-		"USER", //82
-		"USLT", //83
-		"WCOM", //84
-		"WCOP", //85
-		"WOAF", //86
-		"WOAR", //87
-		"WOAS", //88
-		"WORS", //89
-		"WPAY", //90
-		"WPUB", //91
-		"WXXX"  //92
+		"TLAN", //49
+		"TLEN", //50
+		"TMCL", //51
+		"TMED", //52
+		"TMOO", //53
+		"TOAL", //54
+		"TOFL", //55
+		"TOLY", //56
+		"TOPE", //57
+		"TORY", //58
+		"TOWN", //59
+		"TPE1", //60
+		"TPE2", //61
+		"TPE3", //62
+		"TPE4", //63
+		"TPOS", //64
+		"TPRO", //65
+		"TPUB", //66
+		"TRCK", //67
+		"TRDA", //68
+		"TRSN", //69
+		"TRSO", //70
+		"TSO2", //71
+		"TSOA", //72
+		"TSOC", //73
+		"TSOP", //74
+		"TSOT", //75
+		"TSIZ", //76
+		"TSRC", //77
+		"TSSE", //78
+		"TSST", //79
+		"TXXX", //80
+		"TYER", //81
+		"UFID", //82
+		"USER", //83
+		"USLT", //84
+		"WCOM", //85
+		"WCOP", //86
+		"WOAF", //87
+		"WOAR", //88
+		"WOAS", //89
+		"WORS", //90
+		"WPAY", //91
+		"WPUB", //92
+		"WXXX"  //93
 	};
 	
 	if(static_cast<ushort>(frameID) > frames.size())
@@ -340,6 +341,62 @@ std::string ID3::getFrameName(const Frames frameID) {
 	return frames[static_cast<ushort>(frameID)];
 }
 
-//bool ID3::allowsMultipleFrames(const Frames frameID) {
-//		return true if the ID3v2 spec allows multiple of the same frame type, false otherwise
-//}
+///@pkg ID3Functions.h
+bool ID3::allowsMultipleFrames(const Frames frameID) {
+	switch(frameID) {
+		case FRAME_AUDIO_ENCRYPTION:
+		case FRAME_ATTACHED_PICTURE:
+		case FRAME_COMMENT:
+		case FRAME_COMMERCIAL:
+		case FRAME_ENCRYPTION_METHOD_REGISTRATION:
+		case FRAME_EQUALIZATION_2:
+		case FRAME_GENERAL_ENCAPSULATED_OBJECT:
+		case FRAME_GROUP_IDENTIFICATION_REGISTRATION:
+		case FRAME_LINKED_INFORMATION:
+		case FRAME_POPULARIMETER:
+		case FRAME_PRIVATE:
+		case FRAME_RELATIVE_VOLUME_ADJUSTMENT_2:
+		case FRAME_SIGNATURE:
+		case FRAME_SYNCHRONIZED_LYRICS:
+		case FRAME_CUSTOM_USER_INFORMATION:
+		case FRAME_UNIQUE_FILE_IDENTIFIER:
+		case FRAME_TERMS_OF_USE:
+		case FRAME_UNSYNCHRONIZED_LYRICS:
+		case FRAME_COMMERCIAL_INFORMATION_URL:
+		case FRAME_OFFICIAL_ARTIST_URL:
+		case FRAME_USER_DEFINED_URL:
+			return true;
+		default:
+			return false;
+	}
+}
+
+bool ID3::allowsMultipleFrames(const std::string& frameID) {
+	if(frameID == "") return false;
+	
+	switch(frameID[0]) {
+		//FRAME_AUDIO_ENCRYPTION_REGISTRATION, FRAME_ATTACHED_PICTURE
+		case 'A': return frameID == "AENC" || frameID == "APIC";
+		//FRAME_COMMENT, FRAME_COMMERCIAL
+		case 'C': return frameID == "COMM" || frameID == "COMR";
+		//FRAME_ENCRYPTION_METHOD, FRAME_EQUALIZATION_2
+		case 'E': return frameID == "ENCR" || frameID == "EQU2";
+		//FRAME_GENERAL_ENCAPSULATED_OBJECT, FRAME_GROUP_IDENTIFICATION_REGISTRATION
+		case 'G': return frameID == "GEOB" || frameID == "GRID";
+		//FRAME_LINKED_INFORMATION
+		case 'L': return frameID == "LINK";
+		//FRAME_POPULARIMETER, FRAME_PRIVATE
+		case 'P': return frameID == "POPM" || frameID == "PRIV";
+		//FRAME_RELATIVE_VOLUME_ADJUSTMENT
+		case 'R': return frameID == "RVA2";
+		//FRAME_SIGNATURE, FRAME_SYNCHRONIZED_LYRICS
+		case 'S': return frameID == "SIGN" || frameID == "SYLT";
+		//FRAME_CUSTOMER_USER_INFORMATION
+		case 'T': return frameID == "TXXX";
+		//FRAME_UNIQUE_FILE_IDENTIFIER, FRAME_TERMS_OF_USE, FRAME_UNSYNCHRONIZED_LYRICS
+		case 'U': return frameID == "UFID" || frameID == "USER" || frameID == "USLT";
+		//FRAME_COMMERCIAL_INFORMATION_URL, FRAME_OFFICIAL_ARTIST_URL, FRAME_USER_DEFINED_URL
+		case 'W': return frameID == "WCOM" || frameID == "WOAR" || frameID == "WXXX";
+		default: return false;
+	}
+}
