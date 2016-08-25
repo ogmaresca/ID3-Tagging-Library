@@ -587,8 +587,12 @@ void Tag::readFileV2(std::ifstream& file) {
 		if((tagsHeader.flags & FLAG_FOOTER) == FLAG_FOOTER)
 			v2TagInfo.flagFooter = true;
 		
-		//Unsynchronization is not currently supported.
-		if(v2TagInfo.size > filesize || v2TagInfo.flagUnsynchronisation)
+		//Size verification
+		if(v2TagInfo.size > filesize)
+			return;
+		
+		//Unsynchronisation is not currently supported in ID3v2.3 and below.
+		if(v2TagInfo.flagUnsynchronisation && v2TagInfo.majorVer <= 3)
 			return;
 		
 		//The position to start reading from the file

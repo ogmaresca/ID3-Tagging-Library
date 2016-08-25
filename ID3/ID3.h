@@ -991,7 +991,7 @@ namespace ID3 {
 				TagInfo();                  //Constructor
 				ushort majorVer;             //ID3v2 major version
 				ushort minorVer;             //ID3v2 minor version
-				bool flagUnsynchronisation; //Unsynchronization flag
+				bool flagUnsynchronisation; //Unsynchronisation flag
 				bool flagExtHeader;         //Extended header flag
 				bool flagExperimental;      //Experimental flag
 				bool flagFooter;            //Footer flag

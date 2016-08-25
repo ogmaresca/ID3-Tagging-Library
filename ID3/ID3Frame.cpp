@@ -40,8 +40,10 @@ Frame::Frame(const std::string& frameName,
                                             isNull(frameBytes.size() <= HEADER_BYTE_SIZE),
                                             isEdited(false),
                                             isFromFile(true) {
-	if(!isNull && (compressed() || encrypted() || unsynchronized()))
+	if(!isNull && (compressed() || encrypted()))
 		isNull = true;
+	else
+		unsynchronise();
 }
 
 ///@pkg ID3Frame.h
@@ -150,10 +152,10 @@ bool Frame::groupingIdentity() const {
 }
 
 ///@pkg ID3Frame.h
-bool Frame::unsynchronized() const {
+bool Frame::unsynchronised() const {
 	if(ID3Ver < 4 || frameContent.size() < HEADER_BYTE_SIZE)
 		return false;
-	return (frameContent[9] & FLAG2_UNSYNCHRONIZED_V4) == FLAG2_UNSYNCHRONIZED_V4;
+	return (frameContent[9] & FLAG2_UNSYNCHRONISED_V4) == FLAG2_UNSYNCHRONISED_V4;
 }
 
 ///@pkg ID3Frame.h
@@ -207,7 +209,7 @@ void Frame::print() const {
 		if(compressed()) std::cout << " -compressed";
 		if(encrypted()) std::cout << " -encrypted";
 		if(groupingIdentity()) std::cout << " -groupingIdentity";
-		if(unsynchronized()) std::cout << " -unsynchronization";
+		if(unsynchronised()) std::cout << " -unsynchronisation";
 		if(dataLengthIndicator()) std::cout << " -dataLengthIndicator";
 		std::cout << std::endl;
 		if(groupingIdentity())
@@ -231,6 +233,34 @@ void Frame::print() const {
 			std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
 	}
 	std::cout << std::endl << std::noboolalpha << std::dec << std::noshowbase;
+}
+
+///@pkg ID3Frame.h
+void Frame::unsynchronise() {
+	if(!unsynchronised())
+		return;
+	
+	//The current frame size
+	const ulong FRAME_SIZE = frameContent.size();
+	
+	//The new byte vector
+	ByteArray newFrameContent;
+	
+	//Reserve space in the new vector to prevent internal array re-allocations
+	newFrameContent.reserve(FRAME_SIZE);
+	
+	//Loop through the frame bytes, starting after the standard header
+	for(ulong i = HEADER_BYTE_SIZE; i + 2 < FRAME_SIZE; i++) {
+		newFrameContent.push_back(frameContent[i]);
+		
+		//If the byte pattern 0b11111111 0b00000000 0b111XXXXX is found, then the
+		//0 byte has been inserted to prevent false synchronisations and should
+		//be skipped over.
+		if(frameContent[i] == 0xFF && frameContent[i+1] == '\0' && frameContent[i+2] > 0xE0)
+			i++;
+	}
+	
+	frameContent = newFrameContent;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

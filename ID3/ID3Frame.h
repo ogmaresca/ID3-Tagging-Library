@@ -157,7 +157,7 @@ namespace ID3 {
 			 * mandatory by unsynchronisation.
 			 * ID3v2.4 only.
 			 */
-			static const uint8_t FLAG2_UNSYNCHRONIZED_V4 = 0b00000010;
+			static const uint8_t FLAG2_UNSYNCHRONISED_V4 = 0b00000010;
 			
 			/**
 			 * This flag indicates that a data length indicator has been added to
@@ -330,10 +330,10 @@ namespace ID3 {
 			bool groupingIdentity() const;
 			
 			/**
-			 * @return If the Unsynchronization flag is set.
-			 * @see ID3::Frame::FLAG2_UNSYNCHRONIZED_V4
+			 * @return If the Unsynchronisation flag is set.
+			 * @see ID3::Frame::FLAG2_UNSYNCHRONISED_V4
 			 */
-			bool unsynchronized() const;
+			bool unsynchronised() const;
 			
 			/**
 			 * @return If the Data Length Indicator flag is set.
@@ -391,9 +391,10 @@ namespace ID3 {
 			 * set ID3::Frame::isFromFile to true.
 			 * isNull will be set to true if the number of bytes in frameBytes is
 			 * fewer than or equal to the amount of bytes as HEADER_BYTE_SIZE.
-			 * It will also be set true if the frame is compressed, encrypted, or.
-			 * unsynchronized. Call read() in children after calling this
-			 * constructor to get the frame contents.
+			 * It will also be set true if the frame is compressed, or encrypted.
+			 * If the frame is synchronised, then it will be unsynchronised.
+			 * Call read() in children after calling this constructor to get the
+			 * frame contents.
 			 * 
 			 * NOTE: frameBytes MUST include the frame header.
 			 * 
@@ -424,6 +425,15 @@ namespace ID3 {
 			 * @abstract
 			 */
 			virtual void read() = 0;
+			
+			/**
+			 * Unsynchronise frame byte contents. This checks for the
+			 * unsynchronisation frame flag to be set first, so it only supports
+			 * ID3v2.4+ frames.
+			 * This method is automatically called from Frame(std::string&, ushort,
+			 * ByteArray&), and shouldn't be called elsewhere.
+			 */
+			void unsynchronise();
 			
 			/**
 			 * The ID3v2 frame ID.

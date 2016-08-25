@@ -389,11 +389,11 @@ bool ID3::allowsMultipleFrames(const std::string& frameID) {
 		case 'P': return frameID == "POPM" || frameID == "PRIV";
 		//FRAME_RELATIVE_VOLUME_ADJUSTMENT
 		case 'R': return frameID == "RVA2";
-		//FRAME_SIGNATURE, FRAME_SYNCHRONIZED_LYRICS
+		//FRAME_SIGNATURE, FRAME_SYNCHRONISED_LYRICS
 		case 'S': return frameID == "SIGN" || frameID == "SYLT";
 		//FRAME_CUSTOMER_USER_INFORMATION
 		case 'T': return frameID == "TXXX";
-		//FRAME_UNIQUE_FILE_IDENTIFIER, FRAME_TERMS_OF_USE, FRAME_UNSYNCHRONIZED_LYRICS
+		//FRAME_UNIQUE_FILE_IDENTIFIER, FRAME_TERMS_OF_USE, FRAME_UNSYNCHRONISED_LYRICS
 		case 'U': return frameID == "UFID" || frameID == "USER" || frameID == "USLT";
 		//FRAME_COMMERCIAL_INFORMATION_URL, FRAME_OFFICIAL_ARTIST_URL, FRAME_USER_DEFINED_URL
 		case 'W': return frameID == "WCOM" || frameID == "WOAR" || frameID == "WXXX";

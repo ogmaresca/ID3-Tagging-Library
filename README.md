@@ -24,7 +24,7 @@ ID3-Tagging-Library requires the icu-uc package. Add "\`pkg-config icu-uc --cfla
 - Extensive testing.
 - Have support for editing/adding new tags.
 - Process the ID3v2 extended header.
-- Support compressed and unsynchronized frames.
+- Support compressed frames.
 
 ##License
 ID3-Tagging-Library is licensed under the GNU Public License v3 (GPLv3). View `LICENSE.txt` for more information.

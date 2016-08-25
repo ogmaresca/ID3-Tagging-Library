@@ -95,7 +95,7 @@ ByteArray TextFrame::write(ushort version, bool minimize) {
 		
 		//Create a ByteArray that fits the header, encoding, and size
 		const ulong NEW_FRAME_SIZE = HEADER_BYTE_SIZE + 1 + textContent.size();
-		frameContent = ByteArray(NEW_FRAME_SIZE);
+		frameContent = ByteArray(NEW_FRAME_SIZE, '\0');
 		
 		//Save the frame name
 		for(ushort i = 0; i < 4 && i < id.size(); i++)
