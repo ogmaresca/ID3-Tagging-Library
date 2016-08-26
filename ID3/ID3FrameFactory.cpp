@@ -43,30 +43,91 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 	musicFile->seekg(readpos, std::ifstream::beg);
 	if(musicFile->fail()) return FramePtr(new UnknownFrame());
 	
-	//Read the frame header
-	FrameHeader header;
-	musicFile->read(reinterpret_cast<char*>(&header), HEADER_BYTE_SIZE);
+	//The Frame class that should be returned
+	FrameClass frameType;
 	
-	//Get the size of the frame
-	ulong frameSize = byteIntVal(header.size, 4, ID3Ver >= 4);
+	//The ByteArray of the frame's bytes read from the file
+	ByteArray frameBytes;
 	
-	//Validate the frame size
-	if(frameSize == 0 || frameSize + HEADER_BYTE_SIZE > ID3Size)
-		return FramePtr(new UnknownFrame());
+	//The ID3v2 frame ID that will be read from file
+	std::string id;
 	
-	//Get the frame ID
-	std::string id = terminatedstring(header.id, 4);
-	
-	//Get the class the Frame should be
-	FrameClass frameType = FrameFactory::frameType(id);
-	
-	//Create a ByteArray with the entire frame contents
-	ByteArray frameBytes(frameSize + HEADER_BYTE_SIZE);
-	musicFile->seekg(readpos, std::ifstream::beg);
-	if(musicFile->fail())
-		return FramePtr(new UnknownFrame(id));
-	//musicFile->read(reinterpret_cast<char*>(&frameBytes.front()), frameSize + HEADER_BYTE_SIZE);
-	musicFile->read(reinterpret_cast<char*>(&frameBytes.front()), frameSize + HEADER_BYTE_SIZE);
+	//ID3v2.2 and below have a different frame header structure, so they need to
+	//be read differently
+	if(ID3Ver >= 3) {
+		//Read the frame header
+		FrameHeader header;
+		musicFile->read(reinterpret_cast<char*>(&header), HEADER_BYTE_SIZE);
+		
+		//Get the size of the frame
+		ulong frameSize = byteIntVal(header.size, 4, ID3Ver >= 4);
+		
+		//Validate the frame size
+		if(frameSize == 0 || frameSize + HEADER_BYTE_SIZE > ID3Size)
+			return FramePtr(new UnknownFrame());
+		
+		//Get the frame ID
+		id = terminatedstring(header.id, 4);
+		
+		//Get the class the Frame should be
+		frameType = FrameFactory::frameType(id);
+		
+		//Create the ByteArray with the entire frame contents
+		frameBytes = ByteArray(frameSize + HEADER_BYTE_SIZE, '\0');
+		musicFile->seekg(readpos, std::ifstream::beg);
+		if(musicFile->fail())
+			return FramePtr(new UnknownFrame(id));
+		musicFile->read(reinterpret_cast<char*>(&frameBytes.front()), frameSize + HEADER_BYTE_SIZE);
+	} else {
+		//The ID3v2.2 frame header has 6 bytes instead of 10
+		const ushort OLD_FRAME_HEADER_BYTE_SIZE = sizeof(V2FrameHeader);
+		
+		//Read the frame header
+		V2FrameHeader header;
+		musicFile->read(reinterpret_cast<char*>(&header), OLD_FRAME_HEADER_BYTE_SIZE);
+		
+		//Get the size of the frame
+		ulong frameSize = byteIntVal(header.size, 3, false);
+		
+		//Validate the frame size
+		if(frameSize == 0 || frameSize + OLD_FRAME_HEADER_BYTE_SIZE > ID3Size)
+			return FramePtr(new UnknownFrame());
+		
+		//Get the frame ID
+		id = terminatedstring(header.id, 4);
+		
+		//Create the ByteArray with room for the entire frame content, if it were
+		//a new ID3v2 tag
+		frameBytes = ByteArray(frameSize + HEADER_BYTE_SIZE, '\0');
+		musicFile->seekg(readpos, std::ifstream::beg);
+		if(musicFile->fail())
+			return FramePtr(new UnknownFrame(id));
+		
+		//Get the frame bytes, reserving the first four bytes in the ByteArray
+		musicFile->read(reinterpret_cast<char*>(&frameBytes.front()+4), frameSize + OLD_FRAME_HEADER_BYTE_SIZE);
+		
+		//===========================================
+		//Reconstruct the header as an ID3v2.4 header
+		//===========================================
+		
+		//Convert the ID to its ID3v2.4 equivalent, and save them to the currently
+		//unused first four bytes of the frame
+		id = convertOldFrameIDToNew(id);
+		for(ushort i = 0; i < 4; i++)
+			frameBytes[i] = id[i];
+		
+		//Convert the ID3v2.2 non-synchsafe 3-byte frame size to the ID3v2.4
+		//synchsafe 4-byte frame size
+		ByteArray v4Size = intToByteArray(frameSize, 4, true);
+		
+		//And save it to the frame bytes
+		for(ushort i = 0; i < 4; i++)
+			frameBytes[i+4] = v4Size[i];
+		
+		//The frame should have the Discard Frame Upon Tag Alter flag
+		frameBytes[8] = Frame::FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4;
+		frameBytes[9] = 0;
+	}
 	
 	//Return the Frame
 	switch(frameType) {

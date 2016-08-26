@@ -117,6 +117,10 @@ namespace ID3 {
 	 * "V3FRAMEID_XXXX_DEPRECATED" if there is no replacement frame in ID3v2.4.
 	 * The frame groups are sorted by their frame ID values.
 	 * 
+	 * The enum value "UNKNOWN_V2_2_FRAME" is a a special value used when the
+	 * function ID3::convertOldFrameIDToNew(std::string&) does not know the given
+	 * ID3v2.2 frame. These frames will be deleted upon a frame write.
+	 * 
 	 * @see http://id3.org/id3v2.3.0
 	 * @see http://id3.org/id3v2.4.0-frames
 	 * @todo Add values for each frame ID.
@@ -532,7 +536,10 @@ namespace ID3 {
 		
 		FRAME_USER_DEFINED_URL = 93,
 		FRAME_URL_USER_DEFINED = 93,
-		FRAMEID_WXXX           = 93
+		FRAMEID_WXXX           = 93,
+		
+		FRAME_UNKNOWN_V2_2_FRAME = 94,
+		FRAMEID_XXXX             = 94
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -598,24 +605,6 @@ namespace ID3 {
 		uint8_t minorVer;
 		uint8_t flags;
 		uint8_t size[4]; //A synchsafe integer in ID3v2.4+
-	};
-	
-	/**
-	 * A 10-bit struct that captures the structure of the ID3v2.3 extended header.
-	 */
-	struct V3ExtHeader {
-		uint8_t size[4];
-		uint8_t flags[2];
-		uint8_t paddingSize[4];
-	};
-	
-	/**
-	 * An 8-bit struct that captures the structure of the ID3v2.4 extended header.
-	 */
-	struct V4ExtHeader {
-		uint8_t size[4]; //A synchsafe integer
-		uint8_t flagBytes;
-		uint8_t flags;
 	};
 	
 	/**
@@ -687,6 +676,8 @@ namespace ID3 {
 	 * Defined in ID3Tag.cpp.
 	 */	
 	class Tag {
+		friend class FrameFactory;
+		
 		public:
 			/**
 			 * Constructor that takes a filename and opens the file.
@@ -1076,6 +1067,24 @@ namespace ID3 {
 				ulong totalSize;            //Total tag size (tag size + header size
 				                            // + extended header size + footer size)
 				ulong paddingStart;         //The byte in which padding starts
+			};
+			
+			/**
+			 * A 10-bit struct that captures the structure of the ID3v2.3 extended header.
+			 */
+			struct V3ExtHeader {
+				uint8_t size[4];
+				uint8_t flags[2];
+				uint8_t paddingSize[4];
+			};
+			
+			/**
+			 * An 8-bit struct that captures the structure of the ID3v2.4 extended header.
+			 */
+			struct V4ExtHeader {
+				uint8_t size[4]; //A synchsafe integer
+				uint8_t flagBytes;
+				uint8_t flags;
 			};
 			
 			/**

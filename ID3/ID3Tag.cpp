@@ -643,8 +643,13 @@ void Tag::readFileV2(std::ifstream& file) {
 		if(v2TagInfo.size > filesize)
 			return;
 		
-		//Unsynchronisation is not currently supported in ID3v2.3 and below.
-		if(v2TagInfo.flagUnsynchronisation && v2TagInfo.majorVer <= 3)
+		//Unsynchronisation is not supported in ID3v2.3 and below.
+		//In ID3v2.4, it is handled on a per-frame basis.
+		//In ID3v2.2, the extended header flag bit is used for a compression flag
+		//instead. Since there is no standard compression format used in ID3v2.2,
+		//it is not supported.
+		if((v2TagInfo.flagUnsynchronisation && v2TagInfo.majorVer <= 3) ||
+		   (v2TagInfo.flagExtHeader && v2TagInfo.majorVer <= 2))
 			return;
 		
 		//The position to start reading from the file
@@ -704,8 +709,14 @@ void Tag::readFileV2(std::ifstream& file) {
 				addFrame(frame->frame(), frame);
 			//If the frame content is a valid size (bigger than an ID3v2 header)
 			//then continue on to the next frame. If not, then stop the loop.
-			if(frame->size(true) > HEADER_BYTE_SIZE && frame->frame() != "")
+			if(frame->size(true) > HEADER_BYTE_SIZE && frame->frame() != "") {
 				frameStartPos += frame->size(true);
+				
+				//Account for 4 bytes added when reading ID3v2.2 frames from the
+				//ID3::FrameFactory class
+				if(v2TagInfo.majorVer <= 2)
+					frameStartPos -= 4;
+			}
 			else {
 				//Get the start of padding and exit the loop
 				v2TagInfo.paddingStart = frameStartPos;

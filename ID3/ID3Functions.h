@@ -163,6 +163,15 @@ namespace ID3 {
 	 * @see ID3::allowsMultipleFrames(Frames)
 	 */
 	bool allowsMultipleFrames(const std::string& frameID);
+	
+	/**
+	 * Convert an ID3v2.2 or older frame ID to its equivalent ID3v2.4 frame ID.
+	 * If the frame ID is unknown, then the ID "XXXX" will be returned instead.
+	 * 
+	 * @param v2FrameID The ID3v2.2 frame ID.
+	 * @return The equivalent ID3v2.4 frame ID, or "XXXX".
+	 */
+	std::string convertOldFrameIDToNew(const std::string& v2FrameID);
 }
 
 #endif

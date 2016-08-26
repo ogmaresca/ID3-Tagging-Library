@@ -78,6 +78,11 @@ namespace ID3 {
 	extern const ushort SUPPORTED_MINOR_VERSION;
 	
 	/**
+	 * The ID3v2 major version that ID3_Tagging-Library writes as.
+	 */
+	extern const ushort WRITE_VERSION;
+	
+	/**
 	 * The flag values in found in the ID3v2 header.
 	 * Check if the flag is used with flag & ID3::V2_FLAG_XXXX == ID3::V2_FLAG_XXXX.
 	 */

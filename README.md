@@ -15,16 +15,17 @@ It has been compiled exclusively with g++ and C++14. Add `-std=c++14` to the g++
 ID3-Tagging-Library requires the icu-uc package. Add "\`pkg-config icu-uc --cflags --libs\`" to the g++ command when compiling.
 
 ##What ID3-Tagging-Library does do
-- Read ID3v1, ID3v1.1, and ID3v1 Extended tags.
+- Read ID3v1, ID3v1.1, ID3v1 Extended, ID3v2.2, ID3v2.3, and ID3v2.4 tags.
 - Support 148 ID3v1 and ID3v1.1 genres.
 - Support reading the ID3v2 text frames.
 - Support reading the ID3v2 attached picture frame.
 
 ##What ID3-Tagging-Library does not do (yet)
 - Extensive testing.
-- Have support for editing/adding new tags.
 - Process the ID3v2 extended header.
 - Support compressed frames.
+- Edit tags.
+- Write new/updated ID3v2.4 tags to file.
 
 ##License
 ID3-Tagging-Library is licensed under the GNU Public License v3 (GPLv3). View `LICENSE.txt` for more information.

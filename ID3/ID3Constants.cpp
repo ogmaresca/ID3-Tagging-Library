@@ -25,13 +25,16 @@ const ushort ID3::V1::EXTENDED_BYTE_SIZE = sizeof(V1::ExtendedTag);
 const ushort ID3::HEADER_BYTE_SIZE = sizeof(Header);
 
 ///@pkg ID3.h
-const ushort ID3::MIN_SUPPORTED_VERSION = 3;
+const ushort ID3::MIN_SUPPORTED_VERSION = 2;
 
 ///@pkg ID3.h
 const ushort ID3::MAX_SUPPORTED_VERSION = 4;
 
 ///@pkg ID3.h
 const ushort ID3::SUPPORTED_MINOR_VERSION = 0;
+
+///@pkg ID3.h
+const ushort ID3::WRITE_VERSION = 4;
 
 ///@pkg ID3.h
 const uint8_t ID3::FLAG_UNSYNCHRONISATION = 0b10000000;

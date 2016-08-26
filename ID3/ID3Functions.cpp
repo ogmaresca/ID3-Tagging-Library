@@ -333,7 +333,8 @@ std::string ID3::getFrameName(const Frames frameID) {
 		"WORS", //90
 		"WPAY", //91
 		"WPUB", //92
-		"WXXX"  //93
+		"WXXX", //93
+		"XXXX", //94 - Unknown ID3v2.2 frame ID after being converted to ID3v2.4
 	};
 	
 	if(static_cast<ushort>(frameID) > frames.size())
@@ -371,6 +372,7 @@ bool ID3::allowsMultipleFrames(const Frames frameID) {
 	}
 }
 
+///@pkg ID3Functions.h
 bool ID3::allowsMultipleFrames(const std::string& frameID) {
 	if(frameID == "") return false;
 	
@@ -399,4 +401,10 @@ bool ID3::allowsMultipleFrames(const std::string& frameID) {
 		case 'W': return frameID == "WCOM" || frameID == "WOAR" || frameID == "WXXX";
 		default: return false;
 	}
+}
+
+///@pkg ID3Functions.h
+std::string ID3::convertOldFrameIDToNew(const std::string& v2FrameID) {
+	//TODO: Convert ID3v2.2 frame IDs to ID3v2.4 frame IDs
+	return getFrameName(Frames::FRAME_UNKNOWN_V2_2_FRAME);
 }
