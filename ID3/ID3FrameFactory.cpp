@@ -360,10 +360,15 @@ FrameClass FrameFactory::frameType(const std::string& frameID) {
 ///@pkg ID3FrameFactory
 ///@static
 short FrameFactory::frameOptions(const std::string& frameID) {
+	//These frames have a language field
 	if(frameID == "USLT" || frameID == "COMM")
 		return DescriptiveTextFrame::OPTION_LANGUAGE;
+	//This frame always encodes the text content as Latin-1
 	else if(frameID == "WXXX")
 		return DescriptiveTextFrame::OPTION_LATIN1_TEXT;
+	//This frame has a language field and no description
+	else if(frameID == "USER")
+		return DescriptiveTextFrame::OPTION_LANGUAGE | DescriptiveTextFrame::OPTION_NO_DESCRIPTION;
 	else
 		return 0;
 }

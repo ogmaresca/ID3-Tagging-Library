@@ -375,22 +375,16 @@ namespace ID3 {
 			/**
 			 * Save any changes made to the frame, and get the updated content of
 			 * the frame in bytes.
+			 * 
+			 * Upon calling this method, the internal ID3v2 major verision gets
+			 * changed to ID3::WRITE_VERSION (ID3v2.4.0).
+			 * 
 			 * This method is to be implemented in child classes.
 			 * 
-			 * @param version The ID3v2 major version to save the frame
-			 *                contents as. If a value is not supplied,
-			 *                or it is not supported, it will default
-			 *                to using the ID3v2 major version supplied
-			 *                during the object's creation.
-			 * @param minimize By default, the write() method should not shrink the
-			 *                 size of the frame if the modified content is
-			 *                 smaller than the original content. If this is set to
-			 *                 true, no padding will ever be added to the frame.
 			 * @return The new content of the frame, in bytes.
 			 * @abstract
 			 */
-			virtual ByteArray write(ushort version=0,
-			                        bool minimize=false) = 0;
+			virtual ByteArray write() = 0;
 		
 		protected:
 			/**
@@ -539,17 +533,15 @@ namespace ID3 {
 			/**
 			 * The write() method for UnknownFrame will only do two things to the
 			 * frame. If the flag to discard unknown frames when the tag is altered
-			 * is set, then the Frame contents will be cleared. Additionally, if
-			 * the version is a supported version and different from the version
-			 * given in the constructor, the Frame's version will be updated to the
-			 * given version and the frame size in the Frame's bytes will be
-			 * modified to support the changes between ID3v2 that were made about
-			 * whether the frame size is a synchsafe value or nnot.
+			 * is set, or the frame is null and/or empty, then the Frame contents
+			 * will be cleared. Else, if the ID3 version on file is ID3v2.3, the
+			 * frame header's size bytes will be converted from a non-synchsafe
+			 * number to a synchsafe number as the ID3 version of the Frame will
+			 * be changed to ID3v2.4.
 			 * 
-			 * @see ID3::Frame::write(ushort)
+			 * @see ID3::Frame::write()
 			 */
-			virtual ByteArray write(ushort version=0,
-			                        bool minimize=false);
+			virtual ByteArray write();
 		
 		protected:
 			/**

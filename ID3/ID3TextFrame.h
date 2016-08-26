@@ -117,11 +117,9 @@ namespace ID3 {
 			 * The write() method for TextFrame re-creates the frame
 			 * header with UTF-8 encoding and its stored text content.
 			 * 
-			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write(ushort, bool)
+			 * @see ID3::Frame::write()
 			 */
-			virtual ByteArray write(ushort version=0,
-			                        bool minimize=false);
+			virtual ByteArray write();
 		
 		protected:
 			/**
@@ -428,16 +426,27 @@ namespace ID3 {
 		
 		public:
 			/**
-			 * An option value used when reading USLT and COMM frames, as they have
-			 * a 3-byte language string after the encoding byte.
+			 * An option value used when reading USLT, USER, and COMM frames, as
+			 * they have a 3-byte language string after the encoding byte.
 			 */
-			static const short OPTION_LANGUAGE = 0b00000001;
+			static const ushort OPTION_LANGUAGE = 0b00000001;
 			
 			/**
 			 * An option value used when reading the WXXX frame, as the URL string
 			 * is always encoded in LATIN-1.
 			 */
-			static const short OPTION_LATIN1_TEXT = 0b00000010;
+			static const ushort OPTION_LATIN1_TEXT = 0b00000010;
+			
+			/**
+			 * An option value used when reading the USER frame, as it doesn't have
+			 * a description.
+			 */
+			static const ushort OPTION_NO_DESCRIPTION = 0b00000100;
+			
+			/**
+			 * How long, in bytes, a valid ISO 639-2 code language is.
+			 */
+			static const ushort LANGUAGE_SIZE = 3;
 			
 			/**
 			 * Checks if the given Frame is a DescriptiveTextFrame with the same
@@ -523,10 +532,9 @@ namespace ID3 {
 			 * language will default to "xxx".
 			 * 
 			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write(ushort, bool)
+			 * @see ID3::Frame::write()
 			 */
-			virtual ByteArray write(ushort version=0,
-			                        bool   minimize=false);
+			virtual ByteArray write();
 		
 		protected:
 			/**
@@ -610,11 +618,30 @@ namespace ID3 {
 			std::string textLanguage;
 			
 			/**
-			 * The Frame options. It is set in the constructor and it is constant.
-			 * The possible options are ID3::DescriptiveTextFrame::OPTION_LANGUAGE
-			 * and ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT.
+			 * This value saves whether the language option was passed to the
+			 * constructor or not.
+			 * 
+			 * @see ID3::DescriptiveTextFrame::OPTION_LANGUAGE
 			 */
-			const short frameOptions;
+			const bool optionLanguage;
+			
+			/**
+			 * This value saves whether the LATIN-1 text option was passed to the
+			 * constructor or not.
+			 * 
+			 * @see ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT
+			 */
+			const bool optionLatin1;
+			
+			/**
+			 * This value saves whether the "no description" option was passed to
+			 * the constructor or not. This is only checked in the write() method,
+			 * the read() method will try to account for frames that shouldn't be
+			 * missing a description that do miss a description.
+			 * 
+			 * @see ID3::DescriptiveTextFrame::OPTION_NO_DESCRIPTION
+			 */
+			const bool optionNoDescription;
 			
 			/**
 			 * The read() method for TextFrame first gets the text encoding of the
@@ -679,10 +706,9 @@ namespace ID3 {
 			 * header with LATIN-1 encoding and its stored text content.
 			 * 
 			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write(ushort, bool)
+			 * @see ID3::Frame::write()
 			 */
-			virtual ByteArray write(ushort version=0,
-			                        bool   minimize=false);
+			virtual ByteArray write();
 		
 		protected:
 			/**

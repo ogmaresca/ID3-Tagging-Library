@@ -170,11 +170,9 @@ namespace ID3 {
 			 * The write() method for PictureFrame writes a ByteArray with the
 			 * currently stored content.
 			 * 
-			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write(ushort)
+			 * @see ID3::Frame::write()
 			 */
-			virtual ByteArray write(ushort version=0,
-			                        bool minimize=false);
+			virtual ByteArray write();
 			
 			/**
 			 * Check if a given MIME type is allowed for ID3v2 pictures.

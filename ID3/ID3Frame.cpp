@@ -313,15 +313,23 @@ void UnknownFrame::print() const {
 }
 
 ///@pkg ID3Frame.h
-ByteArray UnknownFrame::write(ushort version, bool minimize) {
-	if(discardUponTagAlterIfUnknown()) {
+ByteArray UnknownFrame::write() {
+	//Save the old version to take synchsafe-ness into account
+	const ushort OLD_VERSION = ID3Ver;
+	//Set the ID3 version to ID3::WRITE_VERSION
+	ID3Ver = WRITE_VERSION;
+	isEdited = false;
+	
+	//If the frame is invalid, or the Discard Frame Upon Tag Alter flag is set,
+	//then clear the frame
+	if(discardUponTagAlterIfUnknown() || isNull || empty() ||
+	   frameContent.size() < HEADER_BYTE_SIZE) {
 		frameContent = ByteArray();
-	} else if(frameContent.size() >= HEADER_BYTE_SIZE &&
-	          version != ID3Ver && version >= MIN_SUPPORTED_VERSION &&
-	          version <= MAX_SUPPORTED_VERSION) {
-		//Whether a frame size is synchsafe has been changed in different ID3
-		//versions, so it must be updated to report the correct frame size
-		ByteArray frameSize = intToByteArray(frameContent.size() - HEADER_BYTE_SIZE, 4, ID3Ver >= 4);
+		isNull = true;
+	} else if(OLD_VERSION == 3) {
+		//Whether a frame size is synchsafe has been changed from ID3v2.3 to
+		//ID3v2.4, so it must be updated to report the correct frame size
+		ByteArray frameSize = intToByteArray(frameContent.size() - HEADER_BYTE_SIZE, 4, true);
 		for(short i = 0; i < 4; i++)
 			frameContent[i+4] = frameSize[i];
 	}

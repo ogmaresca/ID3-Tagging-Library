@@ -126,13 +126,65 @@ void PictureFrame::print() const {
 }
 
 ///@pkg ID3TextFrame.h
-ByteArray PictureFrame::write(ushort version, bool minimize) {
-	if(version >= MIN_SUPPORTED_VERSION && version <= MAX_SUPPORTED_VERSION)
-		ID3Ver = version;
+ByteArray PictureFrame::write() {
+	//TODO: Do something (like throw an exception) if the picture data is too
+	//      large for the frame
 	
-	//isEdited = false;
+	//Save the old version to take synchsafe-ness into account
+	const ushort OLD_VERSION = ID3Ver;
+	//Set the ID3 version to ID3::WRITE_VERSION
+	ID3Ver = WRITE_VERSION;
+	
+	//If the Frame is empty or null, then don't write anything to file
+	if(empty() || isNull) {
+		frameContent = ByteArray();
+	} else if(isEdited || isFromFile || OLD_VERSION == 3) {
+		//The description starts after the header, encoding, MIME type, and
+		//picture type.
+		const ulong DESCRIPTION_START = HEADER_BYTE_SIZE + 3 + textMIME.length();
 		
-	//TODO: Encode the frame ID and picture information into a ByteArray
+		//The picture starts after where the description starts plus a null byte.
+		const ulong PIC_START = DESCRIPTION_START + textDescription.size() + 1;
+		
+		//Create a ByteArray that fits the header, encoding, MIME type,
+		//description text size, picture type, and picture data size
+		const ulong NEW_FRAME_SIZE = PIC_START + pictureData.size();
+		
+		//Reset the frame ByteArray. This automatically clears any flags.
+		frameContent = ByteArray(NEW_FRAME_SIZE, '\0');
+		
+		//Save the frame name
+		for(ushort i = 0; i < 4 && i < id.size(); i++)
+			frameContent[i] = id[i];
+		
+		//Save the frame size
+		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, true);
+		for(ushort i = 0; i < 4 && i < id.size(); i++)
+			frameContent[i+4] = size[i];		
+		
+		//Set the encoding to UTF-8
+		frameContent[HEADER_BYTE_SIZE] = FrameEncoding::ENCODING_UTF8;
+		
+		//Write the MIME type to file
+		for(ulong i = 0; i < textMIME.size(); i++)
+			frameContent[HEADER_BYTE_SIZE + 1 + i] = textMIME[i];
+		
+		//Write the picture type to file
+		frameContent[DESCRIPTION_START - 1] = static_cast<uint8_t>(APICType);
+		
+		//Write the description to file. Since frameContent was initialized with
+		//null characters, the null separator is already in the array.
+		for(ulong i = DESCRIPTION_START; i < textDescription.size(); i++)
+			frameContent[DESCRIPTION_START + i] = textDescription[i];
+		
+		//Write the picture data to file
+		for(ulong i = 0; i < pictureData.size() && PIC_START + i < NEW_FRAME_SIZE; i++)
+			frameContent[PIC_START + 1] = pictureData[i];
+	}
+	
+	isEdited = false;
+	
+	//TODO: Encode the frame ID and textContent contents into a ByteArray
 	return frameContent;
 }
 
