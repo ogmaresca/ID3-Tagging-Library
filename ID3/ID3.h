@@ -649,6 +649,30 @@ namespace ID3 {
 		const bool        null;
 	};
 	
+	/**
+	 * A struct that holds the text content of a frame in a tag, and the
+	 * description and language field as well if the frame supports it.
+	 */
+	struct Text {
+		/**
+		 * Create a Text struct. Every paramter is optional, and the respective
+		 * field will default to an empty string.
+		 * 
+		 * @param textContent The content string of the frame.
+		 * @param descText    The description of the frame.
+		 * @param langText    The language of the frame. It should be a ISO 639-2
+		 *                    language code.
+		 */
+		Text(const std::string& textContent="",
+		     const std::string& descText="",
+		     const std::string& langText="") : text(textContent),
+		                                       description(descText),
+		                                       language(langText) {}
+		const std::string text;
+		const std::string description;
+		const std::string language;
+	};
+	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// C L A S S E S ///////////////////////////////
@@ -704,30 +728,29 @@ namespace ID3 {
 			 *                  an ID3v2 frame ID.
 			 * @return If the Frame exists or not.
 			 */
-			bool frameExists(Frames frameName) const;
+			bool exists(const Frames frameName) const;
 			
 			/**
-			 * @see ID3::Tag::frameExists(Frames);
+			 * @see ID3::Tag::exists(Frames);
 			 */
-			bool frameExists(const std::string& frameName) const;
+			bool exists(const std::string& frameName) const;
 			
 			/**
 			 * Get the text content of a frame.
 			 * 
-			 * NOTE: Not all frames support text content. If the given
-			 *       frame name does not, or the music file does not
-			 *       contain an ID3v2 frame of that type, an empty
-			 *       string will be returned.
+			 * NOTE: Not all frames support text content. If the given frame name
+			 *       does not, or the request frame does not exist in the tag, an
+			 *       empty string will be returned. See ID3::Text::exists(Frames)
+			 *       to check if the frame actually exists.
 			 * 
 			 * NOTE: No formatting will be done, so if the frame has special
 			 *       formatting then you should call the relevant method instead.
 			 * 
-			 * @param frameName A Frames enum variable that represents
-			 *                  an ID3v2 frame ID.
-			 * @return The text content, or "" if the frame is not found,
-			 *         "null", or not a text frame.
+			 * @param frameName A Frames enum variable that represents a frame ID.
+			 * @return The text content, or "" if the frame is not found, "null",
+			 *         or not a text frame.
 			 */
-			std::string textContent(Frames frameName) const;
+			std::string textString(const Frames frameName) const;
 			
 			/**
 			 * Get the text content of a frame, split up into a vector for each
@@ -741,7 +764,7 @@ namespace ID3 {
 			 *       does not, or the music file does not contain an ID3v2 frame of
 			 *       that type, the vector will contain just an empty string. Also,
 			 *       multiple values do not make sense for all text frames. For
-			 *       those frames, use ID3::Tag::textContent(Frames) instead.
+			 *       those frames, use ID3::Tag::textString(Frames) instead.
 			 * 
 			 * NOTE: No formatting will be done, so if the frame has special
 			 *       formatting then you should call the relevant method instead.
@@ -754,13 +777,49 @@ namespace ID3 {
 			 *       the slash separator.
 			 * 
 			 * NOTE: The returned vector will always hold at least one string that
-			 *       is either an empty string or the frame text content.
+			 *       is either an empty string or the frame text content. See
+			 *       ID3::Text::exists(Frames) to check if the requested frame
+			 *       content actually exists in the tag.
 			 * 
-			 * @param frameName A Frames enum variable that represents
-			 *                  an ID3v2 frame ID.
+			 * @param frameName A Frames enum variable that represents a frame ID.
 			 * @return A string vector of the text content.
 			 */
-			std::vector<std::string> textContents(Frames frameName) const;
+			std::vector<std::string> textStrings(const Frames frameName) const;
+			
+			/**
+			 * Return a Text struct with a frame's text content, description, and
+			 * language.
+			 * 
+			 * NOTE: Not all frames support text content. If the given frame name
+			 *       does not, or the music file does not contain an ID3v2 frame of
+			 *       that type, the returned struct will contain just empty strings.
+			 *       Likewise, if the frame is a text frame but does not support
+			 *       descriptions and/or languages, those fields will be empty
+			 *       strings. See ID3::Text::exists(Frames) to check if the frame
+			 *       actually exists in the tag.
+			 * 
+			 * @param frameName A Frames enum variable that represents a frame ID.
+			 * @return A Text struct of the frame content.
+			 */
+			Text text(const Frames frameName) const;
+			
+			/**
+			 * Return a vector Text structs with the text content, descriptions,
+			 * and languages of all the frames on file with the given frame ID.
+			 * 
+			 * NOTE: The returned vector will always hold at least one Text struct,
+			 *       even if no frames of the given frame ID were found on file.
+			 *       See ID3::Text::exists(Frames) to check if the requested frame
+			 *       ID actually exists in the tag.
+			 * 
+			 * NOTE: In ID3v2.3 some frames support multiple values, and in ID3v2.4
+			 *       all text frames do. See ID3::Tag::textStrings(Frames) to get
+			 *       the frame value split by the dividing character.
+			 * 
+			 * @param frameName A Frames enum variable that represents a frame ID.
+			 * @return A Text struct of the frame content.
+			 */
+			std::vector<Text> texts(const Frames frameName) const;
 			
 			/**
 			 * Get the title tag.
@@ -790,7 +849,7 @@ namespace ID3 {
 			 * Get the genre tag as a vector of genre string(s).
 			 * 
 			 * @see ID3::Tag::genre(bool)
-			 * @see ID3::Tag::textContents(Frames)
+			 * @see ID3::Tag::textStrings(Frames)
 			 */
 			std::vector<std::string> genres(bool process=true) const;
 			
@@ -806,7 +865,7 @@ namespace ID3 {
 			 * Get the artist tag as a vector of artist string(s).
 			 * 
 			 * @see ID3::Tag::artist()
-			 * @see ID3::Tag::textContents(Frames)
+			 * @see ID3::Tag::textStrings(Frames)
 			 */
 			std::vector<std::string> artists() const;
 			
@@ -822,7 +881,7 @@ namespace ID3 {
 			 * Get the album tag as a vector of album string(s).
 			 * 
 			 * @see ID3::Tag::album()
-			 * @see ID3::Tag::textContents(Frames)
+			 * @see ID3::Tag::textStrings(Frames)
 			 */
 			std::vector<std::string> albums() const;
 			
@@ -839,7 +898,7 @@ namespace ID3 {
 			 * album artist string(s).
 			 * 
 			 * @see ID3::Tag::albumArtist()
-			 * @see ID3::Tag::textContents(Frames)
+			 * @see ID3::Tag::textStrings(Frames)
 			 */
 			std::vector<std::string> albumArtists() const;
 			
@@ -925,7 +984,7 @@ namespace ID3 {
 			 * Get the composer tag as a vector of composer string(s).
 			 * 
 			 * @see ID3::Tag::composer()
-			 * @see ID3::Tag::textContents(Frames)
+			 * @see ID3::Tag::textStrings(Frames)
 			 */
 			std::vector<std::string> composers() const;
 			
@@ -938,6 +997,13 @@ namespace ID3 {
 			std::string bpm() const;
 			
 			/**
+			 * Get the tag comments as a vector of Text structs.
+			 * 
+			 * @see ID3::Tag::texts(Frames)
+			 */
+			std::vector<Text> comments() const;
+			
+			/**
 			 * Get the attached picture.
 			 * 
 			 * @return The attached picture, encapsulated in a ID3::Picture struct.
@@ -945,6 +1011,17 @@ namespace ID3 {
 			 *         MIME type, the null field will be true.
 			 */
 			Picture picture() const;
+			
+			/**
+			 * Get a vector of all attached pictures.
+			 * 
+			 * NOTE: Unlike the getter methods for text frames, if there are no
+			 *       pictures stored in the tag then the returned vector will be
+			 *       empty.
+			 * 
+			 * @return A vector of Picture structs.
+			 */
+			std::vector<Picture> pictures() const;
 			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////

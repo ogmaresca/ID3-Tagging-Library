@@ -180,17 +180,17 @@ Tag::Tag() : isNull(true) {}
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3.h
-bool Tag::frameExists(Frames frameName) const {
+bool Tag::exists(Frames frameName) const {
 	return frames.count(getFrameName(frameName)) > 0;
 }
 
 ///@pkg ID3.h
-bool Tag::frameExists(const std::string& frameName) const {
+bool Tag::exists(const std::string& frameName) const {
 	return frames.count(frameName) > 0;
 }
 
 ///@pkg ID3.h
-std::string Tag::textContent(Frames frameName) const {
+std::string Tag::textString(Frames frameName) const {
 	//Get the frame
 	TextFrame* textFrameObj = getFrame<TextFrame>(frameName);
 	
@@ -200,7 +200,7 @@ std::string Tag::textContent(Frames frameName) const {
 }
 
 ///@pkg ID3.h
-std::vector<std::string> Tag::textContents(Frames frameName) const {
+std::vector<std::string> Tag::textStrings(Frames frameName) const {
 	if(allowsMultipleFrames(frameName)) {
 		//Get the text frames
 		std::vector<TextFrame*> textFrames = getFrames<TextFrame>(frameName);
@@ -221,19 +221,81 @@ std::vector<std::string> Tag::textContents(Frames frameName) const {
 		
 		return textStrings;
 	} else {
-		std::string text = textContent(frameName);
+		std::string text = textString(frameName);
 		return splitTextContent(frameName, text, v2TagInfo.majorVer);
 	}
 }
 
 ///@pkg ID3.h
-std::string Tag::title() const {
-	return textContent(Frames::FRAME_TITLE);
+Text Tag::text(Frames frameName) const {
+	//Get the Frame
+	TextFrame* textFrameObj = getFrame<TextFrame>(frameName);
+	
+	//If it's not a TextFrame, return a default Text struct
+	if(textFrameObj == nullptr)
+		return Text();
+	
+	//Get the Frame's text content
+	std::string textContent = textFrameObj->content();
+	
+	//Try casting the Frame to a DescriptiveTextFrame
+	DescriptiveTextFrame* descFrameObj = dynamic_cast<DescriptiveTextFrame*>(textFrameObj);
+	
+	//If the Frame is a DescriptiveTextFrame, then return a Text struct with its
+	//description and language. If it's a different TextFrame class, then let
+	//those fields default to empty strings.
+	if(descFrameObj == nullptr)
+		return Text(textContent);
+	else
+		return Text(textContent,
+		            descFrameObj->description(),
+		            descFrameObj->language());
 }
 
 ///@pkg ID3.h
+std::vector<Text> Tag::texts(Frames frameName) const {
+	//Get the Frame vector
+	std::vector<TextFrame*> textFrames = getFrames<TextFrame>(frameName);
+	
+	//If no relevant text frames were found, return one with an empty Text
+	if(textFrames.size() == 0)
+		return std::vector<Text>(1, Text());
+	
+	//The vector to return
+	std::vector<Text> toReturn;
+	
+	//Reserve slots in toReturn for each Frame in the textFrames vector
+	toReturn.reserve(textFrames.size());
+	
+	//Loop through every text frame
+	for(TextFrame* currentFrame : textFrames) {
+		//Get the Frame's text content
+		std::string textContent = currentFrame->content();
+		
+		//Try casting the Frame to a DescriptiveTextFrame
+		DescriptiveTextFrame* descFrameObj = dynamic_cast<DescriptiveTextFrame*>(currentFrame);
+		
+		//If the Frame is a DescriptiveTextFrame, then add a Text struct with
+		//its description and language. If it's a different TextFrame class, then
+		//let those fields default to empty strings.
+		if(descFrameObj == nullptr)
+			toReturn.push_back(Text(textContent));
+		else
+			toReturn.push_back(Text(textContent,
+							            descFrameObj->description(),
+							            descFrameObj->language()));
+	}
+	
+	//Return the Text vector
+	return toReturn;
+}
+
+///@pkg ID3.h
+std::string Tag::title() const { return textString(Frames::FRAME_TITLE); }
+
+///@pkg ID3.h
 std::string Tag::genre(bool process) const {
-	std::string genreString = textContent(Frames::FRAME_GENRE);
+	std::string genreString = textString(Frames::FRAME_GENRE);
 	if(process)
 		genreString = processGenre(genreString);
 	return genreString;
@@ -241,7 +303,7 @@ std::string Tag::genre(bool process) const {
 
 ///@pkg ID3.h
 std::vector<std::string> Tag::genres(bool process) const {
-	std::vector<std::string> genreStrings = textContents(Frames::FRAME_GENRE);
+	std::vector<std::string> genreStrings = textStrings(Frames::FRAME_GENRE);
 	if(process)
 		for(std::size_t i = 0; i < genreStrings.size(); i++)
 			genreStrings[i] = processGenre(genreStrings[i]);
@@ -249,43 +311,29 @@ std::vector<std::string> Tag::genres(bool process) const {
 }
 
 ///@pkg ID3.h
-std::string Tag::artist() const {
-	return textContent(Frames::FRAME_ARTIST);
-}
+std::string Tag::artist() const { return textString(Frames::FRAME_ARTIST); }
 
 ///@pkg ID3.h
-std::vector<std::string> Tag::artists() const {
-	return textContents(Frames::FRAME_ARTIST);
-}
+std::vector<std::string> Tag::artists() const { return textStrings(Frames::FRAME_ARTIST); }
 
 ///@pkg ID3.h
-std::string Tag::albumArtist() const {
-	return textContent(Frames::FRAME_ALBUM_ARTIST);
-}
+std::string Tag::albumArtist() const { return textString(Frames::FRAME_ALBUM_ARTIST); }
 
 ///@pkg ID3.h
-std::vector<std::string> Tag::albumArtists() const {
-	return textContents(Frames::FRAME_ALBUM_ARTIST);
-}
+std::vector<std::string> Tag::albumArtists() const { return textStrings(Frames::FRAME_ALBUM_ARTIST); }
 
 ///@pkg ID3.h
-std::string Tag::album() const {
-	return textContent(Frames::FRAME_ALBUM);
-}
+std::string Tag::album() const { return textString(Frames::FRAME_ALBUM); }
 
 ///@pkg ID3.h
-std::vector<std::string> Tag::albums() const {
-	return textContents(Frames::FRAME_ALBUM);
-}
+std::vector<std::string> Tag::albums() const { return textStrings(Frames::FRAME_ALBUM); }
 
 ///@pkg ID3.h
-std::string Tag::year() const {
-	return textContent(Frames::FRAME_YEAR);
-}
+std::string Tag::year() const { return textString(Frames::FRAME_YEAR); }
 
 ///@pkg ID3.h
 std::string Tag::track(bool process) const {
-	std::string trackString = textContent(Frames::FRAME_TRACK);
+	std::string trackString = textString(Frames::FRAME_TRACK);
 	if(process) {
 		size_t slashPos = trackString.find_first_of('/');
 		if(slashPos != std::string::npos) {
@@ -299,7 +347,7 @@ std::string Tag::track(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::trackTotal(bool process) const {
-	std::string trackString = textContent(Frames::FRAME_TRACK);
+	std::string trackString = textString(Frames::FRAME_TRACK);
 	size_t slashPos = trackString.find_first_of('/');
 	if(slashPos == std::string::npos)
 		return "";
@@ -311,7 +359,7 @@ std::string Tag::trackTotal(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::disc(bool process) const {
-	std::string discString = textContent(Frames::FRAME_DISC);
+	std::string discString = textString(Frames::FRAME_DISC);
 	if(process) {
 		size_t slashPos = discString.find_first_of('/');
 		if(slashPos != std::string::npos) {
@@ -325,7 +373,7 @@ std::string Tag::disc(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::discTotal(bool process) const {
-	std::string discString = textContent(Frames::FRAME_DISC);
+	std::string discString = textString(Frames::FRAME_DISC);
 	size_t slashPos = discString.find_first_of('/');
 	if(slashPos == std::string::npos)
 		return "";
@@ -336,46 +384,50 @@ std::string Tag::discTotal(bool process) const {
 }
 
 ///@pkg ID3.h
-std::string Tag::composer() const {
-	return textContent(Frames::FRAME_COMPOSER);
-}
+std::string Tag::composer() const { return textString(Frames::FRAME_COMPOSER); }
 
 ///@pkg ID3.h
-std::vector<std::string> Tag::composers() const {
-	return textContents(Frames::FRAME_COMPOSER);
-}
+std::vector<std::string> Tag::composers() const { return textStrings(Frames::FRAME_COMPOSER); }
 
 ///@pkg ID3.h
-std::string Tag::bpm() const {
-	return textContent(Frames::FRAME_BPM);
-}
+std::string Tag::bpm() const { return textString(Frames::FRAME_BPM); }
+
+///@pkg ID3.h
+std::vector<Text> Tag::comments() const { return texts(Frames::FRAME_COMMENT); }
 
 ///@pkg ID3.h
 Picture Tag::picture() const {
-	try {
-		//Get an iterator from the FrameMap
-		FrameMap::const_iterator pictureItr = frames.find(getFrameName(FRAME_PICTURE));
-		
-		//If the Frame does not exist in the FrameMap
-		if(pictureItr == frames.end()) return Picture();
-		
-		//Get the FramePtr
-		FramePtr pictureFrameBase = pictureItr->second;
-		
-		//Cast it as a PictureFrame
-		PictureFrame* picture = dynamic_cast<PictureFrame*>(pictureFrameBase.get());
-		
-		//Return a Picture struct
-		return picture == nullptr ? Picture() :
-		                            Picture(picture->picture(),
-		                                    picture->mimeType(),
-		                                    picture->description(),
-		                                    picture->pictureType());
-	} catch(std::out_of_range) {
-		//If there is no Frames::FRAME_PICTURE Frame stored, then return an empty
-		//Picture
-		return Picture();
-	}
+	//Get the picture Frame, or a nullptr if there isn't a picture
+	PictureFrame* picture = getFrame<PictureFrame>(Frames::FRAME_PICTURE);
+	
+	//Return a Picture struct
+	return picture == nullptr ? Picture() :
+	                            Picture(picture->picture(),
+	                                    picture->mimeType(),
+	                                    picture->description(),
+	                                    picture->pictureType());
+}
+
+///@pkg ID3.h
+std::vector<Picture> Tag::pictures() const {
+	//Get the vector of PictureFrames in the Frame map.
+	std::vector<PictureFrame*> frames = getFrames<PictureFrame>(Frames::FRAME_PICTURE);
+	
+	//The Picture vector to return
+	std::vector<Picture> toReturn;
+	
+	//Reserve space for each picture Frame
+	toReturn.reserve(frames.size());
+	
+	//Loop through the Frame vector and add a Picture struct for each Frame
+	for(PictureFrame* currentFrame : frames)
+		toReturn.push_back(Picture(currentFrame->picture(),
+	                              currentFrame->mimeType(),
+	                              currentFrame->description(),
+	                              currentFrame->pictureType()));
+	
+	//Return the Picture vector
+	return toReturn;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -442,7 +494,7 @@ void Tag::print() const {
 ///@pkg ID3.h
 bool Tag::addFrame(const std::string& frameName, FramePtr frame) {
 	//Check if the Frame is valid
-	if((frameExists(frameName) && !allowsMultipleFrames(frameName)) ||
+	if((exists(frameName) && !allowsMultipleFrames(frameName)) ||
 	   frame.get() == nullptr || frame->null() || frame->empty())
 		return false;
 	frames.emplace(frameName, frame);
@@ -452,7 +504,7 @@ bool Tag::addFrame(const std::string& frameName, FramePtr frame) {
 ///@pkg ID3.h
 bool Tag::addFrame(const FramePair& frameMapPair) {
 	//Check if the Frame is valid
-	if((frameExists(frameMapPair.first) && !allowsMultipleFrames(frameMapPair.first)) ||
+	if((exists(frameMapPair.first) && !allowsMultipleFrames(frameMapPair.first)) ||
 	   frameMapPair.second.get() == nullptr || frameMapPair.second->null() || frameMapPair.second->empty())
 		return false;
 	frames.emplace(frameMapPair);
@@ -695,7 +747,7 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 		addFrame(FrameFactory::createPair(Frames::FRAME_YEAR,
 		                                  v2TagInfo.majorVer,
 		                                  terminatedstring(tags.year, 4)));
-		if(!frameExists(Frames::FRAME_COMMENT))
+		if(!exists(Frames::FRAME_COMMENT))
 			addFrame(FrameFactory::createPair(Frames::FRAME_COMMENT,
 			                                  v2TagInfo.majorVer,
 			                                  terminatedstring(tags.comment, 30)));
@@ -737,7 +789,7 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 		addFrame(FrameFactory::createPair(Frames::FRAME_YEAR,
 		                                  v2TagInfo.majorVer,
 		                                  terminatedstring(tags.year, 4)));
-		if(!frameExists(Frames::FRAME_COMMENT))
+		if(!exists(Frames::FRAME_COMMENT))
 			addFrame(FrameFactory::createPair(Frames::FRAME_COMMENT,
 			                                  v2TagInfo.majorVer,
 			                                  terminatedstring(tags.comment, 28)));
