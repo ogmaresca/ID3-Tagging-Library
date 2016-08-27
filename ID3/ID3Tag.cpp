@@ -180,12 +180,7 @@ Tag::Tag() : isNull(true) {}
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3.h
-bool Tag::exists(Frames frameName) const {
-	return frames.count(getFrameName(frameName)) > 0;
-}
-
-///@pkg ID3.h
-bool Tag::exists(const std::string& frameName) const {
+bool Tag::exists(const FrameID& frameName) const {
 	return frames.count(frameName) > 0;
 }
 
@@ -513,9 +508,9 @@ bool Tag::addFrame(const FramePair& frameMapPair) {
 
 ///@pkg ID3.h
 template<typename DerivedFrame>
-DerivedFrame* Tag::getFrame(Frames frameName) const {
+DerivedFrame* Tag::getFrame(FrameID frameName) const {
 	//Check if the Frame is in the map
-	const FrameMap::const_iterator result = frames.find(getFrameName(frameName));
+	const FrameMap::const_iterator result = frames.find(frameName);
 	if(result == frames.end()) return nullptr;
 	
 	//If the frame is in the map, get it
@@ -533,11 +528,11 @@ DerivedFrame* Tag::getFrame(Frames frameName) const {
 
 ///@pkg ID3.h
 template<typename DerivedFrame>
-std::vector<DerivedFrame*> Tag::getFrames(Frames frameName) const {
+std::vector<DerivedFrame*> Tag::getFrames(FrameID frameName) const {
 	//Get the range.
 	//Each const_iterator has a first variable, which stores the Frames value,
 	//and a second variable, which stores the FramePtr object.
-	std::pair<FrameMap::const_iterator, FrameMap::const_iterator> range = frames.equal_range(getFrameName(frameName));
+	std::pair<FrameMap::const_iterator, FrameMap::const_iterator> range = frames.equal_range(frameName);
 	
 	//The vector to return
 	std::vector<DerivedFrame*> derivedFrameVector;
@@ -551,7 +546,6 @@ std::vector<DerivedFrame*> Tag::getFrames(Frames frameName) const {
 		if(derivedFrameObj != nullptr && !derivedFrameObj->null())
 			derivedFrameVector.push_back(derivedFrameObj);
 	}
-	
 	
 	//Return the vector
 	return derivedFrameVector;
@@ -854,6 +848,13 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::ExtendedTag&): " << e.what() << std::endl;
 	}
 }
+
+FrameID::FrameID(const std::string& frameID) : enumID(getFrameName(frameID)),
+                                               strID(enumID == FRAME_UNKNOWN_FRAME ? getFrameName(enumID) : frameID) {}
+FrameID::FrameID(const Frames frameID) : enumID(frameID),
+                                         strID(getFrameName(frameID)) {}
+FrameID::operator const std::string&() const { return strID; }
+FrameID::operator Frames() const { return enumID; }
 
 ///@pkg ID3.h
 Tag::TagsOnFile::TagsOnFile() : v1(false),

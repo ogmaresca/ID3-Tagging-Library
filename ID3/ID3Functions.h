@@ -151,6 +151,17 @@ namespace ID3 {
 	std::string getFrameName(const Frames frameID);
 	
 	/**
+	 * Convert a string to its Frames enum value.
+	 * 
+	 * If the frame ID is unknown, then Frames::FRAME_UNKNOWN_FRAME will be
+	 * the value returned.
+	 * 
+	 * @param frameID A string containing an ID3v2 frame ID.
+	 * @return The Frames enum value.
+	 */
+	Frames getFrameName(const std::string& frameID);
+	
+	/**
 	 * Check if the ID3v2 standard supports multiple instances of a given frame
 	 * in the flag.
 	 * 

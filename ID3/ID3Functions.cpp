@@ -19,6 +19,110 @@
 
 using namespace ID3;
 
+//Private namespace
+namespace {
+	/**
+	 * A vector that has a 1:1 correspondence with the Frames enum.
+	 */
+	static const std::vector<std::string> frames = {
+		"AENC", //0
+		"APIC", //1
+		"ASPI", //2
+		"COMM", //3
+		"COMR", //4
+		"ENCR", //5
+		"EQU2", //6
+		"EQUA", //7
+		"ETCO", //8
+		"GEOB", //9
+		"GRID", //10
+		"IPLS", //11
+		"LINK", //12
+		"MCDI", //13
+		"MLLT", //14
+		"OWNE", //15
+		"PCNT", //16
+		"POPM", //17
+		"POSS", //18
+		"PRIV", //19
+		"RBUF", //20
+		"RVA2", //21
+		"RVAD", //22
+		"RVRB", //23
+		"SEEK", //24
+		"SIGN", //25
+		"SYLT", //26
+		"SYTC", //27
+		"TALB", //28
+		"TBPM", //29
+		"TCOM", //30
+		"TCON", //31
+		"TCOP", //32
+		"TDAT", //33
+		"TDEN", //34
+		"TDLY", //35
+		"TDOR", //36
+		"TDRC", //37
+		"TDRL", //38
+		"TDTG", //39
+		"TENC", //40
+		"TEXT", //41
+		"TFLT", //42
+		"TIPL", //43
+		"TIME", //44
+		"TIT1", //45
+		"TIT2", //46
+		"TIT3", //47
+		"TKEY", //48
+		"TLAN", //49
+		"TLEN", //50
+		"TMCL", //51
+		"TMED", //52
+		"TMOO", //53
+		"TOAL", //54
+		"TOFL", //55
+		"TOLY", //56
+		"TOPE", //57
+		"TORY", //58
+		"TOWN", //59
+		"TPE1", //60
+		"TPE2", //61
+		"TPE3", //62
+		"TPE4", //63
+		"TPOS", //64
+		"TPRO", //65
+		"TPUB", //66
+		"TRCK", //67
+		"TRDA", //68
+		"TRSN", //69
+		"TRSO", //70
+		"TSO2", //71
+		"TSOA", //72
+		"TSOC", //73
+		"TSOP", //74
+		"TSOT", //75
+		"TSIZ", //76
+		"TSRC", //77
+		"TSSE", //78
+		"TSST", //79
+		"TXXX", //80
+		"TYER", //81
+		"UFID", //82
+		"USER", //83
+		"USLT", //84
+		"WCOM", //85
+		"WCOP", //86
+		"WOAF", //87
+		"WOAR", //88
+		"WOAS", //89
+		"WORS", //90
+		"WPAY", //91
+		"WPUB", //92
+		"WXXX", //93
+		"XXXX", //94 - Unknown ID3v2.2 frame ID after being converted to ID3v2.4
+	};
+}
+
 ///@pkg ID3Functions.h
 std::string ID3::V1::getGenreString(ushort genre) {
 	if(genre < V1::GENRES.size())
@@ -238,108 +342,34 @@ std::string ID3::getUTF8String(uint8_t encoding,
 
 ///@pkg ID3Functions.h
 std::string ID3::getFrameName(const Frames frameID) {
-	//A vector that has a 1:1 correspondence with the Frames enum.
-	static std::vector<std::string> frames = {
-		"AENC", //0
-		"APIC", //1
-		"ASPI", //2
-		"COMM", //3
-		"COMR", //4
-		"ENCR", //5
-		"EQU2", //6
-		"EQUA", //7
-		"ETCO", //8
-		"GEOB", //9
-		"GRID", //10
-		"IPLS", //11
-		"LINK", //12
-		"MCDI", //13
-		"MLLT", //14
-		"OWNE", //15
-		"PCNT", //16
-		"POPM", //17
-		"POSS", //18
-		"PRIV", //19
-		"RBUF", //20
-		"RVA2", //21
-		"RVAD", //22
-		"RVRB", //23
-		"SEEK", //24
-		"SIGN", //25
-		"SYLT", //26
-		"SYTC", //27
-		"TALB", //28
-		"TBPM", //29
-		"TCOM", //30
-		"TCON", //31
-		"TCOP", //32
-		"TDAT", //33
-		"TDEN", //34
-		"TDLY", //35
-		"TDOR", //36
-		"TDRC", //37
-		"TDRL", //38
-		"TDTG", //39
-		"TENC", //40
-		"TEXT", //41
-		"TFLT", //42
-		"TIPL", //43
-		"TIME", //44
-		"TIT1", //45
-		"TIT2", //46
-		"TIT3", //47
-		"TKEY", //48
-		"TLAN", //49
-		"TLEN", //50
-		"TMCL", //51
-		"TMED", //52
-		"TMOO", //53
-		"TOAL", //54
-		"TOFL", //55
-		"TOLY", //56
-		"TOPE", //57
-		"TORY", //58
-		"TOWN", //59
-		"TPE1", //60
-		"TPE2", //61
-		"TPE3", //62
-		"TPE4", //63
-		"TPOS", //64
-		"TPRO", //65
-		"TPUB", //66
-		"TRCK", //67
-		"TRDA", //68
-		"TRSN", //69
-		"TRSO", //70
-		"TSO2", //71
-		"TSOA", //72
-		"TSOC", //73
-		"TSOP", //74
-		"TSOT", //75
-		"TSIZ", //76
-		"TSRC", //77
-		"TSSE", //78
-		"TSST", //79
-		"TXXX", //80
-		"TYER", //81
-		"UFID", //82
-		"USER", //83
-		"USLT", //84
-		"WCOM", //85
-		"WCOP", //86
-		"WOAF", //87
-		"WOAR", //88
-		"WOAS", //89
-		"WORS", //90
-		"WPAY", //91
-		"WPUB", //92
-		"WXXX", //93
-		"XXXX", //94 - Unknown ID3v2.2 frame ID after being converted to ID3v2.4
-	};
-	
-	if(static_cast<ushort>(frameID) > frames.size())
-		return "";
+	if(static_cast<ushort>(frameID) >= frames.size())
+		return frames[frames.size()];
 	return frames[static_cast<ushort>(frameID)];
+}
+
+///@pkg ID3Functions.h
+Frames ID3::getFrameName(const std::string& frameID) {
+	//A map that holds Frame ID string : Frame ID enum pairs
+	//Initialize the map with a lambda function that goes through the frames
+	//vector in the private namespace and adds a pair to the map of the frame ID
+	//string and the integer location in the vector, casted to a Frames enum value.
+	//Since a function's static variables are initialized upon the function's
+	//first call, there's no need to worry about conversionMap getting
+	//initialized after frames.
+	static std::unordered_map<std::string, Frames> conversionMap = []() {
+		std::unordered_map<std::string, Frames> conversionMap;
+		conversionMap.reserve(frames.size());
+		
+		for(ushort i = 0; i < frames.size(); i++)
+			conversionMap.emplace(frames[i], static_cast<Frames>(i));
+		return conversionMap;
+	}();
+	
+	return conversionMap.count(frameID) > 0 ?
+	       //If the frame ID is found, then return the frame ID enum value
+	       conversionMap[frameID] :
+	       //If it is not found return the XXXX ID
+	       Frames::FRAME_UNKNOWN_FRAME;
 }
 
 ///@pkg ID3Functions.h
@@ -374,33 +404,7 @@ bool ID3::allowsMultipleFrames(const Frames frameID) {
 
 ///@pkg ID3Functions.h
 bool ID3::allowsMultipleFrames(const std::string& frameID) {
-	if(frameID == "") return false;
-	
-	switch(frameID[0]) {
-		//FRAME_AUDIO_ENCRYPTION_REGISTRATION, FRAME_ATTACHED_PICTURE
-		case 'A': return frameID == "AENC" || frameID == "APIC";
-		//FRAME_COMMENT, FRAME_COMMERCIAL
-		case 'C': return frameID == "COMM" || frameID == "COMR";
-		//FRAME_ENCRYPTION_METHOD, FRAME_EQUALIZATION_2
-		case 'E': return frameID == "ENCR" || frameID == "EQU2";
-		//FRAME_GENERAL_ENCAPSULATED_OBJECT, FRAME_GROUP_IDENTIFICATION_REGISTRATION
-		case 'G': return frameID == "GEOB" || frameID == "GRID";
-		//FRAME_LINKED_INFORMATION
-		case 'L': return frameID == "LINK";
-		//FRAME_POPULARIMETER, FRAME_PRIVATE
-		case 'P': return frameID == "POPM" || frameID == "PRIV";
-		//FRAME_RELATIVE_VOLUME_ADJUSTMENT
-		case 'R': return frameID == "RVA2";
-		//FRAME_SIGNATURE, FRAME_SYNCHRONISED_LYRICS
-		case 'S': return frameID == "SIGN" || frameID == "SYLT";
-		//FRAME_CUSTOMER_USER_INFORMATION
-		case 'T': return frameID == "TXXX";
-		//FRAME_UNIQUE_FILE_IDENTIFIER, FRAME_TERMS_OF_USE, FRAME_UNSYNCHRONISED_LYRICS
-		case 'U': return frameID == "UFID" || frameID == "USER" || frameID == "USLT";
-		//FRAME_COMMERCIAL_INFORMATION_URL, FRAME_OFFICIAL_ARTIST_URL, FRAME_USER_DEFINED_URL
-		case 'W': return frameID == "WCOM" || frameID == "WOAR" || frameID == "WXXX";
-		default: return false;
-	}
+	return allowsMultipleFrames(getFrameName(frameID));
 }
 
 ///@pkg ID3Functions.h

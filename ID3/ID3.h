@@ -538,6 +538,7 @@ namespace ID3 {
 		FRAME_URL_USER_DEFINED = 93,
 		FRAMEID_WXXX           = 93,
 		
+		FRAME_UNKNOWN_FRAME      = 94,
 		FRAME_UNKNOWN_V2_2_FRAME = 94,
 		FRAMEID_XXXX             = 94
 	};
@@ -669,6 +670,21 @@ namespace ID3 {
 	/////////////////////////////////////////////////////////////////////////////
 	
 	/**
+	 * @todo Implement in ID3FrameID.cpp, and move ID3 frame ID-specific
+	 * functions to this class.
+	 */
+	class FrameID {
+		public:
+			FrameID(const std::string& frameID);
+			FrameID(const Frames frameID);
+			operator const std::string&() const;
+			operator Frames() const;
+		private:
+			const Frames enumID;
+			const std::string strID;
+	};
+	
+	/**
 	 * A class that, given a file or filename, will read its ID3 tags.
 	 * Call Tag::null() after instantiation to check if the file was
 	 * properly read. Files must be .mp3 files.
@@ -715,16 +731,11 @@ namespace ID3 {
 			/**
 			 * Check if a frame exists.
 			 * 
-			 * @param frameName A Frames enum variable that represents
-			 *                  an ID3v2 frame ID.
+			 * @param frameName A FrameID object, or either optionally a string
+			 *                  containing an ID3 frame ID or a Frames enum value.
 			 * @return If the Frame exists or not.
 			 */
-			bool exists(const Frames frameName) const;
-			
-			/**
-			 * @see ID3::Tag::exists(Frames);
-			 */
-			bool exists(const std::string& frameName) const;
+			bool exists(const FrameID& frameName) const;
 			
 			/**
 			 * Get the text content of a frame.
@@ -1128,7 +1139,7 @@ namespace ID3 {
 			 * @return The Frame in the map, or nullptr.
 			 */
 			template<typename DerivedFrame>
-			DerivedFrame* getFrame(Frames frameName) const;
+			DerivedFrame* getFrame(FrameID frameName) const;
 			
 			/**
 			 * A protected method to get a Frame* vector from the FrameMap.
@@ -1144,7 +1155,7 @@ namespace ID3 {
 			 * @return A Frame vector of all Frames that were found.
 			 */
 			template<typename DerivedFrame>
-			std::vector<DerivedFrame*> getFrames(Frames frameName) const;
+			std::vector<DerivedFrame*> getFrames(FrameID frameName) const;
 			
 			/**
 			 * A constructor helper method that gets the tag information from the given file.
