@@ -555,9 +555,9 @@ namespace ID3 {
 			 * @see ID3::Frame::Frame(std::string&, ushort, ByteArray&)
 			 */
 			DescriptiveTextFrame(const std::string& frameName,
-			                     const ushort version,
-			                     const ByteArray& frameBytes,
-			                     const short options=0);
+			                     const ushort       version,
+			                     const ByteArray&   frameBytes,
+			                     const ushort       options=0);
 			
 			/**
 			 * This constructor manually creates a text frame with
@@ -576,11 +576,11 @@ namespace ID3 {
 			 * 
 			 * NOTE: The language is a ISO 639-2 code.
 			 * 
-			 * @param frameName The frame ID.
-			 * @param version The ID3v2 major version.
-			 * @param value The text of the frame (optional).
+			 * @param frameName   The frame ID.
+			 * @param version     The ID3v2 major version.
+			 * @param value       The text of the frame (optional).
 			 * @param description The frame description (optional).
-			 * @param language The frame language (optional).
+			 * @param language    The frame language (optional).
 			 * @param options Optional options for decoding the ByteArray, where
 			 *                the option values checked for are
 			 *                ID3::DescriptiveTextFrame::OPTION_LANGUAGE and
@@ -592,7 +592,7 @@ namespace ID3 {
 			                     const std::string& value="",
 			                     const std::string& description="",
 			                     const std::string& language="",
-			                     const short        options=0);
+			                     const ushort       options=0);
 			
 			/**
 			 * An empty constructor to initialize variables. Creating a Frame with

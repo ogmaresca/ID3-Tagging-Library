@@ -328,12 +328,12 @@ NumericalTextFrame& NumericalTextFrame::operator+=(const std::string& str) noexc
 DescriptiveTextFrame::DescriptiveTextFrame(const std::string& frameName,
                                            const ushort version,
                                            const ByteArray& frameBytes,
-                                           const short options) : Frame::Frame(frameName,
-                                                                               version,
-                                                                               frameBytes),
-                                                                  optionLanguage((options & OPTION_LANGUAGE) == OPTION_LANGUAGE),
-                                                                  optionLatin1((options & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT),
-                                                                  optionNoDescription((options & OPTION_NO_DESCRIPTION)==OPTION_NO_DESCRIPTION) {
+                                           const ushort options) : Frame::Frame(frameName,
+                                                                                version,
+                                                                                frameBytes),
+                                                                   optionLanguage((options & OPTION_LANGUAGE) == OPTION_LANGUAGE),
+                                                                   optionLatin1((options & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT),
+                                                                   optionNoDescription((options & OPTION_NO_DESCRIPTION)==OPTION_NO_DESCRIPTION) {
 	//If the frame content is not null
 	if(!isNull)
 		read();
@@ -345,12 +345,12 @@ DescriptiveTextFrame::DescriptiveTextFrame(const std::string& frameName,
                                            const std::string& value,
                                            const std::string& description,
                                            const std::string& language,
-                                           const short options) : TextFrame::TextFrame(frameName,
-                                                                                       version,
-                                                                                       value),
-                                                                  optionLanguage((options & OPTION_LANGUAGE) == OPTION_LANGUAGE),
-                                                                  optionLatin1((options & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT),
-                                                                  optionNoDescription((options & OPTION_NO_DESCRIPTION)==OPTION_NO_DESCRIPTION) {
+                                           const ushort options) : TextFrame::TextFrame(frameName,
+                                                                                        version,
+                                                                                        value),
+                                                                   optionLanguage((options & OPTION_LANGUAGE) == OPTION_LANGUAGE),
+                                                                   optionLatin1((options & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT),
+                                                                   optionNoDescription((options & OPTION_NO_DESCRIPTION)==OPTION_NO_DESCRIPTION) {
 	textDescription = description;
 	//Have ID3::DescriptiveTextFrame::language(std::string&) check if a language
 	//can be set, but if it can then isEdited must be set back to false.

@@ -405,6 +405,73 @@ bool ID3::allowsMultipleFrames(const std::string& frameID) {
 
 ///@pkg ID3Functions.h
 std::string ID3::convertOldFrameIDToNew(const std::string& v2FrameID) {
-	//TODO: Convert ID3v2.2 frame IDs to ID3v2.4 frame IDs
-	return getFrameName(Frames::FRAME_UNKNOWN_V2_2_FRAME);
+	//An unordered_map that holds string pairs. The key is the ID3v2.2 frame ID,
+	//and the value is its ID3v2.4 equivalent. Note that for date frames the
+	//ID3v2.3 frame IDs are used, as if not since these frames don't support
+	//multiple instances of the frame on file the second and beyond date frames
+	//would not get saved.
+	static std::unordered_map<std::string, std::string> conversionMap = {
+		{"BUF", "RBUF"},
+		{"COM", "COMM"},
+		{"CNT", "PCNT"},
+		{"CRA", "AENC"},
+		{"ETC", "ETCO"},
+		{"EQU", "EQUA"},
+		{"GEO", "GEOB"},
+		{"IPL", "TIPL"},
+		{"LNK", "LINK"},
+		{"MLL", "MLLT"},
+		{"PIC", "APIC"},
+		{"POP", "POPM"},
+		{"RVA", "RVAD"},
+		{"REV", "RVRB"},
+		{"STC", "SYTC"},
+		{"SLT", "USLT"},
+		{"TT1", "TIT1"},
+		{"TT2", "TIT2"},
+		{"TT3", "TIT3"},
+		{"TP1", "TPE1"},
+		{"TP2", "TPE2"},
+		{"TP3", "TPE3"},
+		{"TP4", "TPE4"},
+		{"TCM", "TCOM"},
+		{"TXT", "TOLY"},
+		{"TLA", "TLAN"},
+		{"TCO", "TCON"},
+		{"TAL", "TALB"},
+		{"TPA", "TPOS"},
+		{"TRK", "TRCK"},
+		{"TRC", "TSRC"},
+		{"TYE", "TYER"},
+		{"TDA", "TDAT"},
+		{"TIM", "TIME"},
+		{"TRD", "TRDA"},
+		{"TMT", "TMED"},
+		{"TBP", "TBPM"},
+		{"TEN", "TENC"},
+		{"TSS", "TSSE"},
+		{"TOF", "TOFN"},
+		{"TLE", "TLEN"},
+		//TSIZ is completely deprecated in ID3v2.4, so don't check the TSI ID
+		{"TDY", "TDLY"},
+		{"TKE", "TKEY"},
+		{"TOT", "TOAL"},
+		{"TOA", "TOPE"},
+		{"TOL", "TOLY"},
+		{"TOR", "TDOR"},
+		{"TXX", "TXXX"},
+		{"ULT", "USLT"},
+		{"WAF", "WOAF"},
+		{"WAR", "WOAR"},
+		{"WCM", "WCOM"},
+		{"WCP", "WCOP"},
+		{"WPB", "WPUB"},
+		{"WXX", "WXXX"}
+	};
+	
+	return conversionMap.count(v2FrameID) > 0 ?
+	       //If the frame ID is found, then return the converted frame ID
+	       conversionMap[v2FrameID] :
+	       //If it is not found return the XXXX ID
+	       getFrameName(Frames::FRAME_UNKNOWN_V2_2_FRAME);
 }
