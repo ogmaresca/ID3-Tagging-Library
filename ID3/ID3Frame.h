@@ -16,6 +16,8 @@
 #include <vector> //For std::vector
 #include <string> //For std::string
 
+#include "ID3FrameID.h"
+
 /**
  * The ID3 namespace defines everything related to reading and writing
  * ID3 tags. The only supported versions for reading are ID3v1, ID3v1.1,
@@ -255,11 +257,11 @@ namespace ID3 {
 			ulong size(bool header=false) const;
 			
 			/**
-			 * Get the string ID of the frame (ex: "TIT2" for titles).
+			 * Get the ID of the frame (ex: "TIT2"/Frames::FRAME_TITLE for titles).
 			 * 
 			 * @return The frame ID.
 			 */
-			std::string frame() const;
+			FrameID frame() const;
 			
 			/**
 			 * Get the content of the frame as bytes.
@@ -407,7 +409,7 @@ namespace ID3 {
 			 * @param version The ID3v2 major version.
 			 * @param frameBytes The content of the frame in bytes.
 			 */
-			Frame(const std::string& frameName,
+			Frame(const FrameID& frameName,
 			      const ushort version,
 			      const ByteArray& frameBytes);
 			
@@ -442,7 +444,7 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::frame()
 			 */
-			std::string id;
+			FrameID id;
 			
 			/**
 			 * This variable records the ID3 version used for reading
@@ -549,11 +551,11 @@ namespace ID3 {
 			 * Frame class, and sets isNull to false if the byte array
 			 * is bigger than HEADER_BYTE_SIZE.
 			 * 
-			 * @see ID3::Frame::Frame(std::string&,
+			 * @see ID3::Frame::Frame(FrameID&,
 			 *                        ushort,
 			 *                        ByteArray&)
 			 */
-			UnknownFrame(const std::string& frameName,
+			UnknownFrame(const FrameID& frameName,
 			             const ushort version,
 			             const ByteArray& frameBytes);
 			
@@ -563,7 +565,7 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::Frame()
 			 */
-			UnknownFrame(const std::string& frameName);
+			UnknownFrame(const FrameID& frameName);
 			
 			/**
 			 * @see ID3::Frame::Frame()

@@ -703,7 +703,7 @@ void Tag::readFileV2(std::ifstream& file) {
 				addFrame(frame->frame(), frame);
 			//If the frame content is a valid size (bigger than an ID3v2 header)
 			//then continue on to the next frame. If not, then stop the loop.
-			if(frame->size(true) > HEADER_BYTE_SIZE && frame->frame() != "") {
+			if(frame->size(true) > HEADER_BYTE_SIZE && !frame->frame().unknown()) {
 				frameStartPos += frame->size(true);
 				
 				//Account for 4 bytes added when reading ID3v2.2 frames from the

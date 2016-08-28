@@ -27,18 +27,17 @@ using namespace ID3;
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3TextFrame.h
-TextFrame::TextFrame(const std::string& frameName,
-                     const ushort       version,
-                     const ByteArray&   frameBytes) : Frame::Frame(frameName,
-                                                                   version,
-                                                                   frameBytes) {
+TextFrame::TextFrame(const FrameID&   frameName,
+                     const ushort     version,
+                     const ByteArray& frameBytes) : Frame::Frame(frameName,
+                                                                 version,
+                                                                 frameBytes) {
 	//If the frame content isn't null, then get the text content
-	if(!isNull)
-		read();
+	if(!isNull) read();
 }
 
 ///@pkg ID3TextFrame.h
-TextFrame::TextFrame(const std::string& frameName,
+TextFrame::TextFrame(const FrameID&    frameName,
                      const ushort       version,
                      const std::string& value) : Frame::Frame() {
 	id = frameName;
@@ -89,6 +88,8 @@ ByteArray TextFrame::write() {
 	
 	//Save the old version to take synchsafe-ness into account
 	const ushort OLD_VERSION = ID3Ver;
+	//Convert the separating character if necessary
+	convertSeparator();
 	//Set the ID3 version to ID3::WRITE_VERSION
 	ID3Ver = WRITE_VERSION;
 	
@@ -108,7 +109,7 @@ ByteArray TextFrame::write() {
 		
 		//Save the frame size
 		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, ID3Ver >= 4);
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
+		for(ushort i = 0; i < 4 && i < size.size(); i++)
 			frameContent[i+4] = size[i];
 		
 		//Set the encoding to UTF-8
@@ -151,6 +152,38 @@ void TextFrame::content(const std::string& newContent) {
 }
 
 ///@pkg ID3TextFrame.h
+char TextFrame::stringSeparator() const {
+	if(ID3Ver <= 3) {
+		switch(frame()) {
+			case FRAME_COMPOSER:
+			case FRAME_LYRICIST:
+			case FRAME_ORIGINAL_LYRICIST:
+			case FRAME_ORIGINAL_ARTIST:
+			case FRAME_ARTIST:
+				return '/';
+			default:
+				break;
+		}
+	}
+	
+	return '\0';
+}
+
+void TextFrame::convertSeparator() {
+	///@pkg ID3TextFrame.h
+	
+	const char OLD_SEPARATOR = stringSeparator();
+	
+	if(OLD_SEPARATOR != '\0') {
+		//Loop through the text and convert every slash to a null character
+		for(char& curChar : textContent) {
+			if(curChar == OLD_SEPARATOR)
+				curChar = '\0';
+		}
+	}
+}
+
+///@pkg ID3TextFrame.h
 bool TextFrame::operator==(const Frame* const frame) const noexcept {
 	//Check if the frame IDs or "null" statuses match
 	if(frame == nullptr || frame->frame() != id || isNull != frame->null())
@@ -186,8 +219,8 @@ TextFrame& TextFrame::operator+=(const std::string& str) noexcept {
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3TextFrame.h
-NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
-                                       const ushort version,
+NumericalTextFrame::NumericalTextFrame(const FrameID&   frameName,
+                                       const ushort     version,
                                        const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                                                    version,
                                                                                    frameBytes) {
@@ -197,7 +230,7 @@ NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
 }
 
 ///@pkg ID3TextFrame.h
-NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
+NumericalTextFrame::NumericalTextFrame(const FrameID&     frameName,
                                        const ushort       version,
                                        const std::string& value) : TextFrame::TextFrame(frameName,
                                                                                         version,
@@ -207,11 +240,11 @@ NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
 }
 
 ///@pkg ID3TextFrame.h
-NumericalTextFrame::NumericalTextFrame(const std::string& frameName,
-                                       const ushort version,
-                                       const long value) : TextFrame::TextFrame(frameName,
-                                                                                version,
-                                                                                std::to_string(value)) {}
+NumericalTextFrame::NumericalTextFrame(const FrameID& frameName,
+                                       const ushort   version,
+                                       const long     value) : TextFrame::TextFrame(frameName,
+                                                                                    version,
+                                                                                    std::to_string(value)) {}
 
 ///@pkg ID3TextFrame.h
 NumericalTextFrame::NumericalTextFrame() noexcept : TextFrame::TextFrame() {}
@@ -325,7 +358,7 @@ NumericalTextFrame& NumericalTextFrame::operator+=(const std::string& str) noexc
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3TextFrame.h
-DescriptiveTextFrame::DescriptiveTextFrame(const std::string& frameName,
+DescriptiveTextFrame::DescriptiveTextFrame(const FrameID& frameName,
                                            const ushort version,
                                            const ByteArray& frameBytes,
                                            const ushort options) : Frame::Frame(frameName,
@@ -340,7 +373,7 @@ DescriptiveTextFrame::DescriptiveTextFrame(const std::string& frameName,
 }
 
 ///@pkg ID3TextFrame.h
-DescriptiveTextFrame::DescriptiveTextFrame(const std::string& frameName,
+DescriptiveTextFrame::DescriptiveTextFrame(const FrameID& frameName,
                                            const ushort version,
                                            const std::string& value,
                                            const std::string& description,
@@ -388,6 +421,8 @@ ByteArray DescriptiveTextFrame::write() {
 	
 	//Save the old version to take synchsafe-ness into account
 	const ushort OLD_VERSION = ID3Ver;
+	//Convert the separating character if necessary
+	convertSeparator();
 	//Set the ID3 version to ID3::WRITE_VERSION
 	ID3Ver = WRITE_VERSION;
 	
@@ -558,8 +593,8 @@ bool DescriptiveTextFrame::operator==(const Frame* const frame) const noexcept {
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3TextFrame.h
-URLTextFrame::URLTextFrame(const std::string& frameName,
-                           const ushort version,
+URLTextFrame::URLTextFrame(const FrameID&   frameName,
+                           const ushort     version,
                            const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                                        version,
                                                                        frameBytes) {
@@ -569,7 +604,7 @@ URLTextFrame::URLTextFrame(const std::string& frameName,
 }
 
 ///@pkg ID3TextFrame.h
-URLTextFrame::URLTextFrame(const std::string& frameName,
+URLTextFrame::URLTextFrame(const FrameID&     frameName,
                            const ushort       version,
                            const std::string& value) : TextFrame::TextFrame() {}
 

@@ -107,6 +107,14 @@ namespace ID3 {
 			virtual void content(const std::string& newContent);
 			
 			/**
+			 * Get the character that is used to separate multiple string values
+			 * in the frame.
+			 * 
+			 * @return '/' for certain ID3v2.2 and ID3v2.3 frames, '\0' for the rest.
+			 */
+			char stringSeparator() const;
+			
+			/**
 			 * Print information about the frame.
 			 * 
 			 * @see ID3::Frame::print()
@@ -133,9 +141,9 @@ namespace ID3 {
 			 * NOTE: The ID3v2 version is not checked to verify that it
 			 *       is a supported ID3v2 version.
 			 * 
-			 * @see ID3::Frame::Frame(std::string&, ushort, ByteArray&)
+			 * @see ID3::Frame::Frame(FrameID&, ushort, ByteArray&)
 			 */
-			TextFrame(const std::string& frameName,
+			TextFrame(const FrameID&     frameName,
 			          const ushort       version,
 			          const ByteArray&   frameBytes);
 			
@@ -154,7 +162,7 @@ namespace ID3 {
 			 * @param version The ID3v2 major version.
 			 * @param value The text of the frame (optional).
 			 */
-			TextFrame(const std::string& frameName,
+			TextFrame(const FrameID&     frameName,
 			          const ushort       version,
 			          const std::string& value="");
 			
@@ -182,6 +190,13 @@ namespace ID3 {
 			 * @see ID3::Frame::read()
 			 */
 			virtual void read();
+			
+			/**
+			 * When write()-ing the Frame, before updating the interal ID3v2
+			 * version call this function to convert any separating character to a
+			 * null character, if necessary.
+			 */
+			void convertSeparator();
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -334,13 +349,11 @@ namespace ID3 {
 			 * NOTE: The ID3v2 version is not checked to verify that it
 			 *       is a supported ID3v2 version.
 			 * 
-			 * @see ID3::Frame::Frame(std::string&,
-			 *                        ushort,
-			 *                        ByteArray&)
+			 * @see ID3::Frame::Frame(FrameID&, ushort, ByteArray&)
 			 */
-			NumericalTextFrame(const std::string& frameName,
-			                   const ushort       version,
-			                   const ByteArray&   frameBytes);
+			NumericalTextFrame(const FrameID&   frameName,
+			                   const ushort     version,
+			                   const ByteArray& frameBytes);
 			
 			/**
 			 * This constructor manually creates a text frame with
@@ -359,9 +372,9 @@ namespace ID3 {
 			 * @param frameName The frame ID.
 			 * @param version The ID3v2 major version.
 			 * @param value The text of the frame (optional).
-			 * @see ID3::Frame::Frame(std::string&, ushort, ByteArray&)
+			 * @see ID3::Frame::Frame(FrameID&, ushort, ByteArray&)
 			 */
-			NumericalTextFrame(const std::string& frameName,
+			NumericalTextFrame(const FrameID&     frameName,
 			                   const ushort       version,
 			                   const std::string& value="");
 			
@@ -381,9 +394,9 @@ namespace ID3 {
 			 * @param textContent The numerical text content of the frame.
 			 * @param description The frame description (optional).
 			 */
-			NumericalTextFrame(const std::string& frameName,
-			                   const ushort       version,
-			                   const long         intContent);
+			NumericalTextFrame(const FrameID& frameName,
+			                   const ushort   version,
+			                   const long     intContent);
 			
 			/**
 			 * An empty constructor to initialize variables. Creating a Frame with
@@ -552,12 +565,12 @@ namespace ID3 {
 			 *                the option values checked for are
 			 *                ID3::DescriptiveTextFrame::OPTION_LANGUAGE and
 			 *                ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT (optional).
-			 * @see ID3::Frame::Frame(std::string&, ushort, ByteArray&)
+			 * @see ID3::Frame::Frame(FrameID&, ushort, ByteArray&)
 			 */
-			DescriptiveTextFrame(const std::string& frameName,
-			                     const ushort       version,
-			                     const ByteArray&   frameBytes,
-			                     const ushort       options=0);
+			DescriptiveTextFrame(const FrameID&   frameName,
+			                     const ushort     version,
+			                     const ByteArray& frameBytes,
+			                     const ushort     options=0);
 			
 			/**
 			 * This constructor manually creates a text frame with
@@ -587,7 +600,7 @@ namespace ID3 {
 			 *                ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT (optional).
 			 *                For multiple values, OR (option | option) them together.
 			 */
-			DescriptiveTextFrame(const std::string& frameName,
+			DescriptiveTextFrame(const FrameID&    frameName,
 			                     const ushort       version,
 			                     const std::string& value="",
 			                     const std::string& description="",
@@ -722,11 +735,11 @@ namespace ID3 {
 			 * NOTE: The ID3v2 version is not checked to verify that it
 			 *       is a supported ID3v2 version.
 			 * 
-			 * @see ID3::Frame::Frame(std::string&, ushort, ByteArray&)
+			 * @see ID3::Frame::Frame(FrameID&, ushort, ByteArray&)
 			 */
-			URLTextFrame(const std::string& frameName,
-			             const ushort       version,
-			             const ByteArray&   frameBytes);
+			URLTextFrame(const FrameID&   frameName,
+			             const ushort     version,
+			             const ByteArray& frameBytes);
 			
 			/**
 			 * This constructor manually creates a text frame with custom text.
@@ -743,7 +756,7 @@ namespace ID3 {
 			 * @param version The ID3v2 major version.
 			 * @param value The text of the frame (optional).
 			 */
-			URLTextFrame(const std::string& frameName,
+			URLTextFrame(const FrameID&     frameName,
 			             const ushort       version,
 			             const std::string& value="");
 			

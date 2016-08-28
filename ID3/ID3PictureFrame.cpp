@@ -39,7 +39,7 @@ Picture::Picture(const ByteArray&   pictureByteArray,
 
 ///@pkg ID3PictureFrame.h
 PictureFrame::PictureFrame(const ushort version,
-                           const ByteArray& frameBytes) : Frame::Frame("APIC",
+                           const ByteArray& frameBytes) : Frame::Frame(FRAME_PICTURE,
                                                                        version,
                                                                        frameBytes),
                                                           APICType(PictureType::OTHER) {

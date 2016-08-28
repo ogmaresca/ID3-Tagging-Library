@@ -114,7 +114,7 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 		//Convert the ID to its ID3v2.4 equivalent, and save them to the currently
 		//unused first four bytes of the frame
 		for(ushort i = 0; i < 4; i++)
-			frameBytes[i] = static_cast<std::string>(id)[i];
+			frameBytes[i] = id[i];
 		
 		//Convert the ID3v2.2 non-synchsafe 3-byte frame size to the ID3v2.4
 		//synchsafe 4-byte frame size

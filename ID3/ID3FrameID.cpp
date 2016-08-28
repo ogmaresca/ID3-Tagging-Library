@@ -243,22 +243,49 @@ FrameID::FrameID(const char* frameID) : FrameID(std::string(frameID)) {}
 
 ///@pkg ID3FrameID.h
 FrameID::FrameID(const std::string& frameID) : enumID(getFrameName(frameID)),
-                                               strID(enumID == FRAME_UNKNOWN_FRAME ? "XXXX" : frameID) {}
+                                               strID(enumID == FRAME_UNKNOWN_FRAME ? "XXXX" : frameID),
+                                               strLen(strID.size()) {}
 
 ///@pkg ID3FrameID.h
 FrameID::FrameID(const std::string& frameID,
                  const ushort version) : enumID(version >= 3 ? getFrameName(frameID) : convertOldFrameIDToNew(frameID).enumID),
-                                         strID(enumID == FRAME_UNKNOWN_FRAME ? "XXXX" : frameID) {}
+                                         strID(enumID == FRAME_UNKNOWN_FRAME ? "XXXX" : frameID),
+                                         strLen(strID.size()) {}
 
 ///@pkg ID3FrameID.h
 FrameID::FrameID(const Frames frameID) : enumID(frameID),
-                                         strID(getFrameName(frameID)) {}
+                                         strID(getFrameName(frameID)),
+                                         strLen(strID.size()) {}
 
 ///@pkg ID3FrameID.h
 FrameID::operator const std::string&() const { return strID; }
 
 ///@pkg ID3FrameID.h
 FrameID::operator Frames() const { return enumID; }
+
+///@pkg ID3FrameID.h
+bool FrameID::operator==(const FrameID& frameID) const { return frameID.enumID == enumID; }
+
+///@pkg ID3FrameID.h
+bool FrameID::operator!=(const FrameID& frameID) const { return frameID.enumID != enumID; }
+
+///@pkg ID3FrameID.h
+bool FrameID::operator==(const Frames frameID) const { return frameID == enumID; }
+
+///@pkg ID3FrameID.h
+bool FrameID::operator!=(const Frames frameID) const { return frameID != enumID; }
+
+///@pkg ID3FrameID.h
+bool FrameID::operator==(const std::string& frameID) const { return frameID == strID; }
+
+///@pkg ID3FrameID.h
+bool FrameID::operator!=(const std::string& frameID) const { return frameID != strID; }
+
+///@pkg ID3FrameID.h
+char FrameID::operator[](const size_t pos) const { return strID[pos]; }
+
+///@pkg ID3FrameID.h
+size_t FrameID::size() const { return strLen; }
 
 ///@pkg ID3FrameID.h
 bool FrameID::unknown() const { return enumID == FRAME_UNKNOWN_FRAME; }

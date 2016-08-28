@@ -26,14 +26,14 @@ using namespace ID3;
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3Frame.h
-Frame::Frame() noexcept : ID3Ver(MAX_SUPPORTED_VERSION),
+Frame::Frame() noexcept : ID3Ver(WRITE_VERSION),
                           isNull(true),
                           isEdited(false),
                           isFromFile(false) {}
 
 ///@pkg ID3Frame.h
-Frame::Frame(const std::string& frameName,
-             const ushort version,
+Frame::Frame(const FrameID&   frameName,
+             const ushort     version,
              const ByteArray& frameBytes) : id(frameName),
                                             ID3Ver(version),
                                             frameContent(frameBytes),
@@ -76,7 +76,7 @@ ulong Frame::size(bool header) const {
 }
 
 ///@pkg ID3Frame.h
-std::string Frame::frame() const { return id; }
+FrameID Frame::frame() const { return id; }
 
 ///@pkg ID3Frame.h
 ByteArray Frame::bytes(bool header) const noexcept {
@@ -270,14 +270,14 @@ void Frame::unsynchronise() {
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3Frame.h
-UnknownFrame::UnknownFrame(const std::string& frameName,
-                           const ushort version,
+UnknownFrame::UnknownFrame(const FrameID&   frameName,
+                           const ushort     version,
                            const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                                        version,
                                                                        frameBytes) {}
 
 ///@pkg ID3Frame.h
-UnknownFrame::UnknownFrame(const std::string& frameName) : Frame::Frame() {
+UnknownFrame::UnknownFrame(const FrameID& frameName) : Frame::Frame() {
 	id = frameName;
 }
 

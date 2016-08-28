@@ -482,6 +482,45 @@ namespace ID3 {
 			FrameID(const Frames frameID);
 			operator const std::string&() const;
 			operator Frames() const;
+			bool operator==(const FrameID& frameID) const;
+			bool operator!=(const FrameID& frameID) const;
+			bool operator==(const Frames frameID) const;
+			bool operator!=(const Frames frameID) const;
+			bool operator==(const std::string& frameID) const;
+			bool operator!=(const std::string& frameID) const;
+			
+			/**
+			 * Get the char at position pos in the string representation of the
+			 * frame ID. If the requested position is larger than the string size,
+			 * undefined behavior occurs.
+			 * 
+			 * @param pos The char position in the string.
+			 * @return The character at that position.
+			 * @see std::string::operator[](size_t)
+			 */
+			char operator[](const size_t pos) const;
+			
+			/**
+			 * Print a frame ID's string.
+			 * 
+			 * @param os      The iostream.
+			 * @param frameID The frame ID.
+			 * @return The iostream.
+			 */
+			friend std::ostream& operator<<(std::ostream& os, const FrameID& frameID) {
+				return os << frameID.strID;
+			}
+			
+			/**
+			 * Get the size of the string representation of the frame ID, in bytes.
+			 * 
+			 * @return The size of the string frame ID.
+			 */
+			size_t size() const;
+			
+			/**
+			 * 
+			 */
 			bool unknown() const;
 			
 			/**
@@ -541,6 +580,7 @@ namespace ID3 {
 			
 			Frames enumID;
 			std::string strID;
+			size_t strLen;
 	};
 }
 
