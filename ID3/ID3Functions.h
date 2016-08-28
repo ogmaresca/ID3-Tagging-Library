@@ -143,46 +143,13 @@ namespace ID3 {
 	                          long end=-1);
 	
 	/**
-	 * Convert a Frames enum value to the ID3v2 frame name string.
-	 * 
-	 * @param frameID A Frames enum variable.
-	 * @return The ID3v2 frame ID string.
-	 */
-	std::string getFrameName(const Frames frameID);
-	
-	/**
-	 * Convert a string to its Frames enum value.
-	 * 
-	 * If the frame ID is unknown, then Frames::FRAME_UNKNOWN_FRAME will be
-	 * the value returned.
-	 * 
-	 * @param frameID A string containing an ID3v2 frame ID.
-	 * @return The Frames enum value.
-	 */
-	Frames getFrameName(const std::string& frameID);
-	
-	/**
 	 * Check if the ID3v2 standard supports multiple instances of a given frame
 	 * in the flag.
 	 * 
 	 * @param frameID The frame to check.
 	 * @return true if multiple instances of the frame are allowed, false otherwise.
 	 */
-	bool allowsMultipleFrames(const Frames frameID);
-	
-	/**
-	 * @see ID3::allowsMultipleFrames(Frames)
-	 */
-	bool allowsMultipleFrames(const std::string& frameID);
-	
-	/**
-	 * Convert an ID3v2.2 or older frame ID to its equivalent ID3v2.4 frame ID.
-	 * If the frame ID is unknown, then the ID "XXXX" will be returned instead.
-	 * 
-	 * @param v2FrameID The ID3v2.2 frame ID.
-	 * @return The equivalent ID3v2.4 frame ID, or "XXXX".
-	 */
-	std::string convertOldFrameIDToNew(const std::string& v2FrameID);
+	bool allowsMultipleFrames(const FrameID& frameID);
 }
 
 #endif

@@ -849,13 +849,6 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 	}
 }
 
-FrameID::FrameID(const std::string& frameID) : enumID(getFrameName(frameID)),
-                                               strID(enumID == FRAME_UNKNOWN_FRAME ? getFrameName(enumID) : frameID) {}
-FrameID::FrameID(const Frames frameID) : enumID(frameID),
-                                         strID(getFrameName(frameID)) {}
-FrameID::operator const std::string&() const { return strID; }
-FrameID::operator Frames() const { return enumID; }
-
 ///@pkg ID3.h
 Tag::TagsOnFile::TagsOnFile() : v1(false),
                                 v1_1(false),

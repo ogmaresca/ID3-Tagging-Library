@@ -16,7 +16,7 @@
 #include "ID3PictureFrame.h"
 #include "ID3Functions.h"
 #include "ID3Constants.h"
-#include <iostream>
+
 using namespace ID3;
 
 ///@pkg ID3FrameFactory.h
@@ -50,7 +50,8 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 	ByteArray frameBytes;
 	
 	//The ID3v2 frame ID that will be read from file
-	std::string id;
+	//std::string id;
+	FrameID id;
 	
 	//ID3v2.2 and below have a different frame header structure, so they need to
 	//be read differently
@@ -93,8 +94,8 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 		if(frameSize == 0 || frameSize + OLD_FRAME_HEADER_BYTE_SIZE > ID3Size)
 			return FramePtr(new UnknownFrame());
 		
-		//Get the frame ID
-		id = terminatedstring(header.id, 4);
+		//Get the ID3v2.2 frame ID, and then convert it to its ID3v2.4 equivalent
+		id = FrameID(terminatedstring(header.id, 4), ID3Ver);
 		
 		//Create the ByteArray with room for the entire frame content, if it were
 		//a new ID3v2 tag
@@ -112,9 +113,8 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 		
 		//Convert the ID to its ID3v2.4 equivalent, and save them to the currently
 		//unused first four bytes of the frame
-		id = convertOldFrameIDToNew(id);
 		for(ushort i = 0; i < 4; i++)
-			frameBytes[i] = id[i];
+			frameBytes[i] = static_cast<std::string>(id)[i];
 		
 		//Convert the ID3v2.2 non-synchsafe 3-byte frame size to the ID3v2.4
 		//synchsafe 4-byte frame size
@@ -153,7 +153,7 @@ FramePair FrameFactory::createPair(const ulong readpos) const {
 }
 
 ///@pkg ID3FrameFactory.h
-FramePtr FrameFactory::create(const std::string& frameName,
+FramePtr FrameFactory::create(const FrameID&     frameName,
                               const std::string& textContent,
                               const std::string& description,
                               const std::string& language) const {
@@ -179,28 +179,11 @@ FramePtr FrameFactory::create(const std::string& frameName,
 }
 
 ///@pkg ID3FrameFactory.h
-FramePtr FrameFactory::create(const Frames frameName,
-                              const std::string& textContent,
-                              const std::string& description,
-                              const std::string& language) const {
-	return create(getFrameName(frameName), textContent, description, language);
-}
-
-///@pkg ID3FrameFactory.h
-FramePair FrameFactory::createPair(const std::string& frameName,
+FramePair FrameFactory::createPair(const FrameID&     frameName,
                                    const std::string& textContent,
                                    const std::string& description,
                                    const std::string& language) const {
 	return FramePair(frameName, create(frameName, textContent, description, language));
-}
-
-///@pkg ID3FrameFactory.h
-FramePair FrameFactory::createPair(const Frames frameName,
-                                   const std::string& textContent,
-                                   const std::string& description,
-                                   const std::string& language) const {
-	FramePtr frame = create(frameName, textContent, description, language);
-	return FramePair(frame->frame(), frame);
 }
 
 ///@pkg ID3FrameFactory.h
@@ -246,7 +229,7 @@ FramePair FrameFactory::createPair(std::ifstream& file,
 
 ///@pkg ID3FrameFactory.h
 ///@static
-FramePtr FrameFactory::create(const std::string& frameName,
+FramePtr FrameFactory::create(const FrameID&     frameName,
                               const ushort       version,
                               const std::string& textContent,
                               const std::string& description,
@@ -257,33 +240,12 @@ FramePtr FrameFactory::create(const std::string& frameName,
 
 ///@pkg ID3FrameFactory.h
 ///@static
-FramePtr FrameFactory::create(const Frames       frameName,
-                              const ushort       version,
-                              const std::string& textContent,
-                              const std::string& description,
-                              const std::string& language) {
-	return create(getFrameName(frameName), version, textContent, description, language);
-}
-
-///@pkg ID3FrameFactory.h
-///@static
-FramePair FrameFactory::createPair(const std::string& frameName,
+FramePair FrameFactory::createPair(const FrameID&     frameName,
                                    const ushort       version,
                                    const std::string& textContent,
                                    const std::string& description,
                                    const std::string& language) {
 	return FramePair(frameName, create(frameName, version, textContent, description, language));
-}
-
-///@pkg ID3FrameFactory.h
-///@static
-FramePair FrameFactory::createPair(const Frames       frameName,
-                                   const ushort       version,
-                                   const std::string& textContent,
-                                   const std::string& description,
-                                   const std::string& language) {
-	FramePtr frame = create(frameName, version, textContent, description, language);
-	return FramePair(frame->frame(), frame);
 }
 
 ///@pkg ID3FrameFactory.h

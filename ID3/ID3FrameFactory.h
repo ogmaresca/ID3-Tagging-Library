@@ -20,6 +20,7 @@
 
 #include "ID3Frame.h"
 #include "ID3PictureFrame.h"
+#include "ID3FrameID.h"
 
 /**
  * The ID3 namespace defines everything related to reading and writing
@@ -103,25 +104,7 @@ namespace ID3 {
 			 *                    with languages. 
 			 * @return A FramePtr containing a relevant Frame object.
 			 */
-			FramePtr create(const std::string& frameName,
-			                const std::string& textContent="",
-			                const std::string& description="",
-			                const std::string& language="") const;
-			
-			/**
-			 * @param frameName   A ID3::Frames enum value.
-			 * @param textContent The string content.
-			 * @param description The frame description. Only applies to text
-			 *                    frames with descriptions.
-			 * @param language    The frame language. Only applied to text frames
-			 *                    with languages. 
-			 * @return A FramePtr containing a relevant Frame object.
-			 * @see ID3::FrameFactory::create(std::string&,
-			 *                                std::string&,
-			 *                                std::string&,
-			 *                                std::string&)
-			 */
-			FramePtr create(const Frames       frameName,
+			FramePtr create(const FrameID& frameName,
 			                const std::string& textContent="",
 			                const std::string& description="",
 			                const std::string& language="") const;
@@ -129,7 +112,7 @@ namespace ID3 {
 			/**
 			 * Creates a relevant FramePair object.
 			 * 
-			 * @param frameName   A ID3::Frames enum value.
+			 * @param frameName   The ID3 frame ID.
 			 * @param textContent The string content.
 			 * @param description The frame description. Only applies to text
 			 *                    frames with descriptions.
@@ -142,28 +125,7 @@ namespace ID3 {
 			 *                                std::string&,
 			 *                                std::string&)
 			 */
-			FramePair createPair(const std::string& frameName,
-			                     const std::string& textContent="",
-			                     const std::string& description="",
-			                     const std::string& language="") const;
-			
-			/**
-			 * Creates a relevant FramePair object.
-			 * 
-			 * @param frameName   A ID3::Frames enum value.
-			 * @param textContent The string content.
-			 * @param description The frame description. Only applies to text
-			 *                    frames with descriptions.
-			 * @param language    The frame language. Only applied to text frames
-			 *                    with languages. 
-			 * @return A FramePair, with the Frame ID in the first slot and the
-			 *         FramePtr in the second slot.
-			 * @see ID3::FrameFactory::create(std::string&,
-			 *                                std::string&,
-			 *                                std::string&,
-			 *                                std::string&)
-			 */
-			FramePair createPair(const Frames       frameName,
+			FramePair createPair(const FrameID& frameName,
 			                     const std::string& textContent="",
 			                     const std::string& description="",
 			                     const std::string& language="") const;
@@ -258,7 +220,7 @@ namespace ID3 {
 			 *                    with languages. 
 			 * @return A FramePtr containing a relevant Frame object.
 			 */
-			static FramePtr create(const std::string& frameName,
+			static FramePtr create(const FrameID&     frameName,
 			                       const ushort       version,
 			                       const std::string& textContent="",
 			                       const std::string& description="",
@@ -271,29 +233,7 @@ namespace ID3 {
 			 *                                ushort,
 			 *                                std::string&,
 			 *                                std::string&)
-			 * @param frameName   The ID3 frame ID.
-			 * @param version     The ID3 major version to use.
-			 * @param textContent The string content.
-			 * @param description The frame description. Only applies to text
-			 *                    frames with descriptions.
-			 * @param language    The frame language. Only applied to text frames
-			 *                    with languages. 
-			 * @return A FramePtr containing a relevant Frame object.
-			 */
-			static FramePtr create(const Frames       frameName,
-			                       const ushort       version,
-			                       const std::string& textContent="",
-			                       const std::string& description="",
-			                       const std::string& language="");
-			
-			/**
-			 * Creates a relevant FramePair object.
-			 * 
-			 * @see ID3::FrameFactory::create(std::string&,
-			 *                                ushort,
-			 *                                std::string&,
-			 *                                std::string&)
-			 * @param frameName   A ID3::Frames enum value.
+			 * @param frameName   The ID3v2 frame ID.
 			 * @param version     The ID3 major version to use.
 			 * @param textContent The string content.
 			 * @param description The frame description. Only applies to text
@@ -303,27 +243,7 @@ namespace ID3 {
 			 * @return A FramePair, with the Frame ID in the first slot
 			 *         and the FramePtr in the second slot.
 			 */
-			static FramePair createPair(const std::string& frameName,
-			                            const ushort       version,
-			                            const std::string& textContent="",
-			                            const std::string& description="",
-			                            const std::string& language="");
-			
-			/**
-			 * @see ID3::FrameFactory::create(std::string&,
-			 *                                ushort,
-			 *                                std::string&,
-			 *                                std::string&)
-			 * @param frameName A ID3::Frames enum value.
-			 * @param version The ID3 major version to use.
-			 * @param textContent The string content.
-			 * @param description The frame description. Only applies
-			 *                    to text frames with descriptions.
-			 * @param language The frame language. Only applied to text frames with languages. 
-			 * @return A FramePair, with the Frame ID in the first slot
-			 *         and the FramePtr in the second slot.
-			 */
-			static FramePair createPair(const Frames       frameName,
+			static FramePair createPair(const FrameID&     frameName,
 			                            const ushort       version,
 			                            const std::string& textContent="",
 			                            const std::string& description="",
