@@ -40,7 +40,7 @@ namespace {
 	 * @param version   The ID3v2 major version.
 	 * @return The string, split into a vector.
 	 */
-	static std::vector<std::string> splitTextContent(const Frames       frameName,
+	static std::vector<std::string> splitTextContent(const FrameID&     frameName,
 	                                                 const std::string& text,
 	                                                 const ushort       version) {
 		//A vector that contains a single string, for cases where there is no text
@@ -185,7 +185,7 @@ bool Tag::exists(const FrameID& frameName) const {
 }
 
 ///@pkg ID3.h
-std::string Tag::textString(Frames frameName) const {
+std::string Tag::textString(const FrameID& frameName) const {
 	//Get the frame
 	TextFrame* textFrameObj = getFrame<TextFrame>(frameName);
 	
@@ -195,8 +195,8 @@ std::string Tag::textString(Frames frameName) const {
 }
 
 ///@pkg ID3.h
-std::vector<std::string> Tag::textStrings(Frames frameName) const {
-	if(allowsMultipleFrames(frameName)) {
+std::vector<std::string> Tag::textStrings(const FrameID& frameName) const {
+	if(frameName.allowsMultiple()) {
 		//Get the text frames
 		std::vector<TextFrame*> textFrames = getFrames<TextFrame>(frameName);
 		
@@ -222,7 +222,7 @@ std::vector<std::string> Tag::textStrings(Frames frameName) const {
 }
 
 ///@pkg ID3.h
-Text Tag::text(Frames frameName) const {
+Text Tag::text(const FrameID& frameName) const {
 	//Get the Frame
 	TextFrame* textFrameObj = getFrame<TextFrame>(frameName);
 	
@@ -248,7 +248,7 @@ Text Tag::text(Frames frameName) const {
 }
 
 ///@pkg ID3.h
-std::vector<Text> Tag::texts(Frames frameName) const {
+std::vector<Text> Tag::texts(const FrameID& frameName) const {
 	//Get the Frame vector
 	std::vector<TextFrame*> textFrames = getFrames<TextFrame>(frameName);
 	
@@ -487,9 +487,9 @@ void Tag::print() const {
 }
 
 ///@pkg ID3.h
-bool Tag::addFrame(const std::string& frameName, FramePtr frame) {
+bool Tag::addFrame(const FrameID& frameName, FramePtr frame) {
 	//Check if the Frame is valid
-	if((exists(frameName) && !allowsMultipleFrames(frameName)) ||
+	if((exists(frameName) && !frameName.allowsMultiple()) ||
 	   frame.get() == nullptr || frame->null() || frame->empty())
 		return false;
 	frames.emplace(frameName, frame);
@@ -499,7 +499,7 @@ bool Tag::addFrame(const std::string& frameName, FramePtr frame) {
 ///@pkg ID3.h
 bool Tag::addFrame(const FramePair& frameMapPair) {
 	//Check if the Frame is valid
-	if((exists(frameMapPair.first) && !allowsMultipleFrames(frameMapPair.first)) ||
+	if((exists(frameMapPair.first) && !FrameID(frameMapPair.first).allowsMultiple()) ||
 	   frameMapPair.second.get() == nullptr || frameMapPair.second->null() || frameMapPair.second->empty())
 		return false;
 	frames.emplace(frameMapPair);
@@ -508,7 +508,7 @@ bool Tag::addFrame(const FramePair& frameMapPair) {
 
 ///@pkg ID3.h
 template<typename DerivedFrame>
-DerivedFrame* Tag::getFrame(FrameID frameName) const {
+DerivedFrame* Tag::getFrame(const FrameID& frameName) const {
 	//Check if the Frame is in the map
 	const FrameMap::const_iterator result = frames.find(frameName);
 	if(result == frames.end()) return nullptr;
@@ -528,7 +528,7 @@ DerivedFrame* Tag::getFrame(FrameID frameName) const {
 
 ///@pkg ID3.h
 template<typename DerivedFrame>
-std::vector<DerivedFrame*> Tag::getFrames(FrameID frameName) const {
+std::vector<DerivedFrame*> Tag::getFrames(const FrameID& frameName) const {
 	//Get the range.
 	//Each const_iterator has a first variable, which stores the Frames value,
 	//and a second variable, which stores the FramePtr object.

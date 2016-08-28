@@ -235,33 +235,3 @@ std::string ID3::getUTF8String(uint8_t encoding,
 		                                                                  end);
 	}
 }
-
-///@pkg ID3Functions.h
-bool ID3::allowsMultipleFrames(const FrameID& frameID) {
-	switch(frameID) {
-		case FRAME_AUDIO_ENCRYPTION:
-		case FRAME_ATTACHED_PICTURE:
-		case FRAME_COMMENT:
-		case FRAME_COMMERCIAL:
-		case FRAME_ENCRYPTION_METHOD_REGISTRATION:
-		case FRAME_EQUALIZATION_2:
-		case FRAME_GENERAL_ENCAPSULATED_OBJECT:
-		case FRAME_GROUP_IDENTIFICATION_REGISTRATION:
-		case FRAME_LINKED_INFORMATION:
-		case FRAME_POPULARIMETER:
-		case FRAME_PRIVATE:
-		case FRAME_RELATIVE_VOLUME_ADJUSTMENT_2:
-		case FRAME_SIGNATURE:
-		case FRAME_SYNCHRONIZED_LYRICS:
-		case FRAME_CUSTOM_USER_INFORMATION:
-		case FRAME_UNIQUE_FILE_IDENTIFIER:
-		case FRAME_TERMS_OF_USE:
-		case FRAME_UNSYNCHRONIZED_LYRICS:
-		case FRAME_COMMERCIAL_INFORMATION_URL:
-		case FRAME_OFFICIAL_ARTIST_URL:
-		case FRAME_USER_DEFINED_URL:
-			return true;
-		default:
-			return false;
-	}
-}

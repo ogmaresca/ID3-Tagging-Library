@@ -12,7 +12,6 @@
 
 #include "ID3FrameID.h"
 #include "ID3.h"
-#include "ID3Functions.h"
 
 using namespace ID3;
 
@@ -263,3 +262,33 @@ FrameID::operator Frames() const { return enumID; }
 
 ///@pkg ID3FrameID.h
 bool FrameID::unknown() const { return enumID == FRAME_UNKNOWN_FRAME; }
+
+///@pkg ID3FrameID.h
+bool FrameID::allowsMultiple() const {
+	switch(enumID) {
+		case FRAME_AUDIO_ENCRYPTION:
+		case FRAME_ATTACHED_PICTURE:
+		case FRAME_COMMENT:
+		case FRAME_COMMERCIAL:
+		case FRAME_ENCRYPTION_METHOD_REGISTRATION:
+		case FRAME_EQUALIZATION_2:
+		case FRAME_GENERAL_ENCAPSULATED_OBJECT:
+		case FRAME_GROUP_IDENTIFICATION_REGISTRATION:
+		case FRAME_LINKED_INFORMATION:
+		case FRAME_POPULARIMETER:
+		case FRAME_PRIVATE:
+		case FRAME_RELATIVE_VOLUME_ADJUSTMENT_2:
+		case FRAME_SIGNATURE:
+		case FRAME_SYNCHRONIZED_LYRICS:
+		case FRAME_CUSTOM_USER_INFORMATION:
+		case FRAME_UNIQUE_FILE_IDENTIFIER:
+		case FRAME_TERMS_OF_USE:
+		case FRAME_UNSYNCHRONIZED_LYRICS:
+		case FRAME_COMMERCIAL_INFORMATION_URL:
+		case FRAME_OFFICIAL_ARTIST_URL:
+		case FRAME_USER_DEFINED_URL:
+			return true;
+		default:
+			return false;
+	}
+}

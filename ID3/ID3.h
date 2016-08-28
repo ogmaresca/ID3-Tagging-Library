@@ -296,7 +296,7 @@ namespace ID3 {
 			 * @return The text content, or "" if the frame is not found, "null",
 			 *         or not a text frame.
 			 */
-			std::string textString(const Frames frameName) const;
+			std::string textString(const FrameID& frameName) const;
 			
 			/**
 			 * Get the text content of a frame, split up into a vector for each
@@ -330,7 +330,7 @@ namespace ID3 {
 			 * @param frameName A Frames enum variable that represents a frame ID.
 			 * @return A string vector of the text content.
 			 */
-			std::vector<std::string> textStrings(const Frames frameName) const;
+			std::vector<std::string> textStrings(const FrameID& frameName) const;
 			
 			/**
 			 * Return a Text struct with a frame's text content, description, and
@@ -347,7 +347,7 @@ namespace ID3 {
 			 * @param frameName A Frames enum variable that represents a frame ID.
 			 * @return A Text struct of the frame content.
 			 */
-			Text text(const Frames frameName) const;
+			Text text(const FrameID& frameName) const;
 			
 			/**
 			 * Return a vector Text structs with the text content, descriptions,
@@ -365,7 +365,7 @@ namespace ID3 {
 			 * @param frameName A Frames enum variable that represents a frame ID.
 			 * @return A Text struct of the frame content.
 			 */
-			std::vector<Text> texts(const Frames frameName) const;
+			std::vector<Text> texts(const FrameID& frameName) const;
 			
 			/**
 			 * Get the title tag.
@@ -662,7 +662,7 @@ namespace ID3 {
 			 * @param frame     The shared pointer holding a Frame object.
 			 * @return true if the frame was succesfully added, false otherwise.
 			 */
-			bool addFrame(const std::string& frameName, FramePtr frame);
+			bool addFrame(const FrameID& frameName, FramePtr frame);
 			
 			/**
 			 * @see ID3::Tag::addFrame(std::string&, FramePtr)
@@ -683,7 +683,7 @@ namespace ID3 {
 			 * @return The Frame in the map, or nullptr.
 			 */
 			template<typename DerivedFrame>
-			DerivedFrame* getFrame(FrameID frameName) const;
+			DerivedFrame* getFrame(const FrameID& frameName) const;
 			
 			/**
 			 * A protected method to get a Frame* vector from the FrameMap.
@@ -699,7 +699,7 @@ namespace ID3 {
 			 * @return A Frame vector of all Frames that were found.
 			 */
 			template<typename DerivedFrame>
-			std::vector<DerivedFrame*> getFrames(FrameID frameName) const;
+			std::vector<DerivedFrame*> getFrames(const FrameID& frameName) const;
 			
 			/**
 			 * A constructor helper method that gets the tag information from the given file.

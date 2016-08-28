@@ -484,6 +484,14 @@ namespace ID3 {
 			operator Frames() const;
 			bool unknown() const;
 			
+			/**
+			 * Check if the ID3v2 standard supports multiple instances of the frame
+			 * in the tag.
+			 * 
+			 * @return Whether multiple instances of the frame are allowed.
+			 */
+			bool allowsMultiple() const;
+			
 		private:
 			static const std::vector<std::string> FRAME_STR_LIST;
 			

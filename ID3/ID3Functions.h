@@ -141,15 +141,6 @@ namespace ID3 {
 	                          const ByteArray& bytes,
 	                          long start=-1,
 	                          long end=-1);
-	
-	/**
-	 * Check if the ID3v2 standard supports multiple instances of a given frame
-	 * in the flag.
-	 * 
-	 * @param frameID The frame to check.
-	 * @return true if multiple instances of the frame are allowed, false otherwise.
-	 */
-	bool allowsMultipleFrames(const FrameID& frameID);
 }
 
 #endif
