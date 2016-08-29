@@ -16,7 +16,7 @@
 #include <vector> //For std::vector
 #include <string> //For std::string
 
-#include "ID3FrameID.h"
+#include "../ID3FrameID.h"
 
 /**
  * The ID3 namespace defines everything related to reading and writing
@@ -38,8 +38,13 @@ namespace ID3 {
 	 * An enum that  represents a Frame class.
 	 * 
 	 * Values and their respective class:
-	 *     TEXT:    TextFrame
-	 *     UNKNOWN: UnknownFrame
+	 *     CLASS_DESCRIPTIVE: DescriptiveTextFrame
+	 *     CLASS_NUMERICAL:   NumericalTextFrame
+	 *     CLASS_PICTURE:     PictureFrame
+	 *     CLASS_PLAY_COUNT:  PlayCountFrame
+	 *     CLASS_TEXT:        TextFrame
+	 *     CLASS_UNKNOWN:     UnknownFrame
+	 *     CLASS_URL:         URLTextFrame
 	 */
 	enum FrameClass : short {
 		CLASS_DESCRIPTIVE = 3, //DescriptiveTextFrame
@@ -48,6 +53,7 @@ namespace ID3 {
 		CLASS_UNKNOWN     = 0, //UnknownFrame
 		CLASS_URL         = 4, //URLTextFrame
 		CLASS_PICTURE     = 5, //PictureTextFrame
+		CLASS_PLAY_COUNT  = 6  //PlayCountFrame
 	};
 	
 	/**

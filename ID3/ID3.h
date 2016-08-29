@@ -18,9 +18,10 @@
 #include <unordered_map> //For std::unordered_map and std::pair
 #include <memory>        //For std::shared_ptr
 
-#include "ID3Frame.h"
-#include "ID3PictureFrame.h"
-#include "ID3FrameID.h"
+#include "Frames/ID3Frame.h"        //For supporting Frames
+#include "Frames/ID3PictureFrame.h" //For PictureType
+#include "ID3FrameID.h"             //For frame IDs
+#include "ID3FrameFactory.h"        //For FrameFactory
 
 /**
  * The ID3 namespace defines everything related to reading and writing
@@ -569,6 +570,13 @@ namespace ID3 {
 			 */
 			std::vector<Picture> pictures() const;
 			
+			/**
+			 * Get the play count.
+			 * 
+			 * @return The play count saved on the file.
+			 */
+			unsigned long long playCount() const;
+			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
 			////////////////////////// E N D   F R A M E //////////////////////////
@@ -778,6 +786,8 @@ namespace ID3 {
 			 * ID3v2 frames.
 			 */
 			FrameMap frames;
+			
+			FrameFactory factory;
 	};
 }
 

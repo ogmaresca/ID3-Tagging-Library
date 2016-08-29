@@ -15,7 +15,8 @@
 #include <algorithm>        //For std::reverse()
 
 #include "ID3Functions.h"
-#include "ID3Constants.h"
+#include "ID3Constants.h" //For ID3::GENRES
+#include "Frames/ID3Frame.h"     //For encoding types
 
 using namespace ID3;
 
@@ -27,12 +28,12 @@ std::string ID3::V1::getGenreString(ushort genre) {
 }
 
 ///@pkg ID3Functions.h
-ulong ID3::byteIntVal(uint8_t* array, int size, bool synchsafe) {
+unsigned long long ID3::byteIntVal(uint8_t* array, int size, bool synchsafe) {
 	if(array == nullptr || size < 1) return 0;
 	
 	const short shiftSize = synchsafe ? 7 : 8;
 	
-	ulong value = *array++;
+	unsigned long long value = *array++;
 	
 	for(int i = 1; i < size; i++)
 		value = (value << shiftSize) + *array++;
@@ -41,7 +42,7 @@ ulong ID3::byteIntVal(uint8_t* array, int size, bool synchsafe) {
 }
 
 ///@pkg ID3Functions.h
-ByteArray ID3::intToByteArray(ulong val, ushort length, bool synchsafe) {
+ByteArray ID3::intToByteArray(unsigned long long val, ushort length, bool synchsafe) {
 	const ushort shiftSize = synchsafe ? 7 : 8;
 	const ushort modVal = synchsafe ? 0x80 : 0x100;
 	
@@ -56,11 +57,11 @@ ByteArray ID3::intToByteArray(ulong val, ushort length, bool synchsafe) {
 		std::reverse(byteVector.begin(), byteVector.end());
 		return byteVector;
 	} else {
-		ByteArray byteVector(length);
+		ByteArray byteVector(length, 0);
 		//If val is too big to fit in the given size, then make it the maximum
 		//possible value that will fit
-		if(val > (1UL << static_cast<ulong>(length * shiftSize)) - 1UL)
-			val = (1UL << static_cast<ulong>(length * shiftSize)) - 1UL;
+		if(val > (1ULL << static_cast<unsigned long long>(length * shiftSize)) - 1ULL)
+			val = (1ULL << static_cast<unsigned long long>(length * shiftSize)) - 1ULL;
 		for(int i = length - 1; i >= 0; i--) {
 			byteVector[i] = val % modVal;
 			val >>= shiftSize;

@@ -19,8 +19,9 @@
 #include "ID3.h"
 #include "ID3Functions.h"
 #include "ID3FrameFactory.h"
-#include "ID3TextFrame.h"
-#include "ID3PictureFrame.h"
+#include "Frames/ID3TextFrame.h"
+#include "Frames/ID3PictureFrame.h"
+#include "Frames/ID3PlayCountFrame.h"
 #include "ID3Constants.h"
 
 using namespace ID3;
@@ -78,12 +79,12 @@ Tag::Tag(std::ifstream& file) : isNull(true) {
 
 ///@pkg ID3.h
 Tag::Tag(const std::string& fileLoc) : filename(fileLoc), isNull(true) {
-	std::ifstream file;
-	
 	//Check if the file is an MP3 file
 	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4|wav)$", std::regex::icase |
 	                                                     std::regex::ECMAScript)))
 		return;
+	
+	std::ifstream file;
 	
 	try {
 		file.open(fileLoc, std::ios::binary | std::ios::ate);
@@ -361,6 +362,15 @@ std::vector<Picture> Tag::pictures() const {
 	return toReturn;
 }
 
+///@pkg ID3.h
+unsigned long long Tag::playCount() const {
+	//Get the play count Frame, or a nullptr if it's not on file
+	PlayCountFrame* pcnt = getFrame<PlayCountFrame>(Frames::FRAME_PLAY_COUNT);
+	
+	//Return the play count
+	return pcnt == nullptr ? 0ULL : pcnt->playCount();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////  E N D   F R A M E //////////////////////////////
@@ -626,8 +636,8 @@ void Tag::readFileV2(std::ifstream& file) {
 		//The file has correctly formatted ID3v2 tags
 		tagsSet.v2 = true;
 		
-		//A FrameFactory to read the frames off the file
-		FrameFactory factory(file, v2TagInfo.majorVer, v2TagInfo.totalSize);
+		//Initialize the Tag's FrameFactory properly
+		factory = FrameFactory(file, v2TagInfo.majorVer, v2TagInfo.totalSize);
 		
 		//Loop over the ID3 tags, and stop once all ID3 frames have been
 		//reached or a frame is null. Add every frame to the frames map.
@@ -676,25 +686,19 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 	//are not really equivalent to ID3v2 comments, don't add an ID3v1 comment if
 	//there's already a read comment frame.
 	try {
-		addFrame(FrameFactory::createPair(Frames::FRAME_TITLE,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.title, 30)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_ARTIST,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.artist, 30)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_ALBUM,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.album, 30)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_YEAR,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.year, 4)));
+		addFrame(factory.createPair(Frames::FRAME_TITLE,
+		                            terminatedstring(tags.title, 30)));
+		addFrame(factory.createPair(Frames::FRAME_ARTIST,
+		                            terminatedstring(tags.artist, 30)));
+		addFrame(factory.createPair(Frames::FRAME_ALBUM,
+		                            terminatedstring(tags.album, 30)));
+		addFrame(factory.createPair(Frames::FRAME_YEAR,
+		                            terminatedstring(tags.year, 4)));
 		if(!exists(Frames::FRAME_COMMENT))
-			addFrame(FrameFactory::createPair(Frames::FRAME_COMMENT,
-			                                  v2TagInfo.majorVer,
-			                                  terminatedstring(tags.comment, 30)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_GENRE,
-		                                  v2TagInfo.majorVer,
-		                                  V1::getGenreString(tags.genre)));
+			addFrame(factory.createPair(Frames::FRAME_COMMENT,
+			                            terminatedstring(tags.comment, 30)));
+		addFrame(factory.createPair(Frames::FRAME_GENRE,
+		                            V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::Tag&, bool): " << e.what() << std::endl;
 	}
@@ -718,28 +722,21 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 	//are not really equivalent to ID3v2 comments, don't add an ID3v1 comment if
 	//there's already a read comment frame.
 	try {
-		addFrame(FrameFactory::createPair(Frames::FRAME_TITLE,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.title, 30)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_ARTIST,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.artist, 30)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_ALBUM,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.album, 30)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_YEAR,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.year, 4)));
+		addFrame(factory.createPair(Frames::FRAME_TITLE,
+		                            terminatedstring(tags.title, 30)));
+		addFrame(factory.createPair(Frames::FRAME_ARTIST,
+		                            terminatedstring(tags.artist, 30)));
+		addFrame(factory.createPair(Frames::FRAME_ALBUM,
+		                            terminatedstring(tags.album, 30)));
+		addFrame(factory.createPair(Frames::FRAME_YEAR,
+		                            terminatedstring(tags.year, 4)));
 		if(!exists(Frames::FRAME_COMMENT))
-			addFrame(FrameFactory::createPair(Frames::FRAME_COMMENT,
-			                                  v2TagInfo.majorVer,
-			                                  terminatedstring(tags.comment, 28)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_TRACK,
-		                                  v2TagInfo.majorVer,
-		                                  std::to_string(tags.trackNum)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_GENRE,
-		                                  v2TagInfo.majorVer,
-		                                  V1::getGenreString(tags.genre)));
+			addFrame(factory.createPair(Frames::FRAME_COMMENT,
+			                            terminatedstring(tags.comment, 28)));
+		addFrame(factory.createPair(Frames::FRAME_TRACK,
+		                            std::to_string(tags.trackNum)));
+		addFrame(factory.createPair(Frames::FRAME_GENRE,
+		                            V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::P1Tag&, bool): " << e.what() << std::endl;
 	}
@@ -748,23 +745,18 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 ///@pkg ID3.h
 void Tag::setTags(const V1::ExtendedTag& tags) {
 	//Save the V1 Extended tags as Frame objects.
-	//Since I'm using std::unordered_map.emplace(), these will not
-	//overwrite any V2 tags.
+	//Since I'm using ID3::Tag::addFrame(), these will not overwrite any V2 tags.
 	try {
 		tagsSet.v1Extended = true;
 		
-		addFrame(FrameFactory::createPair(Frames::FRAME_TITLE,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.title, 60)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_ARTIST,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.artist, 60)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_ALBUM,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.album, 60)));
-		addFrame(FrameFactory::createPair(Frames::FRAME_GENRE,
-		                                  v2TagInfo.majorVer,
-		                                  terminatedstring(tags.genre, 30)));
+		addFrame(factory.createPair(Frames::FRAME_TITLE,
+		                            terminatedstring(tags.title, 60)));
+		addFrame(factory.createPair(Frames::FRAME_ARTIST,
+		                            terminatedstring(tags.artist, 60)));
+		addFrame(factory.createPair(Frames::FRAME_ALBUM,
+		                            terminatedstring(tags.album, 60)));
+		addFrame(factory.createPair(Frames::FRAME_GENRE,
+		                            terminatedstring(tags.genre, 30)));
 		/*
 		 * Placeholder comment for when I add playback speed support and
 		 * support for start and end times.

@@ -255,12 +255,12 @@ namespace ID3 {
 			 * @param val The long int to check.
 			 * @return true if the values are the same, false otherwise.
 			 */
-			virtual bool operator==(long val) const noexcept;
+			virtual bool operator==(long long val) const noexcept;
 			
 			/**
 			 * Get the text content of the frame casted to a long int.
 			 */
-			virtual operator long() const noexcept;
+			virtual operator long long() const noexcept;
 			
 			/**
 			 * Append an int to the frame content. This int will be appended as a
@@ -270,7 +270,7 @@ namespace ID3 {
 			 * @param val The value to add.
 			 * @return The numerical text frame.
 			 */
-			virtual NumericalTextFrame& operator+=(long val) noexcept;
+			virtual NumericalTextFrame& operator+=(long long val) noexcept;
 			
 			/**
 			 * Append a string to the frame content. This string will be appended
@@ -301,7 +301,7 @@ namespace ID3 {
 			 * 
 			 * @param newContent The new numerical content.
 			 */
-			virtual void content(long newContent);
+			virtual void content(long long newContent);
 			
 			/**
 			 * Set the text content. Call write() to finalize changes.
@@ -338,7 +338,7 @@ namespace ID3 {
 			 * 
 			 * @param newContent The new text content.
 			 */
-			virtual void contents(const std::vector<long>& newContent);
+			virtual void contents(const std::vector<long long>& newContent);
 			
 			/**
 			 * Print information about the frame.

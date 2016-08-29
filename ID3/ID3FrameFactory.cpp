@@ -12,8 +12,9 @@
 
 #include "ID3.h"
 #include "ID3FrameFactory.h"
-#include "ID3TextFrame.h"
-#include "ID3PictureFrame.h"
+#include "Frames/ID3TextFrame.h"
+#include "Frames/ID3PictureFrame.h"
+#include "Frames/ID3PlayCountFrame.h"
 #include "ID3Functions.h"
 #include "ID3Constants.h"
 
@@ -30,6 +31,11 @@ FrameFactory::FrameFactory(std::ifstream& file,
 FrameFactory::FrameFactory(const ushort version) : musicFile(nullptr),
                                                    ID3Ver(version),
                                                    ID3Size(0) {}
+
+///@pkg ID3FrameFactory.h	                                              
+FrameFactory::FrameFactory() : musicFile(nullptr),
+                               ID3Ver(WRITE_VERSION),
+                               ID3Size(0) {}
 
 ///@pkg ID3FrameFactory.h
 FramePtr FrameFactory::create(const ulong readpos) const {
@@ -140,6 +146,8 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 			return FramePtr(new URLTextFrame(id, ID3Ver, frameBytes));
 		case FrameClass::CLASS_PICTURE:
 			return FramePtr(new PictureFrame(ID3Ver, frameBytes));
+		case FrameClass::CLASS_PLAY_COUNT:
+			return FramePtr(new PlayCountFrame(ID3Ver, frameBytes));
 		case FrameClass::CLASS_UNKNOWN: default:
 			return FramePtr(new UnknownFrame(id, ID3Ver, frameBytes));
 	}
@@ -172,6 +180,8 @@ FramePtr FrameFactory::create(const FrameID&     frameName,
 			                                         frameOptions(frameName)));
 		case FrameClass::CLASS_URL:
 			return FramePtr(new URLTextFrame(frameName, ID3Ver, textContent));
+		case FrameClass::CLASS_PLAY_COUNT:
+			return FramePtr(new PlayCountFrame(ID3Ver, atoll(textContent.c_str())));
 		default:
 			return FramePtr(new UnknownFrame(frameName));
 	}
@@ -183,6 +193,31 @@ FramePair FrameFactory::createPair(const FrameID&     frameName,
                                    const std::string& description,
                                    const std::string& language) const {
 	return FramePair(frameName, create(frameName, textContent, description, language));
+}
+
+///@pkg ID3FrameFactory.h
+FramePtr FrameFactory::create(const FrameID&     frameName,
+                              const long long    frameValue,
+                              const std::string& description,
+                              const std::string& language) const {
+	FrameClass frameType = FrameFactory::frameType(frameName);
+	
+	switch(frameType) {
+		case FrameClass::CLASS_NUMERICAL:
+			return FramePtr(new NumericalTextFrame(frameName, ID3Ver, frameValue));
+		case FrameClass::CLASS_PLAY_COUNT:
+			return FramePtr(new PlayCountFrame(ID3Ver, frameValue));
+		default:
+			return create(frameName, std::to_string(frameValue), description, language);
+	}
+}
+
+///@pkg ID3FrameFactory.h
+FramePair FrameFactory::createPair(const FrameID&     frameName,
+                                   const long long    frameValue,
+                                   const std::string& description,
+                                   const std::string& language) const {
+	return FramePair(frameName, create(frameName, frameValue, description, language));
 }
 
 ///@pkg ID3FrameFactory.h
@@ -203,69 +238,6 @@ FramePair FrameFactory::createPicturePair(const ByteArray&   pictureByteArray,
 			                                 const std::string& description,
 			                                 const PictureType  type) const {
 	FramePtr frame = createPicture(pictureByteArray, mimeType, description, type);
-	return FramePair(frame->frame(), frame);
-}
-
-///@pkg ID3FrameFactory.h
-///@static
-FramePtr FrameFactory::create(std::ifstream& file,
-                              const ulong    readpos,
-                              const ushort   version,
-                              const ulong    tagEnd) {
-	FrameFactory factory(file, version, tagEnd);
-	return factory.create(readpos);
-}
-
-///@pkg ID3FrameFactory.h
-///@static
-FramePair FrameFactory::createPair(std::ifstream& file,
-                                   const ulong    readpos,
-                                   const ushort   version,
-                                   const ulong    tagEnd) {
-	FramePtr frame = create(file, readpos, version, tagEnd);
-	return FramePair(frame->frame(), frame);
-}
-
-///@pkg ID3FrameFactory.h
-///@static
-FramePtr FrameFactory::create(const FrameID&     frameName,
-                              const ushort       version,
-                              const std::string& textContent,
-                              const std::string& description,
-                              const std::string& language) {
-	FrameFactory factory(version);
-	return factory.create(frameName, textContent, description, language);
-}
-
-///@pkg ID3FrameFactory.h
-///@static
-FramePair FrameFactory::createPair(const FrameID&     frameName,
-                                   const ushort       version,
-                                   const std::string& textContent,
-                                   const std::string& description,
-                                   const std::string& language) {
-	return FramePair(frameName, create(frameName, version, textContent, description, language));
-}
-
-///@pkg ID3FrameFactory.h
-///@static
-FramePtr FrameFactory::createPicture(const ushort       version,
-                                     const ByteArray&   pictureByteArray,
-			                            const std::string& mimeType,
-			                            const std::string& description,
-			                            const PictureType  type) {
-	FrameFactory factory(version);
-	return factory.createPicture(pictureByteArray, mimeType, description, type);
-}
-
-///@pkg ID3FrameFactory.h
-///@static
-FramePair FrameFactory::createPicturePair(const ushort       version,
-                                          const ByteArray&   pictureByteArray,
-			                                 const std::string& mimeType,
-			                                 const std::string& description,
-			                                 const PictureType  type) {
-	FramePtr frame = createPicture(version, pictureByteArray, mimeType, description, type);
 	return FramePair(frame->frame(), frame);
 }
 
@@ -300,6 +272,9 @@ FrameClass FrameFactory::frameType(const FrameID& frameID) {
 		//Frames that are essentially text frames, but don't start with a T
 		case FRAME_INVOLVED_PEOPLE:
 			return FrameClass::CLASS_TEXT;
+		//The Play Count frame
+		case FRAME_PLAY_COUNT:
+			return FrameClass::CLASS_PLAY_COUNT;
 		//For the rest of the frames, compare the string values as there's too
 		//many enum cases
 		default:

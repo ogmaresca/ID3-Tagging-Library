@@ -16,8 +16,6 @@
 #include <string> //For std::string
 #include <vector> //For std::vector
 
-#include "ID3.h"
-
 /**
  * The ID3 namespace defines everything related to reading and writing
  * ID3 tags. The only supported versions for reading are ID3v1, ID3v1.1,
@@ -29,6 +27,11 @@
  * @see ID3.h
  */
 namespace ID3 {
+	/**
+	 * @see ID3.h
+	 */
+	typedef std::vector<uint8_t> ByteArray;
+	
 	/**
 	 * ID3v1 Functions.
 	 */
@@ -54,7 +57,7 @@ namespace ID3 {
 	 *        where the first bit of each byte is always zeroed.
 	 * @return The summed value of the char array's bits.
 	 */
-	ulong byteIntVal(uint8_t* array, int length, bool synchsafe=false);
+	unsigned long long byteIntVal(uint8_t* array, int length, bool synchsafe=false);
 	
 	/**
 	 * Given an unsigned integer value, receive a ByteArray that encodes the
@@ -70,7 +73,7 @@ namespace ID3 {
 	 *        where the first bit of each byte is always zeroed.
 	 * @return The integer value encoded as a ByteArray.
 	 */
-	ByteArray intToByteArray(ulong val, ushort length=0, bool synchsafe=false);
+	ByteArray intToByteArray(unsigned long long val, ushort length=0, bool synchsafe=false);
 	
 	/**
 	 * Create a std::string object with the call std::string(const char* s, size_type n).

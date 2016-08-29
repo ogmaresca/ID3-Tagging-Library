@@ -13,10 +13,10 @@
 #include <iostream>  //For printing
 #include <algorithm> //For std::all_of
 
-#include "ID3.h"
+#include "../ID3.h"
 #include "ID3TextFrame.h"
-#include "ID3Functions.h"
-#include "ID3Constants.h"
+#include "../ID3Functions.h"
+#include "../ID3Constants.h"
 
 using namespace ID3;
 
@@ -324,7 +324,7 @@ void NumericalTextFrame::content(const std::string& newContent) {
 }
 
 ///@pkg ID3TextFrame.h
-void NumericalTextFrame::content(long newContent) {
+void NumericalTextFrame::content(long long newContent) {
 	TextFrame::content(std::to_string(newContent));
 }
 
@@ -348,7 +348,7 @@ void NumericalTextFrame::contents(const std::vector<std::string>& newContent) {
 }
 
 ///@pkg ID3TextFrame.h
-void NumericalTextFrame::contents(const std::vector<long>& newContent) {
+void NumericalTextFrame::contents(const std::vector<long long>& newContent) {
 	if(!readOnly())
 		return;
 	
@@ -399,17 +399,17 @@ bool NumericalTextFrame::operator==(const Frame* const frame) const noexcept {
 }
 
 ///@pkg ID3TextFrame.h
-bool NumericalTextFrame::operator==(long val) const noexcept {
+bool NumericalTextFrame::operator==(long long val) const noexcept {
 	return textContent == std::to_string(val);
 }
 
 ///@pkg ID3TextFrame.h
-NumericalTextFrame::operator long() const noexcept {
-	return atol(textContent.c_str());
+NumericalTextFrame::operator long long() const noexcept {
+	return atoll(textContent.c_str());
 }
 
 ///@pkg ID3TextFrame.h
-NumericalTextFrame& NumericalTextFrame::operator+=(long val) noexcept {
+NumericalTextFrame& NumericalTextFrame::operator+=(long long val) noexcept {
 	textContent += stringSeparator() + std::to_string(val);
 	isEdited = true;
 	return *this;

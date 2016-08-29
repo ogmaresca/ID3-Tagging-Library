@@ -13,11 +13,11 @@
 #include <iostream>  //For printing
 #include <algorithm> //For std::all_of
 
-#include "ID3.h"
 #include "ID3TextFrame.h"
 #include "ID3PictureFrame.h"
-#include "ID3Functions.h"
-#include "ID3Constants.h"
+#include "../ID3.h"
+#include "../ID3Functions.h"
+#include "../ID3Constants.h"
 
 using namespace ID3;
 
@@ -58,7 +58,7 @@ PictureFrame::PictureFrame(const ushort version,
 									                          APICType(type),
 									                          textDescription(description),
 			                                            pictureData(pictureBytes) {
-	id = "APIC";
+	id = FRAME_PICTURE;
 	ID3Ver = version;
 	isNull = false;
 }

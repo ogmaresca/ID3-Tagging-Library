@@ -18,8 +18,8 @@
 #include <unordered_map> //For std::unordered_map and std::pair
 #include <memory>        //For std::shared_ptr
 
-#include "ID3Frame.h"
-#include "ID3PictureFrame.h"
+#include "Frames/ID3Frame.h"
+#include "Frames/ID3PictureFrame.h"
 #include "ID3FrameID.h"
 
 /**
@@ -33,6 +33,16 @@
  * @see ID3.h
  */
 namespace ID3 {
+	/**
+	 * @see ID3.h
+	 */
+	typedef std::shared_ptr<Frame> FramePtr;
+	
+	/**
+	 * @see ID3.h
+	 */
+	typedef std::pair<std::string, FramePtr> FramePair;
+	
 	/**
 	 * FrameFactory is a factory class to create Frame objects.
 	 * After creating a FrameFactory object call create(), or call a static
@@ -71,12 +81,23 @@ namespace ID3 {
 			             const ulong    tagEnd);
 			
 			/**
+			 * The empty constructor.
+			 * 
+			 * NOTE: If creating a FrameFactory with this constructor, then the
+			 *       create(ulong) method and its associated FramePair method will
+			 *       always return "null" UnknownFrame objects. The FrameFactory
+			 *       will also use the ID3v2 write version as its version reference.
+			 */
+			FrameFactory();
+			
+			/**
 			 * Creates a Frame by reading from the given position on the file
 			 * passed in the constructor.
 			 * 
-			 * NOTE: The passed file object must not be closed or null, or a "null"
-			 *       UnknownFrame will be returned. The read position must also be
-			 *       smaller than the ID3v2 tag size.
+			 * NOTE: The passed file object must not be closed or null, and the
+			 *       FrameFactory must not have been created with the empty
+			 *       constructor, or a "null" UnknownFrame will be returned. The
+			 *       read position must also be smaller than the ID3v2 tag size.
 			 * 
 			 * @param readpos The position on the file to start reading from.
 			 * @return A FramePtr containing a relevant Frame object.
@@ -106,7 +127,7 @@ namespace ID3 {
 			 *                    with languages. 
 			 * @return A FramePtr containing a relevant Frame object.
 			 */
-			FramePtr create(const FrameID& frameName,
+			FramePtr create(const FrameID&     frameName,
 			                const std::string& textContent="",
 			                const std::string& description="",
 			                const std::string& language="") const;
@@ -122,13 +143,52 @@ namespace ID3 {
 			 *                    with languages. 
 			 * @return A FramePair, with the Frame ID in the first slot and the
 			 *         FramePtr in the second slot.
-			 * @see ID3::FrameFactory::create(std::string&,
+			 * @see ID3::FrameFactory::create(FrameID&,
 			 *                                std::string&,
 			 *                                std::string&,
 			 *                                std::string&)
 			 */
 			FramePair createPair(const FrameID& frameName,
 			                     const std::string& textContent="",
+			                     const std::string& description="",
+			                     const std::string& language="") const;
+			
+			/**
+			 * Creates a text content or numerical Frame. If the Frame ID is not a
+			 * valid ID for an ID3 frame with numerical or string content, then a
+			 * "null" UnknownFrame will be returned.
+			 * 
+			 * @param frameName   The ID3 frame ID.
+			 * @param frameValue  The numerical frame value.
+			 * @param description The frame description. Only applies to text
+			 *                    frames with descriptions.
+			 * @param language    The frame language. Only applied to text frames
+			 *                    with languages. 
+			 * @return A FramePtr containing a relevant Frame object.
+			 */
+			FramePtr create(const FrameID&     frameName,
+			                const long long    frameValue,
+			                const std::string& description="",
+			                const std::string& language="") const;
+			
+			/**
+			 * Creates a relevant FramePair object.
+			 * 
+			 * @param frameName   The ID3 frame ID.
+			 * @param frameValue  The numerical frame value.
+			 * @param description The frame description. Only applies to text
+			 *                    frames with descriptions.
+			 * @param language    The frame language. Only applied to text frames
+			 *                    with languages. 
+			 * @return A FramePair, with the Frame ID in the first slot and the
+			 *         FramePtr in the second slot.
+			 * @see ID3::FrameFactory::create(FrameID&,
+			 *                                long long&,
+			 *                                std::string&,
+			 *                                std::string&)
+			 */
+			FramePair createPair(const FrameID&     frameName,
+			                     const long long    frameValue,
 			                     const std::string& description="",
 			                     const std::string& language="") const;
 			
@@ -166,130 +226,6 @@ namespace ID3 {
 			                            const std::string& mimeType,
 			                            const std::string& description="",
 			                            const PictureType  type=PictureType::FRONT_COVER) const;
-			
-			/**
-			 * Creates a Frame by reading from the given position on the file
-			 * passed in the constructor.
-			 * 
-			 * NOTE: The passed file object must not be closed or null, or a "null"
-			 *       UnknownFrame will be returned. The read position must also be
-			 *       smaller than the ID3v2 tag size.
-			 * 
-			 * NOTE: The file object will not be closed during the method call.
-			 * 
-			 * @param file An fstream file object.
-			 * @param version The ID3 major version to use.
-			 * @param tagEnd  The byte position that the ID3v2 tags end on. It is
-			 *                assumed that the tag size has already been checked to
-			 *                be smaller than the filesize.
-			 * @param readpos The position on the file to start reading from.
-			 * @return A FramePtr containing a relevant Frame object.
-			 */
-			static FramePtr create(std::ifstream& file,
-			                       const ulong    readpos,
-			                       const ushort   version,
-			                       const ulong    tagEnd);
-			
-			/**
-			 * Creates a relevant FramePair object.
-			 * 
-			 * @param file An fstream file object.
-			 * @param version The ID3 major version to use.
-			 * @param tagEnd  The byte position that the ID3v2 tags end on. It is
-			 *                assumed that the tag size has already been checked to
-			 *                be smaller than the filesize.
-			 * @param readpos The position on the file to start reading from.
-			 * @return A FramePair, with the Frame ID in the first slot and the
-			 *         FramePtr in the second slot.
-			 * @see ID3::FrameFactory::create(std::ifstream&, ulong, ushort, ulong).
-			 */
-			static FramePair createPair(std::ifstream& file,
-			                            const ulong    readpos,
-			                            const ushort   version,
-			                            const ulong    tagEnd);
-			
-			/**
-			 * Creates a text-content Frame. If the Frame ID is not a valid ID for
-			 * an ID3 frame with string content, then a "null" UnknownFrame will be
-			 * returned.
-			 * 
-			 * @param frameName   The ID3 frame ID.
-			 * @param version     The ID3 major version to use.
-			 * @param textContent The string content.
-			 * @param description The frame description. Only applies to text
-			 *                    frames with descriptions.
-			 * @param language    The frame language. Only applies to text frames
-			 *                    with languages. 
-			 * @return A FramePtr containing a relevant Frame object.
-			 */
-			static FramePtr create(const FrameID&     frameName,
-			                       const ushort       version,
-			                       const std::string& textContent="",
-			                       const std::string& description="",
-			                       const std::string& language="");
-			
-			/**
-			 * Creates a relevant FramePair object.
-			 * 
-			 * @see ID3::FrameFactory::create(std::string&,
-			 *                                ushort,
-			 *                                std::string&,
-			 *                                std::string&)
-			 * @param frameName   The ID3v2 frame ID.
-			 * @param version     The ID3 major version to use.
-			 * @param textContent The string content.
-			 * @param description The frame description. Only applies to text
-			 *                    frames with descriptions.
-			 * @param language    The frame language. Only applied to text frames
-			 *                    with languages. 
-			 * @return A FramePair, with the Frame ID in the first slot
-			 *         and the FramePtr in the second slot.
-			 */
-			static FramePair createPair(const FrameID&     frameName,
-			                            const ushort       version,
-			                            const std::string& textContent="",
-			                            const std::string& description="",
-			                            const std::string& language="");
-			
-			/**
-			 * Create a picture Frame.
-			 * 
-			 * @param version          The ID3v2 major version.
-			 * @param pictureByteArray A uint8_t vector of the picture's bytes.
-			 * @param mimeType         The MIME type of the image (PNG or JPEG only).
-			 * @param description      The image description (optional).
-			 * @param type             The ID3v2 APIC type (optional, defaults to
-			 *                         front cover).
-			 * @return A FramePtr with the relevant PictureFrame object.
-			 */
-			static FramePtr createPicture(const ushort       version,
-			                              const ByteArray&   pictureByteArray,
-			                              const std::string& mimeType,
-			                              const std::string& description="",
-			                              const PictureType  type=PictureType::FRONT_COVER);
-			
-			/**
-			 * Create a picture Frame pair.
-			 * 
-			 * @param version          The ID3v2 major version.
-			 * @param pictureByteArray A uint8_t vector of the picture's bytes.
-			 * @param mimeType         The MIME type of the image (PNG or JPEG only).
-			 * @param description      The image description (optional).
-			 * @param type             The ID3v2 APIC type (optional, defaults to
-			 *                         front cover).
-			 * @return A FramePair, with the Frame ID in the first slot and the
-			 *         FramePtr in the second slot.
-			 * @see ID3::Frame::Factory::createPicture(ushort,
-			 *                                         ByteArray&,
-			 *                                         std::string&,
-			 *                                         std::string&,
-			 *                                         PictureType)
-			 */
-			static FramePair createPicturePair(const ushort       version,
-			                                   const ByteArray&   pictureByteArray,
-			                                   const std::string& mimeType,
-			                                   const std::string& description="",
-			                                   const PictureType  type=PictureType::FRONT_COVER);
 		
 		private:
 			/**
@@ -328,12 +264,12 @@ namespace ID3 {
 			/**
 			 * The ID3v2 major version given in the constructor.
 			 */
-			const ushort ID3Ver;
+			ushort ID3Ver;
 			
 			/**
 			 * The size of the ID3 tags in bytes, given in the public constructor.
 			 */
-			const ulong ID3Size;
+			ulong ID3Size;
 	};
 }
 

@@ -12,10 +12,10 @@
 
 #include <iostream>  //For printing
 
-#include "ID3.h"
 #include "ID3Frame.h"
-#include "ID3Functions.h"
-#include "ID3Constants.h"
+#include "../ID3.h"
+#include "../ID3Functions.h"
+#include "../ID3Constants.h"
 
 using namespace ID3;
 

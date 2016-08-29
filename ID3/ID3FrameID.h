@@ -120,6 +120,7 @@ namespace ID3 {
 		FRAME_OWNERSHIP = 15,
 		FRAMEID_OWNE    = 15,
 		
+		FRAME_PLAY_COUNT   = 16,
 		FRAME_PLAY_COUNTER = 16,
 		FRAMEID_PCNT       = 16,
 		
