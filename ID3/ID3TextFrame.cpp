@@ -152,6 +152,63 @@ void TextFrame::content(const std::string& newContent) {
 }
 
 ///@pkg ID3TextFrame.h
+std::vector<std::string> TextFrame::contents() const {
+	//A vector that contains a single string, for cases where there is no text
+	//content.
+	static std::vector<std::string> emptyString(1, "");
+	
+	//If the string is empty, no use continuing
+	if(textContent == "") return emptyString;
+	
+	//A vector of strings to return
+	std::vector<std::string> tokens;
+	
+	//The separating character
+	const char SEPARATOR = stringSeparator();
+	
+	//Loop variables
+	size_t tokenStart = 0, tokenEnd = textContent.find(SEPARATOR, 0);
+	
+	while((tokenEnd = textContent.find(SEPARATOR, tokenStart)) != textContent.npos) {
+		//If the substring isn't an empty string
+		if(tokenEnd > tokenStart)
+			tokens.push_back(textContent.substr(tokenStart, tokenEnd - tokenStart));
+		tokenStart = tokenEnd + 1;
+	}
+	
+	//Add the last string token, if it isn't an empty string
+	if(tokenStart < textContent.size())
+		tokens.push_back(textContent.substr(tokenStart));
+	
+	//In the edge case that the string contains only divider characters, then
+	//also return the empty string vector
+	if(tokens.size() == 0) return emptyString;
+	
+	return tokens;
+}
+
+///@pkg ID3TextFrame.h
+void TextFrame::contents(const std::vector<std::string>& newContent) {
+	if(!readOnly())
+		return;
+	
+	isEdited = true;
+	
+	textContent = "";
+	
+	if(newContent.size() == 0) return;
+	
+	//The separating character
+	const char SEPARATOR = stringSeparator();
+	
+	for(const std::string& currentStr : newContent) {
+		if(textContent != "")
+			textContent += SEPARATOR;
+		textContent != currentStr;
+	}
+}
+
+///@pkg ID3TextFrame.h
 char TextFrame::stringSeparator() const {
 	if(ID3Ver <= 3) {
 		switch(frame()) {
@@ -207,7 +264,7 @@ TextFrame::operator std::string() const noexcept {
 
 ///@pkg ID3TextFrame.h
 TextFrame& TextFrame::operator+=(const std::string& str) noexcept {
-	textContent += str;
+	textContent += stringSeparator() + str;
 	isEdited = true;
 	return *this;
 }
@@ -272,6 +329,46 @@ void NumericalTextFrame::content(long newContent) {
 }
 
 ///@pkg ID3TextFrame.h
+void NumericalTextFrame::contents(const std::vector<std::string>& newContent) {
+	if(!readOnly())
+		return;
+	
+	//Get a string vector of only valid numerical strings
+	std::vector<std::string> validNumericalContent;
+	validNumericalContent.reserve(newContent.size());
+	
+	//Go through newContent and only save integer strings
+	for(const std::string& currentStr : newContent) {
+		if(std::all_of(currentStr.begin(), currentStr.end(), ::isdigit))
+			validNumericalContent.push_back(currentStr);
+	}
+	
+	//Use TextFrame's contents(std::vector<std::string>&) method
+	TextFrame::contents(validNumericalContent);
+}
+
+///@pkg ID3TextFrame.h
+void NumericalTextFrame::contents(const std::vector<long>& newContent) {
+	if(!readOnly())
+		return;
+	
+	isEdited = true;
+	
+	textContent = "";
+	
+	if(newContent.size() == 0) return;
+	
+	//The separating character
+	const char SEPARATOR = stringSeparator();
+	
+	for(const long currentStr : newContent) {
+		if(textContent != "")
+			textContent += SEPARATOR;
+		textContent != std::to_string(currentStr);
+	}
+}
+
+///@pkg ID3TextFrame.h
 void NumericalTextFrame::print() const {
 	Frame::print();
 	std::cout << "Content:        " << textContent << std::endl;
@@ -280,9 +377,13 @@ void NumericalTextFrame::print() const {
 
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::read() {
+	//Read the saved ByteArray
 	TextFrame::read();
-	if(!std::all_of(textContent.begin(), textContent.end(), ::isdigit))
-		textContent = "";
+	
+	//Use the contents() method to get a string vector of the text value, and
+	//then use contents(std::vector<std::string>&) to verify that every string
+	//value is a numerical integer value
+	contents(TextFrame::contents());
 }
 
 ///@pkg ID3TextFrame.h
@@ -309,35 +410,7 @@ NumericalTextFrame::operator long() const noexcept {
 
 ///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator+=(long val) noexcept {
-	textContent += std::to_string(atol(textContent.c_str()) + val);
-	isEdited = true;
-	return *this;
-}
-
-///@pkg ID3TextFrame.h
-NumericalTextFrame& NumericalTextFrame::operator-=(long val) noexcept {
-	textContent += std::to_string(atol(textContent.c_str()) - val);
-	isEdited = true;
-	return *this;
-}
-
-///@pkg ID3TextFrame.h
-NumericalTextFrame& NumericalTextFrame::operator*=(long val) noexcept {
-	textContent += std::to_string(atol(textContent.c_str()) * val);
-	isEdited = true;
-	return *this;
-}
-
-///@pkg ID3TextFrame.h
-NumericalTextFrame& NumericalTextFrame::operator/=(long val) noexcept {
-	textContent += std::to_string(atol(textContent.c_str()) / val);
-	isEdited = true;
-	return *this;
-}
-
-///@pkg ID3TextFrame.h
-NumericalTextFrame& NumericalTextFrame::operator%=(long val) noexcept {
-	textContent += std::to_string(atol(textContent.c_str()) % val);
+	textContent += stringSeparator() + std::to_string(val);
 	isEdited = true;
 	return *this;
 }
@@ -345,7 +418,7 @@ NumericalTextFrame& NumericalTextFrame::operator%=(long val) noexcept {
 ///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator+=(const std::string& str) noexcept {
 	if(std::all_of(str.begin(), str.end(), ::isdigit)) {
-		textContent += str;
+		textContent += stringSeparator() + str;
 		isEdited = true;
 	}
 	return *this;

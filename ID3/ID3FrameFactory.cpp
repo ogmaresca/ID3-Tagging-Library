@@ -50,7 +50,6 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 	ByteArray frameBytes;
 	
 	//The ID3v2 frame ID that will be read from file
-	//std::string id;
 	FrameID id;
 	
 	//ID3v2.2 and below have a different frame header structure, so they need to
@@ -272,65 +271,61 @@ FramePair FrameFactory::createPicturePair(const ushort       version,
 
 ///@pkg ID3FrameFactory
 ///@static
-FrameClass FrameFactory::frameType(const std::string& frameID) {
-	if(frameID == "")
+FrameClass FrameFactory::frameType(const FrameID& frameID) {
+	if(frameID.unknown())
 		return FrameClass::CLASS_UNKNOWN;
 	
-	switch(frameID[0]) {
-		  case 'A': {
-			if(frameID == "APIC")
-				return FrameClass::CLASS_PICTURE;
-			break;
-		} case 'C': {
-			if(frameID == "COMM")
-				return FrameClass::CLASS_DESCRIPTIVE;
-			break;
-		} case 'I': {
-			if(frameID == "IPLS")
-				return FrameClass::CLASS_TEXT;
-			break;
-		} case 'T': {
-			//Numerical Text Frames:
-			//Year, BPM, Date, Length, Playlist Delay, Time, and Original Release Year
-			//NOTE: Track and Disc are not numerical values as they may contain
-			//a slash to separate the total number of tracks/discs in the set.
-			if(frameID == "TYER" ||
-			   frameID == "TBPM" ||
-			   frameID == "TDAT" ||
-			   frameID == "TLEN" ||
-			   frameID == "TDLY" ||
-			   frameID == "TIME" ||
-			   frameID == "TORY")
-				return FrameClass::CLASS_NUMERICAL;
-			else if(frameID == "TXXX")
-				return FrameClass::CLASS_DESCRIPTIVE;
+	switch(frameID) {
+		//Pictures
+		case FRAME_PICTURE:
+			return FrameClass::CLASS_PICTURE;
+		//Frames with descriptions and/or languages
+		case FRAME_COMMENT:
+		case FRAME_CUSTOM_USER_INFO:
+		case FRAME_UNSYNCHRONISED_LYRICS:
+		case FRAME_TERMS_OF_USE:
+		case FRAME_USER_DEFINED_URL:
+			return FrameClass::CLASS_DESCRIPTIVE;
+		//Text frames that should contain an integer value
+		//NOTE: Track and Disc are not numerical values as they may contain a
+		//slash to separate the total number of tracks/discs in the set.
+		case FRAME_BPM:
+		case FRAME_DATE:
+		case FRAME_PLAYLIST_DELAY:
+		case FRAME_TIME:
+		case FRAME_LENGTH:
+		case FRAME_ORIGINAL_RELEASE_YEAR:
+		case FRAME_YEAR:
+			return FrameClass::CLASS_NUMERICAL;
+		//Frames that are essentially text frames, but don't start with a T
+		case FRAME_INVOLVED_PEOPLE:
 			return FrameClass::CLASS_TEXT;
-		} case 'U': {
-			if(frameID == "USLT" || frameID == "USER")
-				return FrameClass::CLASS_DESCRIPTIVE;
-			break;
-		} case 'W': {
-			if(frameID == "WXXX")
-				return FrameClass::CLASS_DESCRIPTIVE;
-			return FrameClass::CLASS_URL;
-		}
+		//For the rest of the frames, compare the string values as there's too
+		//many enum cases
+		default:
+			switch(frameID[0]) {
+				case 'T': return FrameClass::CLASS_TEXT;
+				case 'W': return FrameClass::CLASS_URL;
+				default:  return FrameClass::CLASS_UNKNOWN;
+			}
 	}
-	
-	return FrameClass::CLASS_UNKNOWN;
 }
 
 ///@pkg ID3FrameFactory
 ///@static
-short FrameFactory::frameOptions(const std::string& frameID) {
-	//These frames have a language field
-	if(frameID == "USLT" || frameID == "COMM")
-		return DescriptiveTextFrame::OPTION_LANGUAGE;
-	//This frame always encodes the text content as Latin-1
-	else if(frameID == "WXXX")
-		return DescriptiveTextFrame::OPTION_LATIN1_TEXT;
-	//This frame has a language field and no description
-	else if(frameID == "USER")
-		return DescriptiveTextFrame::OPTION_LANGUAGE | DescriptiveTextFrame::OPTION_NO_DESCRIPTION;
-	else
-		return 0;
+ushort FrameFactory::frameOptions(const FrameID& frameID) {
+	switch(frameID) {
+		//These frames have a language field
+		case FRAME_UNSYNCHRONISED_LYRICS:
+		case FRAME_COMMENT:
+			return DescriptiveTextFrame::OPTION_LANGUAGE;
+		//This frame always encodes the text content as Latin-1
+		case FRAME_USER_DEFINED_URL:
+			return DescriptiveTextFrame::OPTION_LATIN1_TEXT;
+		//This frame has a language field and no description
+		case FRAME_TERMS_OF_USE:
+			return DescriptiveTextFrame::OPTION_LANGUAGE | DescriptiveTextFrame::OPTION_NO_DESCRIPTION;
+		default:
+			return 0;
+	}
 }

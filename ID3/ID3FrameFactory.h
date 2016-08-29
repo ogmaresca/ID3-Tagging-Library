@@ -54,7 +54,9 @@ namespace ID3 {
 	 * after you are finished with the FrameFactory object.
 	 */
 	class FrameFactory {
-		public:
+		protected:
+			friend class Tag;
+			
 			/**
 			 * The public constructor to create a FrameFactory.
 			 * 
@@ -289,7 +291,7 @@ namespace ID3 {
 			                                   const std::string& description="",
 			                                   const PictureType  type=PictureType::FRONT_COVER);
 		
-		protected:
+		private:
 			/**
 			 * A private constructor used in static create() method calls to create
 			 * frames with content given in the method's parameter.
@@ -301,12 +303,12 @@ namespace ID3 {
 			/**
 			 * An internal method used to match each ID3 frame ID with
 			 * a FrameClass enum value. If the frame ID is not recognized
-			 * a FrameClass::UNKNOWN value will be returned.
+			 * a FrameClass::CLASS_UNKNOWN value will be returned.
 			 * 
 			 * @param frameID The ID3v2 frame ID.
 			 * @return The relevant FrameClass enum value.
 			 */
-			static FrameClass frameType(const std::string& frameID);
+			static FrameClass frameType(const FrameID& frameID);
 			
 			/**
 			 * Some frames that are read with integer options specific to their
@@ -316,7 +318,7 @@ namespace ID3 {
 			 * @param frameID The ID3v2 frame ID.
 			 * @return The relevant DescriptiveTextFrame option value.
 			 */
-			static short frameOptions(const std::string& frameID);
+			static ushort frameOptions(const FrameID& frameID);
 			
 			/**
 			 * A pointer to the fstream object given in the public constructor.

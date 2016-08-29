@@ -468,6 +468,13 @@ namespace ID3 {
 		FRAMEID_XXXX             = 94
 	};
 	
+	/**
+	 * FrameID is a class that holds an ID3v2 frame ID. It has one possible value
+	 * for every enumeration in the Frames enum. It can be created with either a
+	 * Frames enum value or a string, although if the string is not a recognized
+	 * ID3v2 frame ID the object's value will be Frames::FRAME_UNNKNOWN_FRAME.
+	 * FrameID objects can be implicitly casted to Frames enum values and strings.
+	 */
 	class FrameID {
 		public:
 			/**
@@ -475,19 +482,107 @@ namespace ID3 {
 			 */
 			FrameID();
 			
-			//Allows string literal assignments
-			FrameID(const char* frameID);
+			/**
+			 * A constructor to allow string literal assignments
+			 * 
+			 * @param frameID The frame ID.
+			 */
+			FrameID(const char* const frameID);
+			
+			/**
+			 * Create a FrameID with a string.
+			 * 
+			 * @param frameID The frame ID.
+			 */
 			FrameID(const std::string& frameID);
+			
+			/**
+			 * Create a FrameID with a string. Use this constructor if saving the
+			 * frame ID of an ID3v2.2 or below frame. If the version is between 0
+			 * and 2, then the given frame ID string will be converted to its
+			 * equivalent ID3v2.4 frame ID, if there is one. If you use the
+			 * constructor above for an ID3v2.2 frame ID, then the object will
+			 * always hold a value of Frames::FRAME_UNKNOWN_FRAME.
+			 * 
+			 * @param frameID The frame ID.
+			 * @param version The ID3v2 major version.
+			 */
 			FrameID(const std::string& frameID, const ushort version);
+			
+			/**
+			 * Create a FrameID with a Frames enum value.
+			 * 
+			 * @param frameID The frame ID.
+			 */
 			FrameID(const Frames frameID);
+			
+			/**
+			 * Implicitly or explicitly cast this FrameID to a string.
+			 */
 			operator const std::string&() const;
+			
+			/**
+			 * Implicitly or explicitly cast this FrameID to a Frames enum value.
+			 */
 			operator Frames() const;
+			
+			/**
+			 * Check if this FrameID has the same ID3v2 frame ID has another FrameID.
+			 * 
+			 * @param frameID The FrameID to compare with.
+			 */
 			bool operator==(const FrameID& frameID) const;
+			
+			/**
+			 * Check if this FrameID is a different ID3v2 frame ID than another FrameID.
+			 * 
+			 * @param frameID The FrameID to compare with.
+			 */
 			bool operator!=(const FrameID& frameID) const;
+			
+			/**
+			 * Check if this FrameID is equal to a given Frames enum value.
+			 * 
+			 * @param frameID The Frames enum value to compare with.
+			 */
 			bool operator==(const Frames frameID) const;
+			
+			/**
+			 * Check if this FrameID is not equal to a given Frames enum value.
+			 * 
+			 * @param frameID The Frames enum value to compare with.
+			 */
 			bool operator!=(const Frames frameID) const;
+			
+			/**
+			 * Check if the string value of this FrameID is equal to a given string.
+			 * 
+			 * @param frameID The string to compare with.
+			 */
 			bool operator==(const std::string& frameID) const;
+			
+			/**
+			 * Check if the string value of this FrameID is not equal to a given string.
+			 * 
+			 * @param frameID The string to compare with.
+			 */
 			bool operator!=(const std::string& frameID) const;
+			
+			/**
+			 * Check if the string value of this FrameID is equal to a given string.
+			 * Allows equality checking with string literals.
+			 * 
+			 * @param frameID The string to compare with.
+			 */
+			bool operator==(const char* const frameID) const;
+			
+			/**
+			 * Check if the string value of this FrameID is equal to a given string.
+			 * Allows equality checking with string literals.
+			 * 
+			 * @param frameID The string to compare with.
+			 */
+			bool operator!=(const char* const frameID) const;
 			
 			/**
 			 * Get the char at position pos in the string representation of the
@@ -519,7 +614,7 @@ namespace ID3 {
 			size_t size() const;
 			
 			/**
-			 * 
+			 * Check if this frame is an unknown frame (Frames::FRAME_UNKNOWN_FRAME).
 			 */
 			bool unknown() const;
 			
@@ -532,12 +627,20 @@ namespace ID3 {
 			bool allowsMultiple() const;
 			
 		private:
+			/**
+			 * A string vector of ID3v2.3-ID3v2.4 frame ID that holds a 1:1
+			 * correspondence with the integer values of Frames enum values and the
+			 * integer position in the vector.
+			 * 
+			 * @see ID3::FrameID::getFrameName(Frames)
+			 */
 			static const std::vector<std::string> FRAME_STR_LIST;
 			
 			/**
 			 * A map that holds frame ID string : Frames enum value pairs that
 			 * connects the Frames enum to the actual ID3v2.3+ frame IDs.
 			 * 
+			 * @see ID3::FrameID::getFrameName(std::string&)
 			 */
 			static const std::unordered_map<std::string, Frames> FRAME_STR_ENUM_MAP;
 			
@@ -578,8 +681,26 @@ namespace ID3 {
 			 */
 			static inline FrameID convertOldFrameIDToNew(const std::string& v2FrameID);
 			
+			/**
+			 * The Frames enum value of this FrameID.
+			 * 
+			 * @see ID3::FrameID::operator Frames()
+			 */
 			Frames enumID;
+			
+			/**
+			 * The string representation of the ID3v2.3+ frame ID of this FrameID.
+			 * 
+			 * @see ID3::FrameID::operator const std::string&()
+			 */
 			std::string strID;
+			
+			/**
+			 * The size of ID3::FrameID::strID in bytes. Should always be 4 for
+			 * ID3v2.3 and ID3v2.4 frame IDs.
+			 * 
+			 * @see ID3::FrameID::size()
+			 */
 			size_t strLen;
 	};
 }

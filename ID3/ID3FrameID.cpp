@@ -239,7 +239,7 @@ inline FrameID FrameID::convertOldFrameIDToNew(const std::string& v2FrameID) {
 FrameID::FrameID() : FrameID(FRAME_UNKNOWN_FRAME) {}
 
 ///@pkg ID3FrameID.h
-FrameID::FrameID(const char* frameID) : FrameID(std::string(frameID)) {}
+FrameID::FrameID(const char* const frameID) : FrameID(std::string(frameID)) {}
 
 ///@pkg ID3FrameID.h
 FrameID::FrameID(const std::string& frameID) : enumID(getFrameName(frameID)),
@@ -280,6 +280,12 @@ bool FrameID::operator==(const std::string& frameID) const { return frameID == s
 
 ///@pkg ID3FrameID.h
 bool FrameID::operator!=(const std::string& frameID) const { return frameID != strID; }
+
+///@pkg ID3FrameID.h
+bool FrameID::operator==(const char* const frameID) const { return frameID == strID; }
+
+///@pkg ID3FrameID.h
+bool FrameID::operator!=(const char* const frameID) const { return frameID != strID; }
 
 ///@pkg ID3FrameID.h
 char FrameID::operator[](const size_t pos) const { return strID[pos]; }

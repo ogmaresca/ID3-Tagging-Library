@@ -66,7 +66,9 @@ namespace ID3 {
 			virtual operator std::string() const noexcept;
 			
 			/**
-			 * Append a string to the frame content.
+			 * Append a string to the frame content. This string will be appended
+			 * to the text content with a separating character, and it will appear
+			 * in its own string in the vector when calling contents().
 			 * 
 			 * @param str The string to append.
 			 * @return The text frame.
@@ -105,6 +107,25 @@ namespace ID3 {
 			 * @param newContent The new text content.
 			 */
 			virtual void content(const std::string& newContent);
+			
+			/**
+			 * Get the text content, split by the separating character.
+			 * 
+			 * @return The text content of the frame in UTF-8 encoding split into
+			 *         a string vector.
+			 */
+			std::vector<std::string> contents() const;
+			
+			/**
+			 * Set the text content with a string vector. The vector will be
+			 * contatenated by the frame's separating character.
+			 * Call write() to finalize changes.
+			 * 
+			 * NOTE: The content will not be modified if the Frame is read-only.
+			 * 
+			 * @param newContent The new text content.
+			 */
+			virtual void contents(const std::vector<std::string>& newContent);
 			
 			/**
 			 * Get the character that is used to separate multiple string values
@@ -242,7 +263,9 @@ namespace ID3 {
 			virtual operator long() const noexcept;
 			
 			/**
-			 * Adds an int value to the frame content.
+			 * Append an int to the frame content. This int will be appended as a
+			 * string to the text content with a separating character, and it will
+			 * appear in its own string in the vector when calling contents().
 			 * 
 			 * @param val The value to add.
 			 * @return The numerical text frame.
@@ -250,47 +273,13 @@ namespace ID3 {
 			virtual NumericalTextFrame& operator+=(long val) noexcept;
 			
 			/**
-			 * Subtracts an int value from the frame content.
-			 * 
-			 * @param val The value to subtract.
-			 * @return The numerical text frame.
-			 */
-			virtual NumericalTextFrame& operator-=(long val) noexcept;
-			
-			/**
-			 * Multiplies an the frame content by an int value.
-			 * 
-			 * @param val The value to multiply the frame content by.
-			 * @return The numerical text frame.
-			 */
-			virtual NumericalTextFrame& operator*=(long val) noexcept;
-			
-			/**
-			 * Divides the frame content by an int value.
-			 * 
-			 * @param val The value to divide the frame content by.
-			 * @return The numerical text frame.
-			 */
-			virtual NumericalTextFrame& operator/=(long val) noexcept;
-			
-			/**
-			 * Mods the frame content by an int value.
-			 * 
-			 * @param val The value to mod the frame content by.
-			 * @return The numerical text frame.
-			 */
-			virtual NumericalTextFrame& operator%=(long val) noexcept;
-			
-			/**
-			 * Append a string to the frame content.
+			 * Append a string to the frame content. This string will be appended
+			 * to the text content with a separating character, and it will appear
+			 * in its own string in the vector when calling contents().
 			 * 
 			 * NOTE: If the string is not an int value, nothing will be added and,
 			 * if the NumericalTextFrame object hasn't been edited before, edited()
 			 * will continue to return false.
-			 * 
-			 * NOTE: This method concatenates the frame content with the given
-			 * string. If you wish to perform a mathematical addition to the frame
-			 * content, use ID3::NumericalTextFrame::operator+=(long) instead.
 			 * 
 			 * @param str The value to append.
 			 * @return The text frame.
@@ -325,6 +314,31 @@ namespace ID3 {
 			 * @param newContent The new text content.
 			 */
 			virtual void content(const std::string& newContent);
+			
+			/**
+			 * Set the text content with a string vector. The vector will be
+			 * contatenated by the frame's separating character.
+			 * Call write() to finalize changes.
+			 * 
+			 * NOTE: The content will not be modified if the Frame is read-only.
+			 * 
+			 * NOTE: Any strings stored in the vector that are not an integer value
+			 *       will not be set.
+			 * 
+			 * @param newContent The new text content.
+			 */
+			virtual void contents(const std::vector<std::string>& newContent);
+			
+			/**
+			 * Set the text content with a integer vector. The vector will be
+			 * contatenated by the frame's separating character.
+			 * Call write() to finalize changes.
+			 * 
+			 * NOTE: The content will not be modified if the Frame is read-only.
+			 * 
+			 * @param newContent The new text content.
+			 */
+			virtual void contents(const std::vector<long>& newContent);
 			
 			/**
 			 * Print information about the frame.

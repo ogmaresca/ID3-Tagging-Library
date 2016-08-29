@@ -28,75 +28,6 @@ using namespace ID3;
 //Private namespace
 namespace {
 	/**
-	 * Split a text along its ID3v2 separating character.
-	 * 
-	 * If the ID3v2 version is 3 or below, then only the Composer, Lyricist,
-	 * Original Lyricist, Original Artist, and Artist will be split, and by a
-	 * slash instead of a null character. The returned vector will always contain
-	 * at least one string.
-	 * 
-	 * @param frameName The frame that the text belongs to.
-	 * @param text      The frame text.
-	 * @param version   The ID3v2 major version.
-	 * @return The string, split into a vector.
-	 */
-	static std::vector<std::string> splitTextContent(const FrameID&     frameName,
-	                                                 const std::string& text,
-	                                                 const ushort       version) {
-		//A vector that contains a single string, for cases where there is no text
-		//content.
-		static std::vector<std::string> emptyString(1, "");
-		
-		//A vector of strings to return
-		std::vector<std::string> tokens;
-		
-		//If the string is empty, no use continuing
-		if(text == "") return emptyString;
-		
-		//In ID3v2.3, only some frames are allowed to have multiple values. If the
-		//requested value does not belong to one of those frames, then do not split
-		//the text content.
-		if(version < 4) {
-			switch(frameName) {
-				case FRAME_COMPOSER:
-				case FRAME_LYRICIST:
-				case FRAME_ORIGINAL_LYRICIST:
-				case FRAME_ORIGINAL_ARTIST:
-				case FRAME_ARTIST: {
-					break;
-				} default: {
-					tokens.push_back(text);
-					return tokens;
-				}
-			}
-		}
-		
-		//The string divider char
-		const char DIVIDER = version >= 4 ? '\0' : '/';
-		
-		//Loop variables
-		std::size_t tokenStart = 0, tokenEnd = text.find(DIVIDER, 0);
-		
-		while((tokenEnd = text.find(DIVIDER, tokenStart)) != std::string::npos) {
-			//If the substring isn't an empty string
-			if(tokenEnd > tokenStart)
-				tokens.push_back(text.substr(tokenStart, tokenEnd - tokenStart));
-			tokenStart = tokenEnd + 1;
-		}
-		
-		//Add the last string token, if it isn't an empty string
-		if(tokenStart < text.size())
-			tokens.push_back(text.substr(tokenStart));
-		
-		//In the edge case that the string contains only divider characters, then
-		//also return the empty string vector
-		if(tokens.size() == 0)
-			return emptyString;
-		
-		return tokens;
-	}
-	
-	/**
 	 * Process a genre tag string.
 	 * 
 	 * @see ID3::Tag::genre(bool)
@@ -150,7 +81,7 @@ Tag::Tag(const std::string& fileLoc) : filename(fileLoc), isNull(true) {
 	std::ifstream file;
 	
 	//Check if the file is an MP3 file
-	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase |
+	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4|wav)$", std::regex::icase |
 	                                                     std::regex::ECMAScript)))
 		return;
 	
@@ -216,8 +147,13 @@ std::vector<std::string> Tag::textStrings(const FrameID& frameName) const {
 		
 		return textStrings;
 	} else {
-		std::string text = textString(frameName);
-		return splitTextContent(frameName, text, v2TagInfo.majorVer);
+		TextFrame* textFrame = getFrame<TextFrame>(frameName);
+		
+		return textFrame == nullptr ?
+		       //If no TextFrame exists with that frame ID
+		       std::vector<std::string>(1, "") :
+		       //If there is a TextFrame, then return its contents
+		       textFrame->contents();
 	}
 }
 
