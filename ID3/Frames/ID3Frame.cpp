@@ -190,7 +190,7 @@ void Frame::print() const {
 	const ulong BODY_SIZE = size();
 	const ulong FRAME_SIZE = size(true);
 	
-	std::cout << std::showbase << "Information about frame " << id << ": " << std::endl;
+	std::cout << std::showbase << "Information about " << id.description() << " frame " << id << ": " << std::endl;
 	std::cout << "Edited:         " << std::boolalpha << isEdited << std::endl;
 	std::cout << "Read from file: " << std::boolalpha << isFromFile << std::endl;
 	std::cout << "Null:           " << std::boolalpha << isNull << std::endl;

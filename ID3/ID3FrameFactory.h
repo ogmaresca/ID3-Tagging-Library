@@ -41,7 +41,7 @@ namespace ID3 {
 	/**
 	 * @see ID3.h
 	 */
-	typedef std::pair<std::string, FramePtr> FramePair;
+	typedef std::pair<FrameID, FramePtr> FramePair;
 	
 	/**
 	 * FrameFactory is a factory class to create Frame objects.

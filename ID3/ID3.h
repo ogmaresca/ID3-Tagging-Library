@@ -63,8 +63,8 @@ namespace ID3 {
 	/////////////////////////////////////////////////////////////////////////////
 	typedef std::vector<uint8_t> ByteArray;
 	typedef std::shared_ptr<Frame> FramePtr;
-	typedef std::unordered_multimap<std::string, FramePtr> FrameMap;
-	typedef std::pair<std::string, FramePtr> FramePair;
+	typedef std::unordered_multimap<FrameID, FramePtr> FrameMap;
+	typedef std::pair<FrameID, FramePtr> FramePair;
 	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
@@ -87,21 +87,6 @@ namespace ID3 {
 			HARDCORE = 4
 		};
 	}*/
-	
-	/**
-	 * An enum containing the highest value for each star rating for the
-	 * Popularimeter (POPM) frame in ID3v2.
-	 * 
-	 * @todo Properly implement this into a POPM Frame class.
-	 */
-	/*enum class POPMRatingCutoff {
-		ZERO  = 0,   //0-0
-		ONE   = 31,  //1-31
-		TWO   = 95,  //32-95
-		THREE = 159, //96-159
-		FOUR  = 223, //160-223
-		FIVE  = 255  //224-255
-	};*/
 	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
@@ -261,8 +246,7 @@ namespace ID3 {
 			
 			/**
 			 * A constructor to set default values.
-			 * Creating a frame with this constructor will result in a
-			 * "null" frame.
+			 * Creating a frame with this constructor will result in a "null" frame.
 			 */
 			Tag();
 			
@@ -573,6 +557,10 @@ namespace ID3 {
 			/**
 			 * Get the play count.
 			 * 
+			 * NOTE: This first searches for the Play Count frame. If not found, it
+			 *       looks for the Popularimeter frame. If that is not found as
+			 *       as well, it returns 0.
+			 * 
 			 * @return The play count saved on the file.
 			 */
 			unsigned long long playCount() const;
@@ -787,6 +775,9 @@ namespace ID3 {
 			 */
 			FrameMap frames;
 			
+			/**
+			 * The FrameFactory to create Frame objects.
+			 */
 			FrameFactory factory;
 	};
 }

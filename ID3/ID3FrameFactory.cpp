@@ -148,6 +148,8 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 			return FramePtr(new PictureFrame(ID3Ver, frameBytes));
 		case FrameClass::CLASS_PLAY_COUNT:
 			return FramePtr(new PlayCountFrame(ID3Ver, frameBytes));
+		case FrameClass::CLASS_POPULARIMETER:
+			return FramePtr(new PopularimeterFrame(ID3Ver, frameBytes));
 		case FrameClass::CLASS_UNKNOWN: default:
 			return FramePtr(new UnknownFrame(id, ID3Ver, frameBytes));
 	}
@@ -182,6 +184,8 @@ FramePtr FrameFactory::create(const FrameID&     frameName,
 			return FramePtr(new URLTextFrame(frameName, ID3Ver, textContent));
 		case FrameClass::CLASS_PLAY_COUNT:
 			return FramePtr(new PlayCountFrame(ID3Ver, atoll(textContent.c_str())));
+		case FrameClass::CLASS_POPULARIMETER:
+			return FramePtr(new PopularimeterFrame(ID3Ver, atoll(textContent.c_str()), 0, description));
 		default:
 			return FramePtr(new UnknownFrame(frameName));
 	}
@@ -207,6 +211,8 @@ FramePtr FrameFactory::create(const FrameID&     frameName,
 			return FramePtr(new NumericalTextFrame(frameName, ID3Ver, frameValue));
 		case FrameClass::CLASS_PLAY_COUNT:
 			return FramePtr(new PlayCountFrame(ID3Ver, frameValue));
+		case FrameClass::CLASS_POPULARIMETER:
+			return FramePtr(new PopularimeterFrame(ID3Ver, frameValue, 0, description));
 		default:
 			return create(frameName, std::to_string(frameValue), description, language);
 	}
@@ -275,6 +281,9 @@ FrameClass FrameFactory::frameType(const FrameID& frameID) {
 		//The Play Count frame
 		case FRAME_PLAY_COUNT:
 			return FrameClass::CLASS_PLAY_COUNT;
+		//The Popularimeter
+		case FRAME_POPULARIMETER:
+			return FrameClass::CLASS_POPULARIMETER;
 		//For the rest of the frames, compare the string values as there's too
 		//many enum cases
 		default:

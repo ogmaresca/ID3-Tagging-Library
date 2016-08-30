@@ -38,22 +38,24 @@ namespace ID3 {
 	 * An enum that  represents a Frame class.
 	 * 
 	 * Values and their respective class:
-	 *     CLASS_DESCRIPTIVE: DescriptiveTextFrame
-	 *     CLASS_NUMERICAL:   NumericalTextFrame
-	 *     CLASS_PICTURE:     PictureFrame
-	 *     CLASS_PLAY_COUNT:  PlayCountFrame
-	 *     CLASS_TEXT:        TextFrame
-	 *     CLASS_UNKNOWN:     UnknownFrame
-	 *     CLASS_URL:         URLTextFrame
+	 *     CLASS_DESCRIPTIVE:   DescriptiveTextFrame
+	 *     CLASS_NUMERICAL:     NumericalTextFrame
+	 *     CLASS_PICTURE:       PictureFrame
+	 *     CLASS_PLAY_COUNT:    PlayCountFrame
+	 *     CLASS_POPULARIMETER: PopularimeterFrame
+	 *     CLASS_TEXT:          TextFrame
+	 *     CLASS_UNKNOWN:       UnknownFrame
+	 *     CLASS_URL:           URLTextFrame
 	 */
 	enum FrameClass : short {
-		CLASS_DESCRIPTIVE = 3, //DescriptiveTextFrame
-		CLASS_NUMERICAL   = 2, //NumericalTextFrame
-		CLASS_TEXT        = 1, //TextFrame
-		CLASS_UNKNOWN     = 0, //UnknownFrame
-		CLASS_URL         = 4, //URLTextFrame
-		CLASS_PICTURE     = 5, //PictureTextFrame
-		CLASS_PLAY_COUNT  = 6  //PlayCountFrame
+		CLASS_DESCRIPTIVE   = 3, //DescriptiveTextFrame
+		CLASS_NUMERICAL     = 2, //NumericalTextFrame
+		CLASS_TEXT          = 1, //TextFrame
+		CLASS_UNKNOWN       = 0, //UnknownFrame
+		CLASS_URL           = 4, //URLTextFrame
+		CLASS_PICTURE       = 5, //PictureTextFrame
+		CLASS_PLAY_COUNT    = 6, //PlayCountFrame
+		CLASS_POPULARIMETER = 7, //PopularimeterFrame
 	};
 	
 	/**

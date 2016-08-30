@@ -102,13 +102,13 @@ namespace ID3 {
 			/**
 			 * This constructor calls the similar constructor in the Frame class
 			 * with PCNT for frameName. If the given ByteArray is long enough to be
-			 * valid it then calls ID3::PictureFrame::read() to process the ByteArray.
+			 * valid it then calls ID3::PlayCountFrame::read() to process the ByteArray.
 			 * 
 			 * @see ID3::Frame::Frame(FrameID&,
 			 *                        ushort,
 			 *                        ByteArray&)
 			 */
-			PlayCountFrame(const ushort version,
+			PlayCountFrame(const ushort     version,
 			               const ByteArray& frameBytes);
 			
 			/**
@@ -122,7 +122,7 @@ namespace ID3 {
 			 * @param playCount The play count (defaults to 0).
 			 * 
 			 */
-			PlayCountFrame(const ushort version,
+			PlayCountFrame(const ushort             version,
 			               const unsigned long long playCount=0ULL);
 			
 			/**
@@ -147,6 +147,159 @@ namespace ID3 {
 			 * @see ID3::PlayCountFrame::playCount()
 			 */
 			unsigned long long count;
+	};
+	
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	//////////////////// P O P U L A R I M E T E R F R A M E ////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * PopularimeterFrame is a child class of PlayCountFrame. It is to be used
+	 * for frames with an email address, rating, and play count (the POPM frame).
+	 * 
+	 * @see ID3::Frame
+	 */
+	class PopularimeterFrame : virtual public PlayCountFrame {
+		friend class FrameFactory;
+		
+		public:
+			/**
+			 * Checks if the given Frame is a PopularimeterFrame with the same
+			 * frame frame ID, "null" status, and if the email address, ratings,
+			 * and play counts match (when neither of the Frames are "null").
+			 * 
+			 * @see ID3::Frame::operator==(Frame*)
+			 */
+			virtual bool operator==(const Frame* const frame) const noexcept;
+			
+			/**
+			 * Returns FrameClass::CLASS_POPULARIMETER.
+			 * 
+			 * @return The FrameClass that is associated with the Frame class.
+			 * @see ID3::Frame::type()
+			 */
+			virtual FrameClass type() const noexcept;
+			
+			/**
+			 * Get the email address.
+			 * 
+			 * @return The email address.
+			 */
+			std::string email() const;
+			
+			/**
+			 * Set the email address. Call write() to finalize changes.
+			 * 
+			 * @param newEmail The new email address.
+			 */
+			void email(const std::string& newEmail);
+			
+			/**
+			 * Get the rating. Its value is between 0 and 5, where 0 is undefined
+			 * and 1-5 are star ratings.
+			 * 
+			 * @return The rating.
+			 */
+			ushort rating() const;
+			
+			/**
+			 * Set the rating. If the value is less than or equal to 5, then the
+			 * rating will be set to what is given. If not, then the following
+			 * ranges map to each rating:
+			 * 
+			 * 6-31:    1
+			 * 32-95:   2
+			 * 96-159:  3
+			 * 169-223: 4
+			 * 224-255: 5
+			 */
+			void rating(uint8_t newRating);
+			
+			/**
+			 * Print information about the frame.
+			 * 
+			 * @see ID3::Frame::print()
+			 */
+			virtual void print() const;
+			
+			/**
+			 * The write() method for PopularimeterFrame writes a ByteArray with
+			 * the currently stored content.
+			 * 
+			 * @see ID3::Frame::write()
+			 */
+			virtual ByteArray write();
+		
+		protected:
+			/**
+			 * This constructor calls the similar constructor in the Frame class
+			 * with POPM for frameName. If the given ByteArray is long enough to be
+			 * valid it then calls ID3::PopularimeterFrame::read() to process the ByteArray.
+			 * 
+			 * @see ID3::Frame::Frame(FrameID&,
+			 *                        ushort,
+			 *                        ByteArray&)
+			 */
+			PopularimeterFrame(const ushort     version,
+			                   const ByteArray& frameBytes);
+			
+			/**
+			 * This constructor manually creates a Popularimeter frame. A Frame
+			 * created from this constructor will return false when calling createdFromFile().
+			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it
+			 *       is a supported ID3v2 version.
+			 * 
+			 * NOTE: If the rating is less than or equal to 5, then it will be set
+			 * to what is given. If not, then the following ranges map to each rating:
+			 *       6-31:    1
+			 *       32-95:   2
+			 *       96-159:  3
+			 *       169-223: 4
+			 *       224-255: 5
+			 * 
+			 * @param version   The ID3v2 major version.
+			 * @param playCount The play count (defaults to 0).
+			 * @param rating    The rating (defaults to 0).
+			 * @param email     The email address (defaults to "")
+			 * 
+			 */
+			PopularimeterFrame(const ushort             version,
+			                   const unsigned long long playCount=0ULL,
+			                   uint8_t                  rating=0,
+			                   const std::string&       email="");
+			
+			/**
+			 * An empty constructor to initialize variables. Creating a Frame with
+			 * this constructor will result in a "null" PopularimeterFrame object.
+			 * 
+			 * @see ID3::Frame::Frame()
+			 */
+			PopularimeterFrame() noexcept;
+			
+			/**
+			 * The read() method for PopularimeterFrame reads the play count from
+			 * the stored frame bytes.
+			 * 
+			 * @see ID3::Frame::read()
+			 */
+			virtual void read();
+			
+			/**
+			 * The email address.
+			 * 
+			 * @see ID3::PopularimeterFrame::email()
+			 */
+			std::string emailAddress;
+			
+			/**
+			 * The rating.
+			 * 
+			 * @see ID3::PopularimeterFrame::rating()
+			 */
+			ushort fiveStarRating;
 	};
 }
 

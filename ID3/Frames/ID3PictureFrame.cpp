@@ -188,11 +188,11 @@ ByteArray PictureFrame::write() {
 	return frameContent;
 }
 
-///@pkg ID3TextFrame.h
+///@pkg ID3PictureFrame.h
 void PictureFrame::read() {
 	const ushort HEADER_SIZE = headerSize();
 	
-	const ulong FRAME_SIZE = size();
+	const ulong FRAME_SIZE = frameContent.size();
 	
 	//Make sure that there is enough room for text before reading the frame bytes
 	if(frameContent.size() > HEADER_SIZE) {

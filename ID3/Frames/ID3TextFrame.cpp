@@ -483,6 +483,7 @@ void DescriptiveTextFrame::print() const {
 		std::cout << "Language:       " << textLanguage << std::endl;
 	std::cout << "Description:    " << textDescription << std::endl;
 	std::cout << "Content:        " << textContent << std::endl;
+	std::cout << std::endl;
 	std::cout << "Frame class:    DescriptiveTextFrame" << std::endl;
 }
 

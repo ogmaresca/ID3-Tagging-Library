@@ -80,7 +80,7 @@ Tag::Tag(std::ifstream& file) : isNull(true) {
 ///@pkg ID3.h
 Tag::Tag(const std::string& fileLoc) : filename(fileLoc), isNull(true) {
 	//Check if the file is an MP3 file
-	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4|wav)$", std::regex::icase |
+	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase |
 	                                                     std::regex::ECMAScript)))
 		return;
 	
@@ -367,6 +367,11 @@ unsigned long long Tag::playCount() const {
 	//Get the play count Frame, or a nullptr if it's not on file
 	PlayCountFrame* pcnt = getFrame<PlayCountFrame>(Frames::FRAME_PLAY_COUNT);
 	
+	if(pcnt != nullptr) return pcnt->playCount();
+	
+	//If no FRAME_PLAY_COUNT frame, then try the Popularimeter
+	pcnt = getFrame<PlayCountFrame>(Frames::FRAME_POPULARIMETER);
+	
 	//Return the play count
 	return pcnt == nullptr ? 0ULL : pcnt->playCount();
 }
@@ -423,6 +428,7 @@ void Tag::print() const {
 	}
 	
 	std::cout << "ID3 version(s) and flags: " << getVersionString(true) << std::endl;
+	std::cout << "Number of frames:         " << frames.size() << std::endl;
 	
 	for(FramePair currentFramePair : frames) {
 		std::cout << "--------------------------" << std::endl;

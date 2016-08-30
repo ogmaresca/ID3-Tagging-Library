@@ -229,6 +229,105 @@ inline FrameID FrameID::convertOldFrameIDToNew(const std::string& v2FrameID) {
 	       itr->second;
 }
 
+///@pkg ID3FrameID.h
+const std::vector<std::string> FrameID::FRAME_DESCRIPTIONS = {
+	"Audio Encryption", //0 AENC
+	"Attached Picture", //1 APIC
+	"Audio Seek Point Index", //2 ASPI
+	"Comment", //3 COMM
+	"Commercial", //4 COMR
+	"Encryption Method", //5 ENCR
+	"Equalisation", //6 EQU2
+	"Equalisation", //7 EQUA
+	"Event Timing Codes", //8 ETCO
+	"General Encapsulated Object", //9 GEOB
+	"Group Identification Registration", //10 GRID
+	"Involved People", //11 IPLS
+	"Linked Information", //12 LINK
+	"Music CD Identifier", //13 MCDI
+	"MPEG Location Lookup Table", //14 MLLT
+	"Ownership", //15 OWNE
+	"Play Counter", //16 PCNT
+	"Popularimeter", //17 POPM
+	"Position Synchronisation", //18 POSS
+	"Private", //19 PRIV
+	"Recommended Buffer Size", //20 RBUF
+	"Relative Volume Adjustment", //21 RVA2
+	"Relative Volume Adjustment", //22 RVAD
+	"Reverb", //23 RVRB
+	"Seek", //24 SEEK
+	"Signature", //25 SIGN
+	"Synchronised Lyrics", //26 SYLT
+	"Synchronised Tempo Codes", //27 SYTC
+	"Album", //28 TALB
+	"BPM", //29 TBPM
+	"Composer", //30 TCOM
+	"Genre", //31 TCON
+	"Copyright", //32 TCOP
+	"Date", //33 TDAT
+	"Encoding Time", //34 TDEN
+	"Playlist Delay", //35 TDLY
+	"Original Release Time", //36 TDOR
+	"Recording Time", //37 TDRC
+	"Release Time", //38 TDRL
+	"Tagging Time", //39 TDTG
+	"Encoded By", //40 TENC
+	"Lyricist", //41 TEXT
+	"File Type", //42 TFLT
+	"Involved People List", //43 TIPL
+	"Time", //44 TIME
+	"Content Group", //45 TIT1
+	"Title", //46 TIT2
+	"Description", //47 TIT3
+	"Initial Key", //48 TKEY
+	"Language", //49 TLAN
+	"Length", //50 TLEN
+	"Musician Credit List", //51 TMCL
+	"Media Type", //52 TMED
+	"Mood", //53 TMOO
+	"Original Album", //54 TOAL
+	"Original Filename", //55 TOFL
+	"Original Lyricist", //56 TOLY
+	"Original Artist", //57 TOPE
+	"Original Release Year", //58 TORY
+	"File Owner", //59 TOWN
+	"Artist", //60 TPE1
+	"Album Artist", //61 TPE2
+	"Conductor", //62 TPE3
+	"Modified By", //63 TPE4
+	"Disc", //64 TPOS
+	"Produced Notice", //65 TPRO
+	"Publisher", //66 TPUB
+	"Track", //67 TRCK
+	"Recording Dates", //68 TRDA
+	"Internet Radio Station", //69 TRSN
+	"Internet Radio Station Owner", //70 TRSO
+	"Album Artist Sort Order", //71 TSO2
+	"Album Sort Order", //72 TSOA
+	"Composer Sort Order", //73 TSOC
+	"Artist Sort Order", //74 TSOP
+	"Title Sort Order", //75 TSOT
+	"Size", //76 TSIZ
+	"ISRC", //77 TSRC
+	"Encoding Settings", //78 TSSE
+	"Set Subtitle", //79 TSST
+	"Custom User Information", //80 TXXX
+	"Year", //81 TYER
+	"Unique File Identifier", //82 UFID
+	"Terms of Use", //83 USER
+	"Unsynchronised Lyrics", //84 USER
+	"Commercial Information URL", //85 WCOM
+	"Copyright URL", //86 WCOP
+	"Official File URL", //87 WOAF
+	"Official Artist URL", //88 WOAR
+	"Official Audio Source URL", //89 WOAS
+	"Official Internet Radio Station URL", //90 WORS
+	"Official Payment URL", //91 WPAY
+	"Official Publisher URL", //92 WPUB
+	"User-defined URL", //93 WXXX
+	"Unknown" //94 XXXX
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////  M E M B E R /////////////////////////////////
@@ -324,4 +423,14 @@ bool FrameID::allowsMultiple() const {
 		default:
 			return false;
 	}
+}
+
+///@pkg ID3FrameID.h
+std::string FrameID::description() const {
+	return static_cast<ushort>(enumID) >= FRAME_DESCRIPTIONS.size() ?
+	       //If the enum value is not in the descriptions list, then return the
+	       //last description, which should be Unknown
+	       FRAME_DESCRIPTIONS[FRAME_DESCRIPTIONS.size() - 1] :
+	       //Return the frame ID that corresponds to the enum value
+	       FRAME_DESCRIPTIONS[static_cast<ushort>(enumID)];
 }

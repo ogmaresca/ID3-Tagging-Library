@@ -111,7 +111,7 @@ namespace ID3 {
 		FRAME_MUSIC_CD_IDENTIFIER = 13,
 		FRAMEID_MCDI              = 13,
 		
-		FRAME_LOCATION_LOOKUO            = 14,
+		FRAME_LOCATION_LOOKUP            = 14,
 		FRAME_LOCATION_LOOKUP_TABLE      = 14,
 		FRAME_MPEG_LOCATION_LOOKUP       = 14,
 		FRAME_MPEG_LOCATION_LOOKUP_TABLE = 14,
@@ -294,7 +294,7 @@ namespace ID3 {
 		V3FRAMEID_TORY_SEE_TDOR     = 58,
 		FRAMEID_TORY                = 58,
 		
-		FRAME_FILEOWNER = 59,
+		FRAME_FILE_OWNER = 59,
 		FRAME_LICENSEE  = 59,
 		FRAMEID_TOWN    = 59,
 		
@@ -627,6 +627,13 @@ namespace ID3 {
 			 */
 			bool allowsMultiple() const;
 			
+			/**
+			 * Return a short description/title of the frame ID.
+			 * 
+			 * @return The frame description.
+			 */
+			std::string description() const;
+			
 		private:
 			/**
 			 * A string vector of ID3v2.3-ID3v2.4 frame ID that holds a 1:1
@@ -683,6 +690,15 @@ namespace ID3 {
 			static inline FrameID convertOldFrameIDToNew(const std::string& v2FrameID);
 			
 			/**
+			 * A vector of strings that hold a 1:1 mapping of Frames enum values
+			 * and vector positions. The strings are a short description or title
+			 * of the frame ID.
+			 * 
+			 * @see ID3::FrameID::description()
+			 */
+			static const std::vector<std::string> FRAME_DESCRIPTIONS;
+			
+			/**
 			 * The Frames enum value of this FrameID.
 			 * 
 			 * @see ID3::FrameID::operator Frames()
@@ -703,6 +719,21 @@ namespace ID3 {
 			 * @see ID3::FrameID::size()
 			 */
 			size_t strLen;
+	};
+}
+
+namespace std {
+	template <>
+	struct hash<ID3::FrameID>	{
+		/**
+		 * The hash function for FrameID. It implicitly casts the given FrameID
+		 * into an ID3::Frames enum value, which then in turn gets implicitly
+		 * casted into a size_t of its defined enum value.
+		 * 
+		 * @param frameID The FrameID to hash.
+		 * @return The FrameID's enum integer value.
+		 */
+		size_t operator()(const ID3::FrameID& frameID) const { return frameID; }
 	};
 }
 
