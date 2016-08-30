@@ -185,6 +185,35 @@ Text Tag::text(const FrameID& frameName) const {
 }
 
 ///@pkg ID3.h
+Text Tag::text(const FrameID& frameName,
+               const std::function<bool (const std::string&, const std::string&)>& filterFunc) const {
+	//If multiple instances of the frame are not allowed, then ignore the filter function
+	if(!frameName.allowsMultiple())
+		return text(frameName);
+	
+	//Get the Frame vector
+	const std::vector<DescriptiveTextFrame*> descTextFrames = getFrames<DescriptiveTextFrame>(frameName);
+	
+	//If it allows multiple instances of the frame, but there are no DescriptiveTextFrame's,
+	//then try ignoring the filter function
+	if(descTextFrames.size() == 0)
+		return text(frameName);
+	
+	for(const DescriptiveTextFrame* const currentFrame : descTextFrames) {
+		Text currentText(currentFrame->TextFrame::content(),
+		                 currentFrame->description(),
+		                 currentFrame->language());
+		
+		//Test the Text struct with the given filter function
+		if(filterFunc(currentText.description, currentText.language))
+			return currentText;
+	}
+	
+	//No matching Frame found
+	return Text();
+}
+
+///@pkg ID3.h
 std::vector<Text> Tag::texts(const FrameID& frameName) const {
 	//Get the Frame vector
 	std::vector<TextFrame*> textFrames = getFrames<TextFrame>(frameName);
@@ -363,6 +392,24 @@ std::vector<Picture> Tag::pictures() const {
 }
 
 ///@pkg ID3.h
+Picture Tag::picture(const std::function<bool (const std::string&)>& filterFunc) const {
+	//Get the vector of PictureFrames in the Frame map.
+	std::vector<PictureFrame*> frames = getFrames<PictureFrame>(Frames::FRAME_PICTURE);
+	
+	//Look for a PictureFrame that matches the filter function
+	for(PictureFrame* currentFrame : frames) {
+		if(filterFunc(currentFrame->description()))
+			return Picture(currentFrame->picture(),
+	                     currentFrame->mimeType(),
+	                     currentFrame->description(),
+	                     currentFrame->pictureType());
+	}
+	
+	//Return an empty picture
+	return Picture();
+}
+
+///@pkg ID3.h
 unsigned long long Tag::playCount() const {
 	//Get the play count Frame, or a nullptr if it's not on file
 	PlayCountFrame* pcnt = getFrame<PlayCountFrame>(Frames::FRAME_PLAY_COUNT);
@@ -374,6 +421,48 @@ unsigned long long Tag::playCount() const {
 	
 	//Return the play count
 	return pcnt == nullptr ? 0ULL : pcnt->playCount();
+}
+
+///@pkg ID3.h
+unsigned long long Tag::playCount(const std::function<bool (const std::string&)>& filterFunc) const {
+	//Look through the Popularimeters with the filter function
+	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
+	for(const PopularimeterFrame* const popm : popularimeters) {
+		if(filterFunc(popm->email()))
+			return popm->playCount();
+	}
+	
+	if(!popularimeters.size()) {
+		//No popularimeters on file, so get the play count Frame, or a nullptr if
+		//it's not on file
+		PlayCountFrame* pcnt = getFrame<PlayCountFrame>(Frames::FRAME_PLAY_COUNT);
+		if(pcnt != nullptr) return pcnt->playCount();
+	}
+	
+	//No matching Frame found, so return 0
+	return 0ULL;
+}
+
+///@pkg ID3.h
+ushort Tag::rating() const {
+	//Look for the first Popularimeter
+	PopularimeterFrame* popm = getFrame<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
+	
+	//Return the rating
+	return popm == nullptr ? 0 : popm->rating();
+}
+
+///@pkg ID3.h
+ushort Tag::rating(const std::function<bool (const std::string&)>& filterFunc) const {
+	//Look through the Popularimeters with the filter function
+	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
+	for(const PopularimeterFrame* const popm : popularimeters) {
+		if(filterFunc(popm->email()))
+			return popm->rating();
+	}
+	
+	//No matching PopularimeterFrame found, so return 0
+	return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -415,13 +504,13 @@ const bool Tag::null() const {
 void Tag::print() const {
 	//A testing section to not print out music files with only TextFrame and
 	//PictureFrame Frames
-	ulong uknfrms = 0;
+	/*ulong uknfrms = 0;
 	for(FramePair currentFramePair : frames) {
 		if(dynamic_cast<TextFrame*>(currentFramePair.second.get()) == nullptr &&
 		   dynamic_cast<PictureFrame*>(currentFramePair.second.get()) == nullptr)
 			uknfrms++;
 	}
-	if(frames.size() && !uknfrms) return;
+	if(frames.size() && !uknfrms) return;*/
 	
 	std::cout << std::endl << "......................" << std::endl;
 	if(filename == "")
@@ -445,9 +534,9 @@ void Tag::print() const {
 		currentFramePair.second->print();
 		//A testing section to compare the byte differences from the file and
 		//the results of the write() method
-		currentFramePair.second->write();
+		/*currentFramePair.second->write();
 		std::cout << "--------------------------" << std::endl;
-		currentFramePair.second->print();
+		currentFramePair.second->print();*/
 	}
 	
 	std::cout << ".........................." << std::endl << std::noboolalpha;

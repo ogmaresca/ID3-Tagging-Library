@@ -17,6 +17,7 @@
 #include <vector>        //For std::vector
 #include <unordered_map> //For std::unordered_map and std::pair
 #include <memory>        //For std::shared_ptr
+#include <functional>    //For std::function
 
 #include "Frames/ID3Frame.h"        //For supporting Frames
 #include "Frames/ID3PictureFrame.h" //For PictureType
@@ -177,11 +178,11 @@ namespace ID3 {
 			     const std::string& mimeType="",
 			     const std::string& pictureDescription="",
 			     const PictureType  pictureType=PictureType::FRONT_COVER);
-		const std::string MIME;
-		const PictureType type;
-		const std::string description;
-		const ByteArray   data;
-		const bool        null;
+		std::string MIME;
+		PictureType type;
+		std::string description;
+		ByteArray   data;
+		bool        null;
 	};
 	
 	/**
@@ -203,9 +204,9 @@ namespace ID3 {
 		     const std::string& langText="") : text(textContent),
 		                                       description(descText),
 		                                       language(langText) {}
-		const std::string text;
-		const std::string description;
-		const std::string language;
+		std::string text;
+		std::string description;
+		std::string language;
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -329,10 +330,36 @@ namespace ID3 {
 			 *       strings. See ID3::Text::exists(Frames) to check if the frame
 			 *       actually exists in the tag.
 			 * 
-			 * @param frameName A Frames enum variable that represents a frame ID.
+			 * @param frameName An ID3v2 frame ID.
 			 * @return A Text struct of the frame content.
 			 */
 			Text text(const FrameID& frameName) const;
+			
+			/**
+			 * Return a Text struct that matches the given function.
+			 * 
+			 * NOTE: If multiple instances of the given frame ID are not allowed on
+			 *       the file, then this function call will be identical to
+			 *       ID3::Tag::text(FrameID&). Additionally, if the frame does
+			 *       allow multiple instances, but it does not have a description
+			 *       and/or language, then again the function call will be
+			 *       identical to ID3::Tag::text(FrameID&). If no matching frame
+			 *       has been found, then the returned Text struct will have empty
+			 *       strings for every field.
+			 * 
+			 * NOTE: The filter function needs to take in two strings and return a
+			 *       boolean. The first string parameter is the frame's description
+			 *       and the second string parameter is the frame's language. Not
+			 *       every frame that will be tested with the function will have
+			 *       a description and/or language, in which case an empty string
+			 *       will be passed instead.
+			 * 
+			 * @param frameName  An ID3v2 frame ID.
+			 * @param filterFunc The filter function. See the notes above.
+			 * @return The matching text content in a Text struct.
+			 */
+			Text text(const FrameID& frameName,
+			          const std::function<bool (const std::string&, const std::string&)>& filterFunc) const;
 			
 			/**
 			 * Return a vector Text structs with the text content, descriptions,
@@ -544,6 +571,19 @@ namespace ID3 {
 			Picture picture() const;
 			
 			/**
+			 * Return a Picture struct that matches the given function.
+			 * 
+			 * NOTE: The filter function needs to take in a string and return a
+			 *       boolean. The string parameter is the picture's description.
+			 *       If no matching picture is found, a null Picture struct will be
+			 *       returned instead.
+			 * 
+			 * @param filterFunc The filter function. See the note above.
+			 * @return The matching picture in a Picture struct.
+			 */
+			Picture picture(const std::function<bool (const std::string&)>& filterFunc) const;
+			
+			/**
 			 * Get a vector of all attached pictures.
 			 * 
 			 * NOTE: Unlike the getter methods for text frames, if there are no
@@ -558,12 +598,52 @@ namespace ID3 {
 			 * Get the play count.
 			 * 
 			 * NOTE: This first searches for the Play Count frame. If not found, it
-			 *       looks for the Popularimeter frame. If that is not found as
+			 *       looks for the first Popularimeter frame. If that is not found
 			 *       as well, it returns 0.
 			 * 
 			 * @return The play count saved on the file.
 			 */
 			unsigned long long playCount() const;
+			
+			/**
+			 * Get the play count from a Popularimeter that matches the given function.
+			 * 
+			 * NOTE: Unlike the ID3::Tag::playCount() method, this method looks
+			 *       through the Popularimeter frames first. If no matching
+			 *       Popularimeter is found, and no Popularimeters exist on file,
+			 *       then it will look for the Play Count frame. Failing finding
+			 *       that frame, it will return 0.
+			 * 
+			 * NOTE: The filter function needs to take in a string and return a
+			 *       boolean. The string parameter is the Popularimeter's email.
+			 * 
+			 * @param filterFunc The filter function. See the notes above.
+			 * @return The matching play count, the value of the Play Count frame,
+			 *         or 0.
+			 */
+			unsigned long long playCount(const std::function<bool (const std::string&)>& filterFunc) const;
+			
+			/**
+			 * Get the rating from the first Popularimeter frame, or 0 if none are found.
+			 * 
+			 * @return The rating on file. The values are 1-5, or 0 if no rating is
+			 *         set.
+			 */
+			ushort rating() const;
+			
+			/**
+			 * Return the rating that matches the given function.
+			 * 
+			 * NOTE: If no matching Popularimeter is found, then 0 will be returned.
+			 * 
+			 * NOTE: The filter function needs to take in a string and return a
+			 *       boolean. The string parameter is the Popularimeter's email.
+			 * 
+			 * @param filterFunc The filter function. See the notes above.
+			 * @return The matching play count, the value of the Play Count frame,
+			 *         or 0.
+			 */
+			ushort rating(const std::function<bool (const std::string&)>& filterFunc) const;
 			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
