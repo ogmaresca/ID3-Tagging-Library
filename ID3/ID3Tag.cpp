@@ -34,8 +34,7 @@ namespace {
 	 * @see ID3::Tag::genre(bool)
 	 */
 	static std::string processGenre(const std::string& genre) {
-		if(genre == "")
-			return "";
+		if(genre == "") return "";
 		
 		std::string genreString;
 		
@@ -57,8 +56,7 @@ namespace {
 				genreString = std::regex_replace(genre, findV1Genre, "");
 				//If there's nothing else in the tag string, then return
 				//the ID3v1 genre
-				if(genreString == "")
-					genreString = V1::getGenreString(genreInt);
+				if(genreString == "") genreString = V1::getGenreString(genreInt);
 			} else {
 				genreString = genre;
 			}
@@ -70,8 +68,7 @@ namespace {
 
 ///@pkg ID3.h
 Tag::Tag(std::ifstream& file) : isNull(true) {
-	if(!file.is_open())
-		return;
+	if(!file.is_open()) return;
 	file.seekg(0, std::ifstream::end);
 	filesize = file.tellg();
 	readFile(file);
@@ -112,9 +109,7 @@ Tag::Tag() : isNull(true) {}
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3.h
-bool Tag::exists(const FrameID& frameName) const {
-	return frames.count(frameName) > 0;
-}
+bool Tag::exists(const FrameID& frameName) const { return frames.count(frameName) > 0; }
 
 ///@pkg ID3.h
 std::string Tag::textString(const FrameID& frameName) const {
@@ -164,8 +159,7 @@ Text Tag::text(const FrameID& frameName) const {
 	TextFrame* textFrameObj = getFrame<TextFrame>(frameName);
 	
 	//If it's not a TextFrame, return a default Text struct
-	if(textFrameObj == nullptr)
-		return Text();
+	if(textFrameObj == nullptr) return Text();
 	
 	//Get the Frame's text content
 	std::string textContent = textFrameObj->content();
@@ -176,28 +170,24 @@ Text Tag::text(const FrameID& frameName) const {
 	//If the Frame is a DescriptiveTextFrame, then return a Text struct with its
 	//description and language. If it's a different TextFrame class, then let
 	//those fields default to empty strings.
-	if(descFrameObj == nullptr)
-		return Text(textContent);
-	else
-		return Text(textContent,
-		            descFrameObj->description(),
-		            descFrameObj->language());
+	if(descFrameObj == nullptr) return Text(textContent);
+	else                        return Text(textContent,
+		                                     descFrameObj->description(),
+		                                     descFrameObj->language());
 }
 
 ///@pkg ID3.h
 Text Tag::text(const FrameID& frameName,
                const std::function<bool (const std::string&, const std::string&)>& filterFunc) const {
 	//If multiple instances of the frame are not allowed, then ignore the filter function
-	if(!frameName.allowsMultiple())
-		return text(frameName);
+	if(!frameName.allowsMultiple()) return text(frameName);
 	
 	//Get the Frame vector
 	const std::vector<DescriptiveTextFrame*> descTextFrames = getFrames<DescriptiveTextFrame>(frameName);
 	
 	//If it allows multiple instances of the frame, but there are no DescriptiveTextFrame's,
 	//then try ignoring the filter function
-	if(descTextFrames.size() == 0)
-		return text(frameName);
+	if(descTextFrames.size() == 0) return text(frameName);
 	
 	for(const DescriptiveTextFrame* const currentFrame : descTextFrames) {
 		Text currentText(currentFrame->TextFrame::content(),
@@ -205,8 +195,7 @@ Text Tag::text(const FrameID& frameName,
 		                 currentFrame->language());
 		
 		//Test the Text struct with the given filter function
-		if(filterFunc(currentText.description, currentText.language))
-			return currentText;
+		if(filterFunc(currentText.description, currentText.language)) return currentText;
 	}
 	
 	//No matching Frame found
@@ -219,8 +208,7 @@ std::vector<Text> Tag::texts(const FrameID& frameName) const {
 	std::vector<TextFrame*> textFrames = getFrames<TextFrame>(frameName);
 	
 	//If no relevant text frames were found, return one with an empty Text
-	if(textFrames.size() == 0)
-		return std::vector<Text>(1, Text());
+	if(textFrames.size() == 0) return std::vector<Text>(1, Text());
 	
 	//The vector to return
 	std::vector<Text> toReturn;
@@ -239,15 +227,31 @@ std::vector<Text> Tag::texts(const FrameID& frameName) const {
 		//If the Frame is a DescriptiveTextFrame, then add a Text struct with
 		//its description and language. If it's a different TextFrame class, then
 		//let those fields default to empty strings.
-		if(descFrameObj == nullptr)
-			toReturn.push_back(Text(textContent));
-		else
-			toReturn.push_back(Text(textContent,
-							            descFrameObj->description(),
-							            descFrameObj->language()));
+		if(descFrameObj == nullptr) toReturn.push_back(Text(textContent));
+		else                        toReturn.push_back(Text(textContent,
+							                                     descFrameObj->description(),
+							                                     descFrameObj->language()));
 	}
 	
 	//Return the Text vector
+	return toReturn;
+}
+
+///@pkg ID3.h
+ByteArray Tag::binaryData(const FrameID& frameName) const {
+	Frame* frame = getFrame<Frame>(frameName);
+	return frame == nullptr ? ByteArray() : frame->bytes();
+}
+
+///@pkg ID3.h
+std::vector<ByteArray> Tag::binaryDatas(const FrameID& frameName) const {
+	std::vector<Frame*> frames = getFrames<Frame>(frameName);
+	std::vector<ByteArray> toReturn;
+	if(frames.size() > 0) {
+		toReturn.reserve(frames.size());
+		for(const Frame* const frame : frames)
+			toReturn.push_back(frame->bytes());
+	}
 	return toReturn;
 }
 
@@ -257,8 +261,7 @@ std::string Tag::title() const { return textString(Frames::FRAME_TITLE); }
 ///@pkg ID3.h
 std::string Tag::genre(bool process) const {
 	std::string genreString = textString(Frames::FRAME_GENRE);
-	if(process)
-		genreString = processGenre(genreString);
+	if(process) genreString = processGenre(genreString);
 	return genreString;
 }
 
@@ -297,9 +300,8 @@ std::string Tag::track(bool process) const {
 	std::string trackString = textString(Frames::FRAME_TRACK);
 	if(process) {
 		size_t slashPos = trackString.find_first_of('/');
-		if(slashPos != std::string::npos) {
+		if(slashPos != std::string::npos)
 			trackString = trackString.substr(0, slashPos);
-		}
 		if(!std::all_of(trackString.begin(), trackString.end(), ::isdigit))
 			return "";
 	}
@@ -310,11 +312,9 @@ std::string Tag::track(bool process) const {
 std::string Tag::trackTotal(bool process) const {
 	std::string trackString = textString(Frames::FRAME_TRACK);
 	size_t slashPos = trackString.find_first_of('/');
-	if(slashPos == std::string::npos)
-		return "";
+	if(slashPos == std::string::npos) return "";
 	trackString = trackString.substr(slashPos + 1);
-	if(process && !std::all_of(trackString.begin(), trackString.end(), ::isdigit))
-			return "";
+	if(process && !std::all_of(trackString.begin(), trackString.end(), ::isdigit)) return "";
 	return trackString;
 }
 
@@ -323,9 +323,8 @@ std::string Tag::disc(bool process) const {
 	std::string discString = textString(Frames::FRAME_DISC);
 	if(process) {
 		size_t slashPos = discString.find_first_of('/');
-		if(slashPos != std::string::npos) {
+		if(slashPos != std::string::npos)
 			discString = discString.substr(0, slashPos);
-		}
 		if(!std::all_of(discString.begin(), discString.end(), ::isdigit))
 			return "";
 	}
@@ -336,11 +335,9 @@ std::string Tag::disc(bool process) const {
 std::string Tag::discTotal(bool process) const {
 	std::string discString = textString(Frames::FRAME_DISC);
 	size_t slashPos = discString.find_first_of('/');
-	if(slashPos == std::string::npos)
-		return "";
+	if(slashPos == std::string::npos) return "";
 	discString = discString.substr(slashPos + 1);
-	if(process && !std::all_of(discString.begin(), discString.end(), ::isdigit))
-			return "";
+	if(process && !std::all_of(discString.begin(), discString.end(), ::isdigit)) return "";
 	return discString;
 }
 
@@ -362,11 +359,10 @@ Picture Tag::picture() const {
 	PictureFrame* picture = getFrame<PictureFrame>(Frames::FRAME_PICTURE);
 	
 	//Return a Picture struct
-	return picture == nullptr ? Picture() :
-	                            Picture(picture->picture(),
-	                                    picture->mimeType(),
-	                                    picture->description(),
-	                                    picture->pictureType());
+	return picture == nullptr ? Picture() : Picture(picture->picture(),
+	                                                picture->mimeType(),
+	                                                picture->description(),
+	                                                picture->pictureType());
 }
 
 ///@pkg ID3.h
@@ -413,7 +409,6 @@ Picture Tag::picture(const std::function<bool (const std::string&)>& filterFunc)
 unsigned long long Tag::playCount() const {
 	//Get the play count Frame, or a nullptr if it's not on file
 	PlayCountFrame* pcnt = getFrame<PlayCountFrame>(Frames::FRAME_PLAY_COUNT);
-	
 	if(pcnt != nullptr) return pcnt->playCount();
 	
 	//If no FRAME_PLAY_COUNT frame, then try the Popularimeter
@@ -428,8 +423,7 @@ unsigned long long Tag::playCount(const std::function<bool (const std::string&)>
 	//Look through the Popularimeters with the filter function
 	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
 	for(const PopularimeterFrame* const popm : popularimeters) {
-		if(filterFunc(popm->email()))
-			return popm->playCount();
+		if(filterFunc(popm->email())) return popm->playCount();
 	}
 	
 	if(!popularimeters.size()) {
@@ -457,8 +451,7 @@ ushort Tag::rating(const std::function<bool (const std::string&)>& filterFunc) c
 	//Look through the Popularimeters with the filter function
 	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
 	for(const PopularimeterFrame* const popm : popularimeters) {
-		if(filterFunc(popm->email()))
-			return popm->rating();
+		if(filterFunc(popm->email())) return popm->rating();
 	}
 	
 	//No matching PopularimeterFrame found, so return 0
@@ -513,10 +506,8 @@ void Tag::print() const {
 	if(frames.size() && !uknfrms) return;*/
 	
 	std::cout << std::endl << "......................" << std::endl;
-	if(filename == "")
-		std::cout << "Printing information about ID3 File:" << std::endl;
-	else
-		std::cout << "Printing information about file " << filename << ":" << std::endl;
+	if(filename == "") std::cout << "Printing information about ID3 File:" << std::endl;
+	else               std::cout << "Printing information about file " << filename << ":" << std::endl;
 	std::cout << "Filesize:                 " << filesize << std::endl;
 	std::cout << "Tag size:                 " << v2TagInfo.size << std::endl;
 	std::cout << "Null:                     " << std::boolalpha << isNull << std::endl;
@@ -609,11 +600,8 @@ std::vector<DerivedFrame*> Tag::getFrames(const FrameID& frameName) const {
 
 ///@pkg ID3.h
 void Tag::readFile(std::ifstream& file) {
-	if(!file.good())
-		return;
-	
+	if(!file.good()) return;
 	isNull = false;
-	
 	readFileV2(file);
 	readFileV1(file);
 }
@@ -624,18 +612,15 @@ void Tag::readFileV1(std::ifstream& file) {
 	V1::ExtendedTag extTags;
 	bool extTagsSet;
 	
-	if(filesize < V1::BYTE_SIZE)
-		return;
+	if(filesize < V1::BYTE_SIZE) return;
 	
 	try {
 		file.seekg(-V1::BYTE_SIZE, std::ifstream::end);
-		if(file.fail())
-			return;
+		if(file.fail()) return;
 		
 		file.read(reinterpret_cast<char*>(&tags), V1::BYTE_SIZE);
 		
-		if(memcmp(tags.header, "TAG", 3) != 0)
-			return;
+		if(memcmp(tags.header, "TAG", 3) != 0) return;
 		
 		//Get the bytes for the extended tags
 		if(filesize > V1::BYTE_SIZE + V1::EXTENDED_BYTE_SIZE) {
@@ -656,18 +641,15 @@ void Tag::readFileV1(std::ifstream& file) {
 void Tag::readFileV2(std::ifstream& file) {
 	Header tagsHeader;
 	
-	if(filesize < HEADER_BYTE_SIZE)
-		return;
+	if(filesize < HEADER_BYTE_SIZE) return;
 	
 	try {
 		file.seekg(0, std::ifstream::beg);
-		if(file.fail())
-			return;
+		if(file.fail()) return;
 		
 		file.read(reinterpret_cast<char*>(&tagsHeader), HEADER_BYTE_SIZE);
 		
-		if(memcmp(tagsHeader.header, "ID3", 3) != 0)
-			return;
+		if(memcmp(tagsHeader.header, "ID3", 3) != 0) return;
 		
 		v2TagInfo.majorVer = tagsHeader.majorVer;
 		v2TagInfo.minorVer = tagsHeader.minorVer;
@@ -690,8 +672,7 @@ void Tag::readFileV2(std::ifstream& file) {
 			v2TagInfo.flagFooter = true;
 		
 		//Size verification
-		if(v2TagInfo.size > filesize)
-			return;
+		if(v2TagInfo.size > filesize) return;
 		
 		//Unsynchronisation is not supported in ID3v2.3 and below.
 		//In ID3v2.4, it is handled on a per-frame basis.
@@ -755,8 +736,7 @@ void Tag::readFileV2(std::ifstream& file) {
 			//Create a new Frame at this position
 			FramePtr frame = factory.create(frameStartPos);
 			//Add the Frame to the map if it's not null
-			if(!frame->null())
-				addFrame(frame->frame(), frame);
+			if(!frame->null()) addFrame(frame->frame(), frame);
 			//If the frame content is a valid size (bigger than an ID3v2 header)
 			//then continue on to the next frame. If not, then stop the loop.
 			if(frame->size(true) > HEADER_BYTE_SIZE && !frame->frame().unknown()) {
@@ -764,8 +744,7 @@ void Tag::readFileV2(std::ifstream& file) {
 				
 				//Account for 4 bytes added when reading ID3v2.2 frames from the
 				//ID3::FrameFactory class
-				if(v2TagInfo.majorVer <= 2)
-					frameStartPos -= 4;
+				if(v2TagInfo.majorVer <= 2) frameStartPos -= 4;
 			}
 			else {
 				//Get the start of padding and exit the loop
@@ -796,19 +775,13 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 	//are not really equivalent to ID3v2 comments, don't add an ID3v1 comment if
 	//there's already a read comment frame.
 	try {
-		addFrame(factory.createPair(Frames::FRAME_TITLE,
-		                            terminatedstring(tags.title, 30)));
-		addFrame(factory.createPair(Frames::FRAME_ARTIST,
-		                            terminatedstring(tags.artist, 30)));
-		addFrame(factory.createPair(Frames::FRAME_ALBUM,
-		                            terminatedstring(tags.album, 30)));
-		addFrame(factory.createPair(Frames::FRAME_YEAR,
-		                            terminatedstring(tags.year, 4)));
+		addFrame(factory.createPair(Frames::FRAME_TITLE,  terminatedstring(tags.title, 30)));
+		addFrame(factory.createPair(Frames::FRAME_ARTIST, terminatedstring(tags.artist, 30)));
+		addFrame(factory.createPair(Frames::FRAME_ALBUM,  terminatedstring(tags.album, 30)));
+		addFrame(factory.createPair(Frames::FRAME_YEAR,   terminatedstring(tags.year, 4)));
 		if(!exists(Frames::FRAME_COMMENT))
-			addFrame(factory.createPair(Frames::FRAME_COMMENT,
-			                            terminatedstring(tags.comment, 30)));
-		addFrame(factory.createPair(Frames::FRAME_GENRE,
-		                            V1::getGenreString(tags.genre)));
+			addFrame(factory.createPair(Frames::FRAME_COMMENT, terminatedstring(tags.comment, 30)));
+		addFrame(factory.createPair(Frames::FRAME_GENRE,  V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::Tag&, bool): " << e.what() << std::endl;
 	}
@@ -832,21 +805,14 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 	//are not really equivalent to ID3v2 comments, don't add an ID3v1 comment if
 	//there's already a read comment frame.
 	try {
-		addFrame(factory.createPair(Frames::FRAME_TITLE,
-		                            terminatedstring(tags.title, 30)));
-		addFrame(factory.createPair(Frames::FRAME_ARTIST,
-		                            terminatedstring(tags.artist, 30)));
-		addFrame(factory.createPair(Frames::FRAME_ALBUM,
-		                            terminatedstring(tags.album, 30)));
-		addFrame(factory.createPair(Frames::FRAME_YEAR,
-		                            terminatedstring(tags.year, 4)));
+		addFrame(factory.createPair(Frames::FRAME_TITLE,  terminatedstring(tags.title, 30)));
+		addFrame(factory.createPair(Frames::FRAME_ARTIST, terminatedstring(tags.artist, 30)));
+		addFrame(factory.createPair(Frames::FRAME_ALBUM,  terminatedstring(tags.album, 30)));
+		addFrame(factory.createPair(Frames::FRAME_YEAR,   terminatedstring(tags.year, 4)));
 		if(!exists(Frames::FRAME_COMMENT))
-			addFrame(factory.createPair(Frames::FRAME_COMMENT,
-			                            terminatedstring(tags.comment, 28)));
-		addFrame(factory.createPair(Frames::FRAME_TRACK,
-		                            std::to_string(tags.trackNum)));
-		addFrame(factory.createPair(Frames::FRAME_GENRE,
-		                            V1::getGenreString(tags.genre)));
+			addFrame(factory.createPair(Frames::FRAME_COMMENT, terminatedstring(tags.comment, 28)));
+		addFrame(factory.createPair(Frames::FRAME_TRACK,  std::to_string(tags.trackNum)));
+		addFrame(factory.createPair(Frames::FRAME_GENRE,  V1::getGenreString(tags.genre)));
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::P1Tag&, bool): " << e.what() << std::endl;
 	}
@@ -859,17 +825,11 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 	try {
 		tagsSet.v1Extended = true;
 		
-		addFrame(factory.createPair(Frames::FRAME_TITLE,
-		                            terminatedstring(tags.title, 60)));
-		addFrame(factory.createPair(Frames::FRAME_ARTIST,
-		                            terminatedstring(tags.artist, 60)));
-		addFrame(factory.createPair(Frames::FRAME_ALBUM,
-		                            terminatedstring(tags.album, 60)));
-		addFrame(factory.createPair(Frames::FRAME_GENRE,
-		                            terminatedstring(tags.genre, 30)));
-		/*
-		 * Placeholder comment for when I add playback speed support and
-		 * support for start and end times.
+		addFrame(factory.createPair(Frames::FRAME_TITLE,  terminatedstring(tags.title, 60)));
+		addFrame(factory.createPair(Frames::FRAME_ARTIST, terminatedstring(tags.artist, 60)));
+		addFrame(factory.createPair(Frames::FRAME_ALBUM,  terminatedstring(tags.album, 60)));
+		addFrame(factory.createPair(Frames::FRAME_GENRE,  terminatedstring(tags.genre, 30)));
+		/* Placeholder comment for when I add playback speed support and support for start and end times.
 		uint speed;
 		startTime = atoi(tags.startTime);
 		endTime = atoi(tags.endTime);
@@ -888,10 +848,7 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 }
 
 ///@pkg ID3.h
-Tag::TagsOnFile::TagsOnFile() : v1(false),
-                                v1_1(false),
-                                v1Extended(false),
-                                v2(false) {}
+Tag::TagsOnFile::TagsOnFile() : v1(false), v1_1(false), v1Extended(false), v2(false) {}
 
 ///@pkg ID3.h
 Tag::TagInfo::TagInfo() : majorVer(-1),

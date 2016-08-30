@@ -261,8 +261,7 @@ namespace ID3 {
 			/**
 			 * Check if a frame exists.
 			 * 
-			 * @param frameName A FrameID object, or either optionally a string
-			 *                  containing an ID3 frame ID or a Frames enum value.
+			 * @param frameName An ID3v2 frame ID.
 			 * @return If the Frame exists or not.
 			 */
 			bool exists(const FrameID& frameName) const;
@@ -278,7 +277,7 @@ namespace ID3 {
 			 * NOTE: No formatting will be done, so if the frame has special
 			 *       formatting then you should call the relevant method instead.
 			 * 
-			 * @param frameName A Frames enum variable that represents a frame ID.
+			 * @param frameName An ID3v2 frame ID.
 			 * @return The text content, or "" if the frame is not found, "null",
 			 *         or not a text frame.
 			 */
@@ -313,7 +312,7 @@ namespace ID3 {
 			 *       ID3::Text::exists(Frames) to check if the requested frame
 			 *       content actually exists in the tag.
 			 * 
-			 * @param frameName A Frames enum variable that represents a frame ID.
+			 * @param frameName An ID3v2 frame ID.
 			 * @return A string vector of the text content.
 			 */
 			std::vector<std::string> textStrings(const FrameID& frameName) const;
@@ -374,10 +373,40 @@ namespace ID3 {
 			 *       all text frames do. See ID3::Tag::textStrings(Frames) to get
 			 *       the frame value split by the dividing character.
 			 * 
-			 * @param frameName A Frames enum variable that represents a frame ID.
+			 * @param frameName An ID3v2 frame ID.
 			 * @return A Text struct of the frame content.
 			 */
 			std::vector<Text> texts(const FrameID& frameName) const;
+			
+			/**
+			 * Return the unprocessed binary data of the frame body of the
+			 * requested frame.
+			 * 
+			 * NOTE: If the requested frame does not exist, the length of the
+			 *       returned vector will be 0. The length will also be 0 if the
+			 *       frame was created with this ID3::Tag object, and the changes
+			 *       haven't been written to the file yet. See
+			 *       ID3::Tag::exists(FrameID&) to check if the frame exists.
+			 * 
+			 * @param frameName An ID3v2 frame ID.
+			 * @return The frame's binary data.
+			 */
+			ByteArray binaryData(const FrameID& frameName) const;
+			
+			/**
+			 * Return the unprocessed binary data of the frame body of all the
+			 * requested frames.
+			 * 
+			 * NOTE: If the requested frame does not exist, the length of the
+			 *       returned vector will be 0. For each ByteArray in the returned
+			 *       vector, its length will be 0 if the frame was created with
+			 *       this ID3::Tag object, and the changes haven't been written to
+			 *       the file yet.
+			 * 
+			 * @param frameName An ID3v2 frame ID.
+			 * @return The binary data of all requested frames.
+			 */
+			std::vector<ByteArray> binaryDatas(const FrameID& frameName) const;
 			
 			/**
 			 * Get the title tag.
