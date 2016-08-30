@@ -201,28 +201,29 @@ void Frame::print() const {
 	}
 	
 	std::cout << "Frame size:     " << FRAME_SIZE << std::endl;
-	if(FRAME_SIZE > 0) {
-		std::cout << "Flags:          ";
-		if(discardUponTagAlterIfUnknown()) std::cout << " -discardIfUnknown";
-		if(discardUponAudioAlter())        std::cout << " -discardUponAudioAlter";
-		if(readOnly()) std::cout << " -readOnly";
-		if(compressed()) std::cout << " -compressed";
-		if(encrypted()) std::cout << " -encrypted";
-		if(groupingIdentity()) std::cout << " -groupingIdentity";
-		if(unsynchronised()) std::cout << " -unsynchronisation";
-		if(dataLengthIndicator()) std::cout << " -dataLengthIndicator";
-		std::cout << std::endl;
-		if(groupingIdentity())
-			std::cout << "Group identity: " << std::boolalpha << groupIdentity() << std::endl;
-		std::cout << "Header size:    " << std::dec << HEADER_SIZE << std::endl;
-		std::cout << "Header bytes:  ";
-		for(ulong i = 0; i < HEADER_SIZE && i < FRAME_SIZE; i++)
-			std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
-		std::cout << std::endl;
-		
-		std::cout << "Empty:          " << std::boolalpha << empty() << std::endl;
-		std::cout << "Body size:      " << std::dec << BODY_SIZE << std::endl;
-	}
+	if(FRAME_SIZE == 0)
+		return;
+	
+	std::cout << "Flags:          ";
+	if(discardUponTagAlterIfUnknown()) std::cout << " -discardIfUnknown";
+	if(discardUponAudioAlter())        std::cout << " -discardUponAudioAlter";
+	if(readOnly()) std::cout << " -readOnly";
+	if(compressed()) std::cout << " -compressed";
+	if(encrypted()) std::cout << " -encrypted";
+	if(groupingIdentity()) std::cout << " -groupingIdentity";
+	if(unsynchronised()) std::cout << " -unsynchronisation";
+	if(dataLengthIndicator()) std::cout << " -dataLengthIndicator";
+	std::cout << std::endl;
+	if(groupingIdentity())
+		std::cout << "Group identity: " << std::boolalpha << groupIdentity() << std::endl;
+	std::cout << "Header size:    " << std::dec << HEADER_SIZE << std::endl;
+	std::cout << "Header bytes:  ";
+	for(ulong i = 0; i < HEADER_SIZE && i < FRAME_SIZE; i++)
+		std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
+	std::cout << std::endl;
+	
+	std::cout << "Empty:          " << std::boolalpha << empty() << std::endl;
+	std::cout << "Body size:      " << std::dec << BODY_SIZE << std::endl;
 	std::cout << "Body bytes:    ";
 	if(BODY_SIZE <= 100) {
 		for(ulong i = HEADER_SIZE; i < FRAME_SIZE; i++)

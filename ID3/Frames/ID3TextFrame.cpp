@@ -72,7 +72,7 @@ void TextFrame::print() const {
 			} case FrameEncoding::ENCODING_UTF16BOM: {
 				std::cout << "UTF-16 BOM"; break;
 			} case FrameEncoding::ENCODING_UTF8: {
-				std::cout << "UTF-16"; break;
+				std::cout << "UTF-8"; break;
 			} case FrameEncoding::ENCODING_LATIN1: default: {
 				std::cout << "LATIN-1"; break;
 			}
@@ -86,17 +86,16 @@ void TextFrame::print() const {
 ByteArray TextFrame::write() {
 	//TODO: Trim strings that are too long
 	
-	//Save the old version to take synchsafe-ness into account
-	const ushort OLD_VERSION = ID3Ver;
 	//Convert the separating character if necessary
 	convertSeparator();
+	
 	//Set the ID3 version to ID3::WRITE_VERSION
 	ID3Ver = WRITE_VERSION;
 	
 	//If the Frame is empty, then don't write anything to file
 	if(empty()) {
 		frameContent = ByteArray();
-	} else if(isEdited || isFromFile || OLD_VERSION == 3) {
+	} else {
 		//Create a ByteArray that fits the header, encoding, and text content size
 		const ulong NEW_FRAME_SIZE = HEADER_BYTE_SIZE + 1 + textContent.size();
 		
@@ -112,8 +111,18 @@ ByteArray TextFrame::write() {
 		for(ushort i = 0; i < 4 && i < size.size(); i++)
 			frameContent[i+4] = size[i];
 		
-		//Set the encoding to UTF-8
-		frameContent[HEADER_BYTE_SIZE] = FrameEncoding::ENCODING_UTF8;
+		//Check if the text content is pure ASCII or if it has to be encoded in UTF-8
+		bool isASCII = true;
+		for(const char currentChar : textContent) {
+			if(static_cast<uint8_t>(currentChar) >= 0x80) {
+				isASCII = false;
+				break;
+			}
+		}
+		
+		//Set the encoding to LATIN-1 if it's pure ASCII, else UTF-8
+		frameContent[HEADER_BYTE_SIZE] = isASCII ? FrameEncoding::ENCODING_LATIN1 :
+		                                           FrameEncoding::ENCODING_UTF8;
 		
 		//Write the text string to file
 		for(ulong i = 0; i < textContent.size() && i + HEADER_BYTE_SIZE + 1 < NEW_FRAME_SIZE; i++)
@@ -226,9 +235,8 @@ char TextFrame::stringSeparator() const {
 	return '\0';
 }
 
+///@pkg ID3TextFrame.h
 void TextFrame::convertSeparator() {
-	///@pkg ID3TextFrame.h
-	
 	const char OLD_SEPARATOR = stringSeparator();
 	
 	if(OLD_SEPARATOR != '\0') {
@@ -384,6 +392,7 @@ void NumericalTextFrame::read() {
 	//then use contents(std::vector<std::string>&) to verify that every string
 	//value is a numerical integer value
 	contents(TextFrame::contents());
+	isEdited = false;
 }
 
 ///@pkg ID3TextFrame.h
@@ -483,7 +492,6 @@ void DescriptiveTextFrame::print() const {
 		std::cout << "Language:       " << textLanguage << std::endl;
 	std::cout << "Description:    " << textDescription << std::endl;
 	std::cout << "Content:        " << textContent << std::endl;
-	std::cout << std::endl;
 	std::cout << "Frame class:    DescriptiveTextFrame" << std::endl;
 }
 
@@ -493,17 +501,16 @@ ByteArray DescriptiveTextFrame::write() {
 	//      that the text content string is in ASCII.
 	//TODO: Trim strings that are too long
 	
-	//Save the old version to take synchsafe-ness into account
-	const ushort OLD_VERSION = ID3Ver;
 	//Convert the separating character if necessary
 	convertSeparator();
+	
 	//Set the ID3 version to ID3::WRITE_VERSION
 	ID3Ver = WRITE_VERSION;
 	
 	//If the Frame is empty, then don't write anything to file
 	if(empty()) {
 		frameContent = ByteArray();
-	} else if(isEdited || isFromFile || OLD_VERSION == 3) {
+	} else {
 		//The description starts after the header, encoding, and language (if it
 		//has one)
 		const ulong DESCRIPTION_START = HEADER_BYTE_SIZE + 1 + (optionLanguage ? LANGUAGE_SIZE : 0);
@@ -542,13 +549,13 @@ ByteArray DescriptiveTextFrame::write() {
 		//Write the description to file. Since frameContent was initialized with
 		//null characters, the null separator is already in the array.
 		if(!optionNoDescription) {
-			for(ulong i = DESCRIPTION_START; i < textDescription.size(); i++)
+			for(ulong i = 0; i < textDescription.size(); i++)
 				frameContent[DESCRIPTION_START + i] = textDescription[i];
 		}
 		
 		//Write the text string to file
 		for(ulong i = 0; i < textContent.size() && TEXT_START + i < NEW_FRAME_SIZE; i++)
-			frameContent[TEXT_START + 1] = textContent[i];
+			frameContent[TEXT_START + i] = textContent[i];
 	}
 	
 	isEdited = false;
@@ -704,15 +711,13 @@ ByteArray URLTextFrame::write() {
 	//TODO: Actually encode the text content as LATIN-1, instead of just assuming
 	//it is in ASCII.
 	
-	//Save the old version to take synchsafe-ness into account
-	const ushort OLD_VERSION = ID3Ver;
 	//Set the ID3 version to ID3::WRITE_VERSION
 	ID3Ver = WRITE_VERSION;
 	
 	//If the Frame is empty, then don't write anything to file
 	if(empty()) {
 		frameContent = ByteArray();
-	} else if(isEdited || isFromFile || OLD_VERSION == 3) {
+	} else {
 		//Create a ByteArray that fits the header and text content size
 		const ulong NEW_FRAME_SIZE = HEADER_BYTE_SIZE + textContent.size();
 		

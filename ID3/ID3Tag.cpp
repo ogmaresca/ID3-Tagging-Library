@@ -413,6 +413,16 @@ const bool Tag::null() const {
 
 ///@pkg ID3.h
 void Tag::print() const {
+	//A testing section to not print out music files with only TextFrame and
+	//PictureFrame Frames
+	ulong uknfrms = 0;
+	for(FramePair currentFramePair : frames) {
+		if(dynamic_cast<TextFrame*>(currentFramePair.second.get()) == nullptr &&
+		   dynamic_cast<PictureFrame*>(currentFramePair.second.get()) == nullptr)
+			uknfrms++;
+	}
+	if(frames.size() && !uknfrms) return;
+	
 	std::cout << std::endl << "......................" << std::endl;
 	if(filename == "")
 		std::cout << "Printing information about ID3 File:" << std::endl;
@@ -431,6 +441,11 @@ void Tag::print() const {
 	std::cout << "Number of frames:         " << frames.size() << std::endl;
 	
 	for(FramePair currentFramePair : frames) {
+		std::cout << "--------------------------" << std::endl;
+		currentFramePair.second->print();
+		//A testing section to compare the byte differences from the file and
+		//the results of the write() method
+		currentFramePair.second->write();
 		std::cout << "--------------------------" << std::endl;
 		currentFramePair.second->print();
 	}
@@ -677,7 +692,7 @@ void Tag::readFileV2(std::ifstream& file) {
 ///@pkg ID3.h
 void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 	//Check if this isn't actually a ID3v1.1 tag
-	if(zeroCheck && tags.comment[28] == '\0') {
+	if(zeroCheck && tags.comment[28] == '\0' && tags.comment[29] != '\0') {
 		V1::P1Tag correctID3VerTags;
 		std::memcpy(&correctID3VerTags, &tags, sizeof correctID3VerTags);
 		setTags(correctID3VerTags, false);

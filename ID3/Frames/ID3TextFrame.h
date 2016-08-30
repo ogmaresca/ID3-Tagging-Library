@@ -143,8 +143,9 @@ namespace ID3 {
 			virtual void print() const;
 			
 			/**
-			 * The write() method for TextFrame re-creates the frame
-			 * header with UTF-8 encoding and its stored text content.
+			 * The write() method for TextFrame re-creates the frame header and the
+			 * frame text, with LATIN-1 as the encoding if the text is in ASCII and
+			 * UTF-8 if characters fall outside of the ASCII range.
 			 * 
 			 * @see ID3::Frame::write()
 			 */

@@ -79,15 +79,13 @@ ByteArray PlayCountFrame::write() {
 	//TODO: Do something (like throw an exception) if the picture data is too
 	//      large for the frame
 	
-	//Save the old version to take synchsafe-ness into account
-	const ushort OLD_VERSION = ID3Ver;
 	//Set the ID3 version to ID3::WRITE_VERSION
 	ID3Ver = WRITE_VERSION;
 	
 	//If the Frame is null don't write anything to file
 	if(isNull) {
 		frameContent = ByteArray();
-	} else if(isEdited || isFromFile || OLD_VERSION == 3) {
+	} else {
 		//A ByteArray of the play count encoded as a byte array
 		ByteArray playCountArr = intToByteArray(count, 0, false);
 		
@@ -231,16 +229,15 @@ void PopularimeterFrame::print() const {
 ByteArray PopularimeterFrame::write() {
 	//TODO: Do something (like throw an exception) if the picture data is too
 	//      large for the frame
+	//TODO: Don't just assume that the email address isn't LATIN-1
 	
-	//Save the old version to take synchsafe-ness into account
-	const ushort OLD_VERSION = ID3Ver;
 	//Set the ID3 version to ID3::WRITE_VERSION
 	ID3Ver = WRITE_VERSION;
 	
 	//If the Frame is null don't write anything to file
 	if(isNull) {
 		frameContent = ByteArray();
-	} else if(isEdited || isFromFile || OLD_VERSION == 3) {
+	} else {
 		//A ByteArray of the play count encoded as a byte array
 		ByteArray playCountArr = intToByteArray(count, 0, false);
 		
@@ -254,7 +251,7 @@ ByteArray PopularimeterFrame::write() {
 		
 		//Create a ByteArray that fits the header, email, email separating byte,
 		//rating, and play count
-		const ulong NEW_FRAME_SIZE = EMAIL_END_BYTE + 1 + playCountArr.size();
+		const ulong NEW_FRAME_SIZE = EMAIL_END_BYTE + 2 + playCountArr.size();
 		
 		//Reset the frame ByteArray. This automatically clears any flags.
 		frameContent = ByteArray(NEW_FRAME_SIZE, '\0');
@@ -269,21 +266,21 @@ ByteArray PopularimeterFrame::write() {
 			frameContent[i+4] = size[i];
 		
 		//Save the email address
-		for(ulong i = HEADER_BYTE_SIZE; i < EMAIL_END_BYTE; i++)
-			frameContent[HEADER_BYTE_SIZE + 1] = emailAddress[i];
-		
+		for(ulong i = 0; i < emailAddress.size(); i++)
+			frameContent[HEADER_BYTE_SIZE + i] = emailAddress[i];
+		std::cout << "Wrote the email \"" << emailAddress << "\"" << std::endl;
 		//Save the rating
 		switch(fiveStarRating) {
-			case 5: frameContent[EMAIL_END_BYTE + 1] = 255;
-			case 4: frameContent[EMAIL_END_BYTE + 1] = 196;
-			case 3: frameContent[EMAIL_END_BYTE + 1] = 128;
-			case 2: frameContent[EMAIL_END_BYTE + 1] = 64;
+			case 5: { frameContent[EMAIL_END_BYTE + 1] = 255; break; }
+			case 4: { frameContent[EMAIL_END_BYTE + 1] = 196; break; }
+			case 3: { frameContent[EMAIL_END_BYTE + 1] = 128; break; }
+			case 2: { frameContent[EMAIL_END_BYTE + 1] = 64;  break; }
 			case 1: case 0: default: frameContent[EMAIL_END_BYTE + 1] = fiveStarRating;
 		}
 		
 		//Insert the play count into the frame content
 		for(ulong i = 0; i < playCountArr.size() && i+EMAIL_END_BYTE+2 < NEW_FRAME_SIZE; i++)
-			frameContent[EMAIL_END_BYTE + 2] = playCountArr[i];
+			frameContent[EMAIL_END_BYTE + 2 + i] = playCountArr[i];
 	}
 	
 	isEdited = false;
@@ -315,7 +312,7 @@ void PopularimeterFrame::read() {
 		                             emailEnd);
 		
 		//Read the rating on file
-		const char POPM_RATING = frameContent[emailEnd + 1];
+		const uint8_t POPM_RATING = frameContent[emailEnd + 1];
 		     if(POPM_RATING <= 31)  fiveStarRating = 1;
 		else if(POPM_RATING <= 95)  fiveStarRating = 2;
 		else if(POPM_RATING <= 159) fiveStarRating = 3;

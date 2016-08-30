@@ -130,15 +130,13 @@ ByteArray PictureFrame::write() {
 	//TODO: Do something (like throw an exception) if the picture data is too
 	//      large for the frame
 	
-	//Save the old version to take synchsafe-ness into account
-	const ushort OLD_VERSION = ID3Ver;
 	//Set the ID3 version to ID3::WRITE_VERSION
 	ID3Ver = WRITE_VERSION;
 	
 	//If the Frame is empty or null, then don't write anything to file
 	if(empty() || isNull) {
 		frameContent = ByteArray();
-	} else if(isEdited || isFromFile || OLD_VERSION == 3) {
+	} else {
 		//The description starts after the header, encoding, MIME type, and
 		//picture type.
 		const ulong DESCRIPTION_START = HEADER_BYTE_SIZE + 3 + textMIME.length();
@@ -174,12 +172,12 @@ ByteArray PictureFrame::write() {
 		
 		//Write the description to file. Since frameContent was initialized with
 		//null characters, the null separator is already in the array.
-		for(ulong i = DESCRIPTION_START; i < textDescription.size(); i++)
+		for(ulong i = 0; i < textDescription.size(); i++)
 			frameContent[DESCRIPTION_START + i] = textDescription[i];
 		
 		//Write the picture data to file
 		for(ulong i = 0; i < pictureData.size() && PIC_START + i < NEW_FRAME_SIZE; i++)
-			frameContent[PIC_START + 1] = pictureData[i];
+			frameContent[PIC_START + i] = pictureData[i];
 	}
 	
 	isEdited = false;
