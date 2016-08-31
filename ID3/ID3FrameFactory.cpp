@@ -15,6 +15,7 @@
 #include "Frames/ID3TextFrame.h"
 #include "Frames/ID3PictureFrame.h"
 #include "Frames/ID3PlayCountFrame.h"
+#include "Frames/ID3EventTimingFrame.h"
 #include "ID3Functions.h"
 #include "ID3Constants.h"
 
@@ -150,6 +151,8 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 			return FramePtr(new PlayCountFrame(ID3Ver, frameBytes));
 		case FrameClass::CLASS_POPULARIMETER:
 			return FramePtr(new PopularimeterFrame(ID3Ver, frameBytes));
+		case FrameClass::CLASS_EVENT_TIMING:
+			return FramePtr(new EventTimingFrame(ID3Ver, frameBytes));
 		case FrameClass::CLASS_UNKNOWN: default:
 			return FramePtr(new UnknownFrame(id, ID3Ver, frameBytes));
 	}
@@ -170,22 +173,21 @@ FramePtr FrameFactory::create(const FrameID&     frameName,
 	
 	switch(frameType) {
 		case FrameClass::CLASS_TEXT:
-			return FramePtr(new TextFrame(frameName, ID3Ver, textContent));
+			return FramePtr(new TextFrame(frameName, textContent));
 		case FrameClass::CLASS_NUMERICAL:
-			return FramePtr(new NumericalTextFrame(frameName, ID3Ver, textContent));
+			return FramePtr(new NumericalTextFrame(frameName, textContent));
 		case FrameClass::CLASS_DESCRIPTIVE:
 			return FramePtr(new DescriptiveTextFrame(frameName,
-			                                         ID3Ver,
 			                                         textContent,
 			                                         description,
 			                                         language,
 			                                         frameOptions(frameName)));
 		case FrameClass::CLASS_URL:
-			return FramePtr(new URLTextFrame(frameName, ID3Ver, textContent));
+			return FramePtr(new URLTextFrame(frameName, textContent));
 		case FrameClass::CLASS_PLAY_COUNT:
-			return FramePtr(new PlayCountFrame(ID3Ver, atoll(textContent.c_str())));
+			return FramePtr(new PlayCountFrame(atoll(textContent.c_str())));
 		case FrameClass::CLASS_POPULARIMETER:
-			return FramePtr(new PopularimeterFrame(ID3Ver, atoll(textContent.c_str()), 0, description));
+			return FramePtr(new PopularimeterFrame(atoll(textContent.c_str()), 0, description));
 		default:
 			return FramePtr(new UnknownFrame(frameName));
 	}
@@ -208,11 +210,11 @@ FramePtr FrameFactory::create(const FrameID&     frameName,
 	
 	switch(frameType) {
 		case FrameClass::CLASS_NUMERICAL:
-			return FramePtr(new NumericalTextFrame(frameName, ID3Ver, frameValue));
+			return FramePtr(new NumericalTextFrame(frameName, frameValue));
 		case FrameClass::CLASS_PLAY_COUNT:
-			return FramePtr(new PlayCountFrame(ID3Ver, frameValue));
+			return FramePtr(new PlayCountFrame(frameValue));
 		case FrameClass::CLASS_POPULARIMETER:
-			return FramePtr(new PopularimeterFrame(ID3Ver, frameValue, 0, description));
+			return FramePtr(new PopularimeterFrame(frameValue, 0, description));
 		default:
 			return create(frameName, std::to_string(frameValue), description, language);
 	}
@@ -231,11 +233,7 @@ FramePtr FrameFactory::createPicture(const ByteArray&   pictureByteArray,
 			                            const std::string& mimeType,
 			                            const std::string& description,
 			                            const PictureType  type) const {
-	return FramePtr(new PictureFrame(ID3Ver,
-	                                 pictureByteArray,
-	                                 mimeType,
-	                                 description,
-	                                 type));
+	return FramePtr(new PictureFrame(pictureByteArray, mimeType, description, type));
 }
 
 ///@pkg ID3FrameFactory.h
@@ -284,6 +282,9 @@ FrameClass FrameFactory::frameType(const FrameID& frameID) {
 		//The Popularimeter
 		case FRAME_POPULARIMETER:
 			return FrameClass::CLASS_POPULARIMETER;
+		//The Event Timing Codes frame
+		case FRAME_EVENT_TIMING_CODES:
+			return FrameClass::CLASS_EVENT_TIMING;
 		//For the rest of the frames, compare the string values as there's too
 		//many enum cases
 		default:

@@ -19,10 +19,11 @@
 #include <memory>        //For std::shared_ptr
 #include <functional>    //For std::function
 
-#include "Frames/ID3Frame.h"        //For supporting Frames
-#include "Frames/ID3PictureFrame.h" //For PictureType
-#include "ID3FrameID.h"             //For frame IDs
-#include "ID3FrameFactory.h"        //For FrameFactory
+#include "Frames/ID3Frame.h"            //For supporting Frames
+#include "Frames/ID3PictureFrame.h"     //For PictureType
+#include "Frames/ID3EventTimingFrame.h" //For TimingCodes
+#include "ID3FrameID.h"                 //For frame IDs
+#include "ID3FrameFactory.h"            //For FrameFactory
 
 /**
  * The ID3 namespace defines everything related to reading and writing
@@ -156,8 +157,6 @@ namespace ID3 {
 	
 	/**
 	 * A struct that contains information about a picture embedded in ID3v2 tags.
-	 * Every field of this struct is constant, you must create a new Picture to
-	 * modify a field.
 	 * The null variable will be set to true if given an invalid MIME type. The
 	 * picture data is not checked to verify that it is a valid image.
 	 */
@@ -183,6 +182,30 @@ namespace ID3 {
 		std::string description;
 		ByteArray   data;
 		bool        null;
+	};
+	
+	/**
+	 * A struct that contains information about an event timing code.
+	 * If the value of the timing code is not set in the tags, the value should
+	 * be 0.
+	 * If usingMilliseconds is false, then the value refers to the MPEG frames of
+	 * the file, instead of milliseconds.
+	 */
+	struct EventTimingCode {
+		/**
+		 * Create a EventTimingCode struct.
+		 * 
+		 * Defined in EventTimingFrame.cpp.
+		 * 
+		 * @param code The event timing code.
+		 * @param val  The event timing code value (optional, defaults to 0).
+		 * @param milliseconds Whether the value refers to milliseconds or MPEG
+		 *                     frames (optional, defaults to true).
+		 */
+		EventTimingCode(TimingCodes code, ulong val=0UL, bool milliseconds=true);
+		bool usingMilliseconds;
+		TimingCodes timingCode;
+		ulong value;
 	};
 	
 	/**
@@ -586,9 +609,17 @@ namespace ID3 {
 			/**
 			 * Get the tag comments as a vector of Text structs.
 			 * 
-			 * @see ID3::Tag::texts(Frames)
+			 * @see ID3::Tag::texts(FrameID&)
 			 */
 			std::vector<Text> comments() const;
+			
+			/**
+			 * Get a specific comment in the tag as a Text struct.
+			 * 
+			 * @see ID3::Tag::comments()
+			 * @see ID3::Tag::text(FrameID&, std::function&)
+			 */
+			Text comment(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const;
 			
 			/**
 			 * Get the attached picture.
@@ -673,6 +704,17 @@ namespace ID3 {
 			 *         or 0.
 			 */
 			ushort rating(const std::function<bool (const std::string&)>& filterFunc) const;
+			
+			/**
+			 * Return the value of the given event timing code.
+			 * 
+			 * NOTE: If the event timing code does not exist on file, the returned
+			 *       EventTimingCode will have a value of 0.
+			 * 
+			 * @param code The event timing code to retrieve.
+			 * @return The event timing code, wrapped in a EventTimingCode struct.
+			 */
+			EventTimingCode timingCode(const TimingCodes code) const;
 			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////

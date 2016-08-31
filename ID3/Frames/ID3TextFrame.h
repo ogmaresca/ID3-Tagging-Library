@@ -177,24 +177,11 @@ namespace ID3 {
 			 * NOTE: The frame ID is not checked to verify that the
 			 *       frame ID is a valid text frame.
 			 * 
-			 * NOTE: The ID3v2 version is not checked to verify that it
-			 *       is a supported ID3v2 version.
-			 * 
 			 * @param frameName The frame ID.
-			 * @param version The ID3v2 major version.
 			 * @param value The text of the frame (optional).
 			 */
-			TextFrame(const FrameID&     frameName,
-			          const ushort       version,
-			          const std::string& value="");
-			
-			/**
-			 * An empty constructor to initialize variables. Creating a Frame with
-			 * this constructor will result in a "null" TextFrame object.
-			 * 
-			 * @see ID3::Frame::Frame()
-			 */
-			TextFrame() noexcept;
+			TextFrame(const FrameID&     frameName=Frames::FRAME_UNKNOWN_FRAME,
+			          const std::string& value="") noexcept;
 			
 			/**
 			 * The content of the frame.
@@ -385,12 +372,10 @@ namespace ID3 {
 			 *       is a supported ID3v2 version.
 			 * 
 			 * @param frameName The frame ID.
-			 * @param version The ID3v2 major version.
 			 * @param value The text of the frame (optional).
 			 * @see ID3::Frame::Frame(FrameID&, ushort, ByteArray&)
 			 */
-			NumericalTextFrame(const FrameID&     frameName,
-			                   const ushort       version,
+			NumericalTextFrame(const FrameID&     frameName=Frames::FRAME_UNKNOWN_FRAME,
 			                   const std::string& value="");
 			
 			/**
@@ -401,25 +386,12 @@ namespace ID3 {
 			 * NOTE: The frame ID is not checked to verify that the
 			 *       frame ID is a valid text frame.
 			 * 
-			 * NOTE: The ID3v2 version is not checked to verify that it
-			 *       is a supported ID3v2 version.
-			 * 
 			 * @param frameName The frame ID.
-			 * @param version The ID3v2 major version.
 			 * @param textContent The numerical text content of the frame.
 			 * @param description The frame description (optional).
 			 */
 			NumericalTextFrame(const FrameID& frameName,
-			                   const ushort   version,
 			                   const long     intContent);
-			
-			/**
-			 * An empty constructor to initialize variables. Creating a Frame with
-			 * this constructor will result in a "null" NumericalTextFrame object.
-			 * 
-			 * @see ID3::Frame::Frame()
-			 */
-			NumericalTextFrame() noexcept;
 			
 			/**
 			 * The read() method for NumericalTextFrame first gets the text
@@ -593,10 +565,7 @@ namespace ID3 {
 			 * return false when calling createdFromFile().
 			 * 
 			 * NOTE: The frame ID is not checked to verify that the
-			 *       frame ID is a valid text frame.
-			 * 
-			 * NOTE: The ID3v2 version is not checked to verify that it
-			 *       is a supported ID3v2 version.
+			 *       frame ID is a valid descriptive text frame.
 			 * 
 			 * NOTE: The language will only be set if the language option is
 			 *       passed in the parameter values, and the new language string is
@@ -605,7 +574,6 @@ namespace ID3 {
 			 * NOTE: The language is a ISO 639-2 code.
 			 * 
 			 * @param frameName   The frame ID.
-			 * @param version     The ID3v2 major version.
 			 * @param value       The text of the frame (optional).
 			 * @param description The frame description (optional).
 			 * @param language    The frame language (optional).
@@ -615,20 +583,11 @@ namespace ID3 {
 			 *                ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT (optional).
 			 *                For multiple values, OR (option | option) them together.
 			 */
-			DescriptiveTextFrame(const FrameID&    frameName,
-			                     const ushort       version,
+			DescriptiveTextFrame(const FrameID&    frameName=Frames::FRAME_UNKNOWN_FRAME,
 			                     const std::string& value="",
 			                     const std::string& description="",
 			                     const std::string& language="",
 			                     const ushort       options=0);
-			
-			/**
-			 * An empty constructor to initialize variables. Creating a Frame with
-			 * this constructor will result in a "null" TextFrame object.
-			 * 
-			 * @see ID3::Frame::Frame()
-			 */
-			DescriptiveTextFrame() noexcept;
 			
 			/**
 			 * The description of the frame.
@@ -762,26 +721,13 @@ namespace ID3 {
 			 * when calling createdFromFile().
 			 * 
 			 * NOTE: The frame ID is not checked to verify that the
-			 *       frame ID is a valid URL frame ID.
-			 * 
-			 * NOTE: The ID3v2 version is not checked to verify that it
-			 *       is a supported ID3v2 version.
+			 *       frame ID is a valid URL text frame ID.
 			 * 
 			 * @param frameName The frame ID.
-			 * @param version The ID3v2 major version.
 			 * @param value The text of the frame (optional).
 			 */
-			URLTextFrame(const FrameID&     frameName,
-			             const ushort       version,
+			URLTextFrame(const FrameID&     frameName=Frames::FRAME_UNKNOWN_FRAME,
 			             const std::string& value="");
-			
-			/**
-			 * An empty constructor to initialize variables. Creating a Frame with
-			 * this constructor will result in a "null" URLTextFrame object.
-			 * 
-			 * @see ID3::Frame::Frame()
-			 */
-			URLTextFrame() noexcept;
 			
 			/**
 			 * The read() method for URLTextFrame saves every byte following the

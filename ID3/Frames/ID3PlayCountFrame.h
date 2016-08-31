@@ -104,6 +104,9 @@ namespace ID3 {
 			 * with PCNT for frameName. If the given ByteArray is long enough to be
 			 * valid it then calls ID3::PlayCountFrame::read() to process the ByteArray.
 			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it is a
+			 *       supported ID3v2 version.
+			 * 
 			 * @see ID3::Frame::Frame(FrameID&,
 			 *                        ushort,
 			 *                        ByteArray&)
@@ -115,23 +118,10 @@ namespace ID3 {
 			 * This constructor manually creates a play count frame. A Frame created
 			 * from this constructor will return false when calling createdFromFile().
 			 * 
-			 * NOTE: The ID3v2 version is not checked to verify that it
-			 *       is a supported ID3v2 version.
-			 * 
-			 * @param version   The ID3v2 major version.
 			 * @param playCount The play count (defaults to 0).
-			 * 
-			 */
-			PlayCountFrame(const ushort             version,
-			               const unsigned long long playCount=0ULL);
-			
-			/**
-			 * An empty constructor to initialize variables. Creating a Frame with
-			 * this constructor will result in a "null" PlayCountFrame object.
-			 * 
 			 * @see ID3::Frame::Frame()
 			 */
-			PlayCountFrame() noexcept;
+			PlayCountFrame(const unsigned long long playCount=0ULL) noexcept;
 			
 			/**
 			 * The read() method for PlayCountFrame reads the play count from the
@@ -238,6 +228,9 @@ namespace ID3 {
 			 * with POPM for frameName. If the given ByteArray is long enough to be
 			 * valid it then calls ID3::PopularimeterFrame::read() to process the ByteArray.
 			 * 
+			 * NOTE: The ID3v2 version is not checked to verify that it is a
+			 *       supported ID3v2 version.
+			 * 
 			 * @see ID3::Frame::Frame(FrameID&,
 			 *                        ushort,
 			 *                        ByteArray&)
@@ -249,9 +242,6 @@ namespace ID3 {
 			 * This constructor manually creates a Popularimeter frame. A Frame
 			 * created from this constructor will return false when calling createdFromFile().
 			 * 
-			 * NOTE: The ID3v2 version is not checked to verify that it
-			 *       is a supported ID3v2 version.
-			 * 
 			 * NOTE: If the rating is less than or equal to 5, then it will be set
 			 * to what is given. If not, then the following ranges map to each rating:
 			 *       6-31:    1
@@ -260,24 +250,14 @@ namespace ID3 {
 			 *       169-223: 4
 			 *       224-255: 5
 			 * 
-			 * @param version   The ID3v2 major version.
 			 * @param playCount The play count (defaults to 0).
 			 * @param rating    The rating (defaults to 0).
 			 * @param email     The email address (defaults to "")
-			 * 
-			 */
-			PopularimeterFrame(const ushort             version,
-			                   const unsigned long long playCount=0ULL,
-			                   uint8_t                  rating=0,
-			                   const std::string&       email="");
-			
-			/**
-			 * An empty constructor to initialize variables. Creating a Frame with
-			 * this constructor will result in a "null" PopularimeterFrame object.
-			 * 
 			 * @see ID3::Frame::Frame()
 			 */
-			PopularimeterFrame() noexcept;
+			PopularimeterFrame(const unsigned long long playCount=0ULL,
+			                   uint8_t                  rating=0,
+			                   const std::string&       email="") noexcept;
 			
 			/**
 			 * The read() method for PopularimeterFrame reads the play count from

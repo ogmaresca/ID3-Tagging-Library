@@ -26,10 +26,11 @@ using namespace ID3;
 ////////////////////////////////////////////////////////////////////////////////
 
 ///@pkg ID3Frame.h
-Frame::Frame() noexcept : ID3Ver(WRITE_VERSION),
-                          isNull(true),
-                          isEdited(false),
-                          isFromFile(false) {}
+Frame::Frame(const FrameID& frameName) noexcept : id(frameName),
+                                                  ID3Ver(WRITE_VERSION),
+                                                  isNull(id == Frames::FRAME_UNKNOWN_FRAME),
+                                                  isEdited(false),
+                                                  isFromFile(false) {}
 
 ///@pkg ID3Frame.h
 Frame::Frame(const FrameID&   frameName,
@@ -278,12 +279,7 @@ UnknownFrame::UnknownFrame(const FrameID&   frameName,
                                                                        frameBytes) {}
 
 ///@pkg ID3Frame.h
-UnknownFrame::UnknownFrame(const FrameID& frameName) : Frame::Frame() {
-	id = frameName;
-}
-
-///@pkg ID3Frame.h
-UnknownFrame::UnknownFrame() noexcept : Frame::Frame() {}
+UnknownFrame::UnknownFrame(const FrameID& frameName) noexcept : Frame::Frame(frameName) {}
 
 ///@pkg ID3Frame.h
 bool UnknownFrame::operator==(const Frame* const frame) const noexcept {

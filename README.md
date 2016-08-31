@@ -20,6 +20,7 @@ ID3-Tagging-Library requires the icu-uc package. Add "\`pkg-config icu-uc --cfla
 - Support reading the ID3v2 text frames.
 - Support reading the ID3v2 attached picture frame.
 - Support reading the ID3v2 play counter and Popularimeter frames.
+- Support reading the ID3v2 event timing codes frame.
 
 ##What ID3-Tagging-Library does not do (yet)
 - Extensive testing.

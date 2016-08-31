@@ -49,64 +49,43 @@ PictureFrame::PictureFrame(const ushort version,
 }
 
 ///@pkg ID3PictureFrame.h
-PictureFrame::PictureFrame(const ushort version,
-                           const ByteArray pictureBytes,
+PictureFrame::PictureFrame(const ByteArray pictureBytes,
 			                  const std::string& mimeType,
 			                  const std::string& description,
-			                  const PictureType type) : Frame::Frame(),
+			                  const PictureType type) : Frame::Frame(FRAME_PICTURE),
 			                                            textMIME(mimeType),
 									                          APICType(type),
 									                          textDescription(description),
-			                                            pictureData(pictureBytes) {
-	id = FRAME_PICTURE;
-	ID3Ver = version;
-	isNull = false;
-}
+			                                            pictureData(pictureBytes) {}
 
 ///@pkg ID3PictureFrame.h
-PictureFrame::PictureFrame() noexcept : Frame::Frame(),
+PictureFrame::PictureFrame() noexcept : Frame::Frame(FRAME_PICTURE),
                                         APICType(PictureType::OTHER) {}
 
 
 ///@pkg ID3PictureFrame.h
-FrameClass PictureFrame::type() const noexcept {
-	return FrameClass::CLASS_PICTURE;
-}
+FrameClass PictureFrame::type() const noexcept { return FrameClass::CLASS_PICTURE; }
 
 ///@pkg ID3PictureFrame.h
-bool PictureFrame::empty() const {
-	return pictureData.size() == 0;
-}
+bool PictureFrame::empty() const { return pictureData.size() == 0; }
 
 ///@pkg ID3PictureFrame.h
-std::string PictureFrame::mimeType() const {
-	return textMIME;
-}
+std::string PictureFrame::mimeType() const { return textMIME; }
 
 ///@pkg ID3PictureFrame.h
-PictureType PictureFrame::pictureType() const {
-	return APICType;
-}
+PictureType PictureFrame::pictureType() const { return APICType; }
 
 ///@pkg ID3PictureFrame.h
-void PictureFrame::pictureType(PictureType newType) {
-	APICType = newType;
-}
+void PictureFrame::pictureType(PictureType newType) { APICType = newType; }
 
 ///@pkg ID3PictureFrame.h
-std::string PictureFrame::description() const {
-	return textDescription;
-}
+std::string PictureFrame::description() const { return textDescription; }
 
 ///@pkg ID3PictureFrame.h
-void PictureFrame::description(const std::string& newDescription) {
-	textDescription = newDescription;
-}
+void PictureFrame::description(const std::string& newDescription) { textDescription = newDescription; }
 
 ///@pkg ID3PictureFrame.h
-ByteArray PictureFrame::picture() const {
-	return pictureData;
-}
+ByteArray PictureFrame::picture() const { return pictureData; }
 
 ///@pkg ID3PictureFrame.h
 void PictureFrame::picture(const ByteArray& newPictureData,
@@ -182,7 +161,6 @@ ByteArray PictureFrame::write() {
 	
 	isEdited = false;
 	
-	//TODO: Encode the frame ID and textContent contents into a ByteArray
 	return frameContent;
 }
 
@@ -193,7 +171,7 @@ void PictureFrame::read() {
 	const ulong FRAME_SIZE = frameContent.size();
 	
 	//Make sure that there is enough room for text before reading the frame bytes
-	if(frameContent.size() > HEADER_SIZE) {
+	if(FRAME_SIZE > HEADER_SIZE) {
 		//The encoding
 		const uint8_t encoding = frameContent[HEADER_SIZE];
 		//If the encoding uses 16-byte or 8-byte characters

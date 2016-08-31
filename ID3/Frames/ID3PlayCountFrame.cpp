@@ -37,18 +37,8 @@ PlayCountFrame::PlayCountFrame(const ushort version,
 }
 
 ///@pkg ID3PlayCountFrame.h
-PlayCountFrame::PlayCountFrame(const ushort version,
-                           const unsigned long long playCount) : Frame::Frame(),
-                                                                 count(playCount) {
-	id = FRAME_PLAY_COUNT;
-	ID3Ver = version;
-	isNull = false;
-}
-
-///@pkg ID3PlayCountFrame.h
-PlayCountFrame::PlayCountFrame() noexcept : Frame::Frame(),
-                                            count(0ULL) {}
-
+PlayCountFrame::PlayCountFrame(const unsigned long long playCount) noexcept : Frame::Frame(FRAME_PLAY_COUNT),
+                                                                              count(playCount) {}
 
 ///@pkg ID3PlayCountFrame.h
 FrameClass PlayCountFrame::type() const noexcept {
@@ -126,7 +116,7 @@ void PlayCountFrame::read() {
 	const ulong FRAME_SIZE = frameContent.size();
 	
 	//Make sure that there is enough room for text before reading the frame bytes
-	if(frameContent.size() > HEADER_SIZE) {
+	if(FRAME_SIZE > HEADER_SIZE) {
 		//Read the play count on file
 		count = byteIntVal(frameContent.data()+HEADER_SIZE, FRAME_SIZE - HEADER_SIZE, false);
 	} else {
@@ -166,26 +156,15 @@ PopularimeterFrame::PopularimeterFrame(const ushort version,
 }
 
 ///@pkg ID3PlayCountFrame.h
-PopularimeterFrame::PopularimeterFrame(const ushort version,
-                                       const unsigned long long playCount,
+PopularimeterFrame::PopularimeterFrame(const unsigned long long playCount,
                                        uint8_t rating,
-                                       const std::string& email) : Frame::Frame(),
-                                                                   emailAddress(email) {
-	id = FRAME_POPULARIMETER;
-	ID3Ver = version;
-	isNull = false;
+                                       const std::string& email) noexcept : Frame::Frame(FRAME_POPULARIMETER),
+                                                                            emailAddress(email) {
 	count = 0ULL;
 	//Take advantage of the already existing if statements
 	this->rating(rating);
 	isEdited = false;
 }
-
-///@pkg ID3PlayCountFrame.h
-PopularimeterFrame::PopularimeterFrame() noexcept : Frame::Frame(),
-                                                    fiveStarRating(0) {
-	count = 0ULL;
-}
-
 
 ///@pkg ID3PlayCountFrame.h
 FrameClass PopularimeterFrame::type() const noexcept {
@@ -295,7 +274,7 @@ void PopularimeterFrame::read() {
 	const ulong FRAME_SIZE = frameContent.size();
 	
 	//Make sure that there is enough room for text before reading the frame bytes
-	if(frameContent.size() > HEADER_SIZE) {
+	if(FRAME_SIZE > HEADER_SIZE) {
 		ulong emailEnd = HEADER_SIZE;
 		
 		for(ulong i = HEADER_SIZE; i < FRAME_SIZE - 2; i++) {

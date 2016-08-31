@@ -264,7 +264,6 @@ std::string Tag::genre(bool process) const {
 	if(process) genreString = processGenre(genreString);
 	return genreString;
 }
-
 ///@pkg ID3.h
 std::vector<std::string> Tag::genres(bool process) const {
 	std::vector<std::string> genreStrings = textStrings(Frames::FRAME_GENRE);
@@ -276,19 +275,16 @@ std::vector<std::string> Tag::genres(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::artist() const { return textString(Frames::FRAME_ARTIST); }
-
 ///@pkg ID3.h
 std::vector<std::string> Tag::artists() const { return textStrings(Frames::FRAME_ARTIST); }
 
 ///@pkg ID3.h
 std::string Tag::albumArtist() const { return textString(Frames::FRAME_ALBUM_ARTIST); }
-
 ///@pkg ID3.h
 std::vector<std::string> Tag::albumArtists() const { return textStrings(Frames::FRAME_ALBUM_ARTIST); }
 
 ///@pkg ID3.h
 std::string Tag::album() const { return textString(Frames::FRAME_ALBUM); }
-
 ///@pkg ID3.h
 std::vector<std::string> Tag::albums() const { return textStrings(Frames::FRAME_ALBUM); }
 
@@ -307,7 +303,6 @@ std::string Tag::track(bool process) const {
 	}
 	return trackString;
 }
-
 ///@pkg ID3.h
 std::string Tag::trackTotal(bool process) const {
 	std::string trackString = textString(Frames::FRAME_TRACK);
@@ -330,7 +325,6 @@ std::string Tag::disc(bool process) const {
 	}
 	return discString;
 }
-
 ///@pkg ID3.h
 std::string Tag::discTotal(bool process) const {
 	std::string discString = textString(Frames::FRAME_DISC);
@@ -343,7 +337,6 @@ std::string Tag::discTotal(bool process) const {
 
 ///@pkg ID3.h
 std::string Tag::composer() const { return textString(Frames::FRAME_COMPOSER); }
-
 ///@pkg ID3.h
 std::vector<std::string> Tag::composers() const { return textStrings(Frames::FRAME_COMPOSER); }
 
@@ -352,6 +345,8 @@ std::string Tag::bpm() const { return textString(Frames::FRAME_BPM); }
 
 ///@pkg ID3.h
 std::vector<Text> Tag::comments() const { return texts(Frames::FRAME_COMMENT); }
+///@pkg ID3.h
+Text Tag::comment(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const { return text(Frames::FRAME_COMMENT, filterFunc); }
 
 ///@pkg ID3.h
 Picture Tag::picture() const {
@@ -458,6 +453,17 @@ ushort Tag::rating(const std::function<bool (const std::string&)>& filterFunc) c
 	return 0;
 }
 
+///@pkg ID3.h
+EventTimingCode Tag::timingCode(const TimingCodes code) const {
+	EventTimingFrame* frame = getFrame<EventTimingFrame>(Frames::FRAME_EVENT_TIMING_CODES);
+	
+	return frame == nullptr || frame->null() ?
+	       //No valid event timing code frame found, return a struct with the default value
+	       EventTimingCode(code) :
+	       //Return a struct with all the values set
+	       EventTimingCode(code, frame->value(code), frame->format() == TimeStampFormat::MILLISECONDS);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////  E N D   F R A M E //////////////////////////////
@@ -520,7 +526,7 @@ void Tag::print() const {
 	std::cout << "ID3 version(s) and flags: " << getVersionString(true) << std::endl;
 	std::cout << "Number of frames:         " << frames.size() << std::endl;
 	
-	for(FramePair currentFramePair : frames) {
+	for(const FramePair& currentFramePair : frames) {
 		std::cout << "--------------------------" << std::endl;
 		currentFramePair.second->print();
 		//A testing section to compare the byte differences from the file and

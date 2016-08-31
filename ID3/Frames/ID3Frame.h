@@ -56,6 +56,7 @@ namespace ID3 {
 		CLASS_PICTURE       = 5, //PictureTextFrame
 		CLASS_PLAY_COUNT    = 6, //PlayCountFrame
 		CLASS_POPULARIMETER = 7, //PopularimeterFrame
+		CLASS_EVENT_TIMING  = 8  //EventTimingFrame
 	};
 	
 	/**
@@ -413,7 +414,7 @@ namespace ID3 {
 			 * NOTE: The version is not checked to see if it is a
 			 *       supported ID3v2 major version.
 			 * 
-			 * @param frameName The frame ID string.
+			 * @param frameName The frame ID.
 			 * @param version The ID3v2 major version.
 			 * @param frameBytes The content of the frame in bytes.
 			 */
@@ -423,9 +424,12 @@ namespace ID3 {
 			
 			/**
 			 * An empty constructor to initialize variables. Creating a Frame with
-			 * this constructor will result in a "null" Frame object.
+			 * this constructor will result in a "null" Frame object if the frame
+			 * ID is the unknown frame.
+			 * 
+			 * @param frameName The frame ID (defaults to Unknown Frame)
 			 */
-			Frame() noexcept;
+			Frame(const FrameID& frameName=Frames::FRAME_UNKNOWN_FRAME) noexcept;
 			
 			/**
 			 * Read and process the bytes of an ID3v2 frame. This method should
@@ -568,17 +572,12 @@ namespace ID3 {
 			             const ByteArray& frameBytes);
 			
 			/**
-			 * This constructor creates calls ID3::Frame::Frame() and
-			 * creates a "null" frame, but also saves the frame ID.
+			 * This constructor creates calls ID3::Frame::Frame() and creates a
+			 * "null" frame, but also saves the frame ID.
 			 * 
-			 * @see ID3::Frame::Frame()
+			 * @see ID3::Frame::Frame(FrameID&)
 			 */
-			UnknownFrame(const FrameID& frameName);
-			
-			/**
-			 * @see ID3::Frame::Frame()
-			 */
-			UnknownFrame() noexcept;
+			UnknownFrame(const FrameID& frameName=Frames::FRAME_UNKNOWN_FRAME) noexcept;
 			
 			/**
 			 * The read() method for UnknownFrame is an empty method.

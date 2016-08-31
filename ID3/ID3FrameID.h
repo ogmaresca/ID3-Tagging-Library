@@ -66,7 +66,7 @@ namespace ID3 {
 		FRAMEID_ASPI                 = 2,
 		
 		FRAME_COMMENT = 3,
-		FRAMEID_COMM  = 3,
+		FRAMEID_COMM  = 3, //ID3::Tag::comment(std::function&), ID3::Tag::comments()
 		
 		FRAME_COMMERCIAL = 4,
 		FRAMEID_COMR     = 4,
