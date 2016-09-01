@@ -87,6 +87,22 @@ namespace ID3 {
 		uint8_t size[3];
 	};
 	
+	/**
+	 * An enum of different frame flags that can be set on a frame.
+	 * 
+	 * Used in ID3::Frame::flag(FrameFlag).
+	 */
+	enum class FrameFlag : uint8_t {
+		DISCARD_UPON_TAG_ALTER_IF_UNKNOWN,
+		DISCARD_UPON_AUDIO_ALTER,
+		READ_ONLY,
+		COMPRESSED,
+		ENCRYPTED,
+		GROUPING_IDENTITY,
+		UNSYNCHRONISED,
+		DATA_LENGTH_INDICATOR
+	};
+	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////// F R A M E /////////////////////////////////
@@ -112,7 +128,7 @@ namespace ID3 {
 			 * of alterations, including adding more padding and reordering the frames.
 			 * This flag is found on the first frame flag byte.
 			 */
-			static const uint8_t FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN    = 0b10000000;
+			static const uint8_t FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V3 = 0b10000000;
 			static const uint8_t FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4 = 0b01000000;
 			
 			/**
@@ -121,7 +137,7 @@ namespace ID3 {
 			 * apply when the audio is completely replaced with other audio data.
 			 * This flag is found on the first frame flag byte.
 			 */
-			static const uint8_t FLAG1_DISCARD_UPON_AUDIO_ALTER    = 0b01000000;
+			static const uint8_t FLAG1_DISCARD_UPON_AUDIO_ALTER_V3 = 0b01000000;
 			static const uint8_t FLAG1_DISCARD_UPON_AUDIO_ALTER_V4 = 0b00100000;
 			
 			/**
@@ -133,7 +149,7 @@ namespace ID3 {
 			 * the bit should be cleared.
 			 * This flag is found on the first frame flag byte.
 			 */
-			static const uint8_t FLAG1_READ_ONLY    = 0b00100000;
+			static const uint8_t FLAG1_READ_ONLY_V3 = 0b00100000;
 			static const uint8_t FLAG1_READ_ONLY_V4 = 0b00010000;
 			
 			/**
@@ -142,7 +158,7 @@ namespace ID3 {
 			 * The 4 bytes are included in the frame's size in the header.
 			 * This flag is found on the second frame flag byte.
 			 */
-			static const uint8_t FLAG2_COMPRESSED    = 0b10000000;
+			static const uint8_t FLAG2_COMPRESSED_V3 = 0b10000000;
 			static const uint8_t FLAG2_COMPRESSED_V4 = 0b00001000;
 			
 			/**
@@ -153,7 +169,7 @@ namespace ID3 {
 			 * The encryption byte is included in the frame's size in the header.
 			 * This flag is found on the second frame flag byte.
 			 */
-			static const uint8_t FLAG2_ENCRYPTED    = 0b01000000;
+			static const uint8_t FLAG2_ENCRYPTED_V3 = 0b01000000;
 			static const uint8_t FLAG2_ENCRYPTED_V4 = 0b00000100;
 			
 			/**
@@ -165,7 +181,7 @@ namespace ID3 {
 			 * The grouping identity byte is included in the frame's size in the header.
 			 * This flag is found on the second frame flag byte.
 			 */
-			static const uint8_t FLAG2_GROUPING_IDENTITY    = 0b00100000;
+			static const uint8_t FLAG2_GROUPING_IDENTITY_V3 = 0b00100000;
 			static const uint8_t FLAG2_GROUPING_IDENTITY_V4 = 0b01000000;
 			
 			/**
@@ -313,52 +329,13 @@ namespace ID3 {
 			virtual bool empty() const = 0;
 			
 			/**
-			 * @return If the "Tag alter preservation" flag is set.
-			 * @see ID3::Frame::FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN
+			 * Check if a flag is set.
+			 * 
+			 * @param flag The frame flag to check.
+			 * @return If the flag is set.
+			 * @see ID3::FrameFlag
 			 */
-			bool discardUponTagAlterIfUnknown() const;
-			
-			/**
-			 * @return If the "File alter preservation" flag is set.
-			 * @see ID3::Frame::FLAG1_DISCARD_UPON_AUDIO_ALTER
-			 */
-			bool discardUponAudioAlter() const;
-			
-			/**
-			 * @return If the "File alter preservation" flag is set.
-			 * @see ID3::Frame::FLAG1_READ_ONLY
-			 */
-			bool readOnly() const;
-			
-			/**
-			 * @return If the Read-only flag is set.
-			 * @see ID3::Frame::FLAG2_COMPRESSED
-			 */
-			bool compressed() const;
-			
-			/**
-			 * @return If the Encryption flag is set.
-			 * @see ID3::Frame::FLAG2_ENCRYPTED
-			 */
-			bool encrypted() const;
-			
-			/**
-			 * @return If the Grouping Identity flag is set.
-			 * @see ID3::Frame::FLAG2_GROUPING_IDENTIY
-			 */
-			bool groupingIdentity() const;
-			
-			/**
-			 * @return If the Unsynchronisation flag is set.
-			 * @see ID3::Frame::FLAG2_UNSYNCHRONISED_V4
-			 */
-			bool unsynchronised() const;
-			
-			/**
-			 * @return If the Data Length Indicator flag is set.
-			 * @see ID3::Frame::FLAG2_DATA_LENGTH_INDICATOR_V4
-			 */
-			bool dataLengthIndicator() const;
+			bool flag(const FrameFlag flag) const;
 			
 			/**
 			 * Get the grouping identity. If the grouping identity flag is not set,
@@ -390,12 +367,12 @@ namespace ID3 {
 			 * Upon calling this method, the internal ID3v2 major verision gets
 			 * changed to ID3::WRITE_VERSION (ID3v2.4.0).
 			 * 
-			 * This method is to be implemented in child classes.
+			 * The only flags that are preserved by this method is the grouping
+			 * identity.
 			 * 
 			 * @return The new content of the frame, in bytes.
-			 * @abstract
 			 */
-			virtual ByteArray write() = 0;
+			virtual ByteArray write();
 		
 		protected:
 			/**
@@ -441,6 +418,20 @@ namespace ID3 {
 			 * @abstract
 			 */
 			virtual void read() = 0;
+			
+			/**
+			 * The writeBody() method is called after building the frame header
+			 * in frameContents. The frame data should be appended to frameContents
+			 * in this method. The frame size will be set in write() after calling
+			 * writeBody().
+			 * 
+			 * This method will not be called if the Frame is empty or null.
+			 * 
+			 * This method is to be implemented in child classes.
+			 * 
+			 * @abstract
+			 */
+			virtual void writeBody() = 0;
 			
 			/**
 			 * Unsynchronise frame byte contents. This checks for the
@@ -545,13 +536,10 @@ namespace ID3 {
 			virtual void print() const;
 			
 			/**
-			 * The write() method for UnknownFrame will only do two things to the
-			 * frame. If the flag to discard unknown frames when the tag is altered
-			 * is set, or the frame is null and/or empty, then the Frame contents
-			 * will be cleared. Else, if the ID3 version on file is ID3v2.3, the
-			 * frame header's size bytes will be converted from a non-synchsafe
-			 * number to a synchsafe number as the ID3 version of the Frame will
-			 * be changed to ID3v2.4.
+			 * The write() method for UnknownFrame overrides the write() method in
+			 * Frame. The only changes that will be made is empting the frame if
+			 * its null or if the discard unknown frames flag is set, and changing
+			 * the frame size to be synchsafe is the ID3 major version is <= 3.
 			 * 
 			 * @see ID3::Frame::write()
 			 */
@@ -585,6 +573,13 @@ namespace ID3 {
 			 * @see ID3::Frame::read()
 			 */
 			virtual void read();
+			
+			/**
+			 * The writeBody() method for UnknownFrame is an empty method.
+			 * 
+			 * @see ID3::Frame::writeBody()
+			 */
+			virtual void writeBody();
 	};
 }
 

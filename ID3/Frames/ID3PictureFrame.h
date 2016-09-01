@@ -121,6 +121,8 @@ namespace ID3 {
 			/**
 			 * Get the picture type. Call write() to finalize changes.
 			 * 
+			 * The Frame will not be modified if it is read-only.
+			 * 
 			 * @return newType The new PictureType enum value.
 			 */
 			void pictureType(PictureType newType);
@@ -134,6 +136,8 @@ namespace ID3 {
 			
 			/**
 			 * Set the description. Call write() to finalize changes.
+			 * 
+			 * The Frame will not be modified if it is read-only.
 			 * 
 			 * @param newDescription The new description.
 			 */
@@ -153,6 +157,8 @@ namespace ID3 {
 			 * ID3::TextFrame::allowedMIMEType(std::string&), then this Frame will
 			 * become "null".
 			 * 
+			 * The Frame will not be modified if it is read-only.
+			 * 
 			 * @param newPictureData The new PNG or JPG picture, as a uint8_t vector.
 			 * @param newMIMEType The new MIME type.
 			 */
@@ -165,14 +171,6 @@ namespace ID3 {
 			 * @see ID3::Frame::print()
 			 */
 			virtual void print() const;
-			
-			/**
-			 * The write() method for PictureFrame writes a ByteArray with the
-			 * currently stored content.
-			 * 
-			 * @see ID3::Frame::write()
-			 */
-			virtual ByteArray write();
 			
 			/**
 			 * Check if a given MIME type is allowed for ID3v2 pictures.
@@ -245,6 +243,14 @@ namespace ID3 {
 			 * @see ID3::Frame::read()
 			 */
 			virtual void read();
+			
+			/**
+			 * The writeBody() method for PictureFrame adds the MIME type,
+			 * picture type, description, and image to the frame contents.
+			 * 
+			 * @see ID3::Frame::writeBody()
+			 */
+			virtual void writeBody();
 			
 			/**
 			 * The image MIME type.

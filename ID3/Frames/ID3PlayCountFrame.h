@@ -79,6 +79,8 @@ namespace ID3 {
 			/**
 			 * Set the play count. Call write() to finalize changes.
 			 * 
+			 * The Frame will not be modified if it is read-only.
+			 * 
 			 * @param newPlayCount The new play count.
 			 */
 			void playCount(const unsigned long long newPlayCount);
@@ -90,14 +92,6 @@ namespace ID3 {
 			 */
 			virtual void print() const;
 			
-			/**
-			 * The write() method for PlayCountFrame writes a ByteArray with the
-			 * currently stored content.
-			 * 
-			 * @see ID3::Frame::write()
-			 */
-			virtual ByteArray write();
-		
 		protected:
 			/**
 			 * This constructor calls the similar constructor in the Frame class
@@ -130,6 +124,14 @@ namespace ID3 {
 			 * @see ID3::Frame::read()
 			 */
 			virtual void read();
+			
+			/**
+			 * The writeBody() method for PlayCountFrame appends to the ByteArray
+			 * the play count.
+			 * 
+			 * @see ID3::Frame::write()
+			 */
+			virtual void writeBody();
 			
 			/**
 			 * The play count.
@@ -182,6 +184,8 @@ namespace ID3 {
 			/**
 			 * Set the email address. Call write() to finalize changes.
 			 * 
+			 * The Frame will not be modified if it is read-only.
+			 * 
 			 * @param newEmail The new email address.
 			 */
 			void email(const std::string& newEmail);
@@ -204,6 +208,10 @@ namespace ID3 {
 			 * 96-159:  3
 			 * 169-223: 4
 			 * 224-255: 5
+			 * 
+			 * The Frame will not be modified if it is read-only.
+			 * 
+			 * @param newRating The new rating.
 			 */
 			void rating(uint8_t newRating);
 			
@@ -214,14 +222,6 @@ namespace ID3 {
 			 */
 			virtual void print() const;
 			
-			/**
-			 * The write() method for PopularimeterFrame writes a ByteArray with
-			 * the currently stored content.
-			 * 
-			 * @see ID3::Frame::write()
-			 */
-			virtual ByteArray write();
-		
 		protected:
 			/**
 			 * This constructor calls the similar constructor in the Frame class
@@ -266,6 +266,14 @@ namespace ID3 {
 			 * @see ID3::Frame::read()
 			 */
 			virtual void read();
+			
+			/**
+			 * The writeBody() method for PopularimeterFrame appends the email,
+			 * rating, and play count to the ByteArray.
+			 * 
+			 * @see ID3::Frame::writeBody()
+			 */
+			virtual void writeBody();
 			
 			/**
 			 * The email address.

@@ -76,13 +76,23 @@ std::string PictureFrame::mimeType() const { return textMIME; }
 PictureType PictureFrame::pictureType() const { return APICType; }
 
 ///@pkg ID3PictureFrame.h
-void PictureFrame::pictureType(PictureType newType) { APICType = newType; }
+void PictureFrame::pictureType(PictureType newType) {
+	if(!flag(FrameFlag::READ_ONLY)) {
+		APICType = newType;
+		isEdited = true;
+	}
+}
 
 ///@pkg ID3PictureFrame.h
 std::string PictureFrame::description() const { return textDescription; }
 
 ///@pkg ID3PictureFrame.h
-void PictureFrame::description(const std::string& newDescription) { textDescription = newDescription; }
+void PictureFrame::description(const std::string& newDescription) {
+	if(!flag(FrameFlag::READ_ONLY)) {
+		textDescription = newDescription;
+		isEdited = true;
+	}
+}
 
 ///@pkg ID3PictureFrame.h
 ByteArray PictureFrame::picture() const { return pictureData; }
@@ -90,9 +100,11 @@ ByteArray PictureFrame::picture() const { return pictureData; }
 ///@pkg ID3PictureFrame.h
 void PictureFrame::picture(const ByteArray& newPictureData,
                            const std::string& newMIMEType) {
-	isNull = !allowedMIMEType(newMIMEType);
-	pictureData = newPictureData;
-	textMIME = newMIMEType;
+	if(!flag(FrameFlag::READ_ONLY)) {
+		isNull = !allowedMIMEType(newMIMEType);
+		pictureData = newPictureData;
+		textMIME = newMIMEType;
+	}
 }
 
 ///@pkg ID3PictureFrame.h
@@ -105,63 +117,34 @@ void PictureFrame::print() const {
 }
 
 ///@pkg ID3TextFrame.h
-ByteArray PictureFrame::write() {
+void PictureFrame::writeBody() {
 	//TODO: Do something (like throw an exception) if the picture data is too
 	//      large for the frame
 	
-	//Set the ID3 version to ID3::WRITE_VERSION
-	ID3Ver = WRITE_VERSION;
+	//The description starts after the header, encoding, MIME type, and
+	//picture type.
+	const ulong DESCRIPTION_SIZE = frameContent.size() + 3 + textMIME.length();
 	
-	//If the Frame is empty or null, then don't write anything to file
-	if(empty() || isNull) {
-		frameContent = ByteArray();
-	} else {
-		//The description starts after the header, encoding, MIME type, and
-		//picture type.
-		const ulong DESCRIPTION_START = HEADER_BYTE_SIZE + 3 + textMIME.length();
-		
-		//The picture starts after where the description starts plus a null byte.
-		const ulong PIC_START = DESCRIPTION_START + textDescription.size() + 1;
-		
-		//Create a ByteArray that fits the header, encoding, MIME type,
-		//description text size, picture type, and picture data size
-		const ulong NEW_FRAME_SIZE = PIC_START + pictureData.size();
-		
-		//Reset the frame ByteArray. This automatically clears any flags.
-		frameContent = ByteArray(NEW_FRAME_SIZE, '\0');
-		
-		//Save the frame name
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i] = id[i];
-		
-		//Save the frame size
-		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, true);
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i+4] = size[i];		
-		
-		//Set the encoding to UTF-8
-		frameContent[HEADER_BYTE_SIZE] = FrameEncoding::ENCODING_UTF8;
-		
-		//Write the MIME type to file
-		for(ulong i = 0; i < textMIME.size(); i++)
-			frameContent[HEADER_BYTE_SIZE + 1 + i] = textMIME[i];
-		
-		//Write the picture type to file
-		frameContent[DESCRIPTION_START - 1] = static_cast<uint8_t>(APICType);
-		
-		//Write the description to file. Since frameContent was initialized with
-		//null characters, the null separator is already in the array.
-		for(ulong i = 0; i < textDescription.size(); i++)
-			frameContent[DESCRIPTION_START + i] = textDescription[i];
-		
-		//Write the picture data to file
-		for(ulong i = 0; i < pictureData.size() && PIC_START + i < NEW_FRAME_SIZE; i++)
-			frameContent[PIC_START + i] = pictureData[i];
-	}
+	//Expand the ByteArray to fit the header, encoding, MIME type, description
+	//text, picture type, and picture data
+	frameContent.reserve(DESCRIPTION_SIZE + textDescription.size() + 1 + pictureData.size());
 	
-	isEdited = false;
+	//Set the encoding to UTF-8
+	frameContent.push_back(FrameEncoding::ENCODING_UTF8);
 	
-	return frameContent;
+	//Write the MIME type to file and insert a null separating byte
+	frameContent.insert(frameContent.end(), textMIME.begin(), textMIME.end());
+	frameContent.push_back('\0');
+	
+	//Write the picture type to file
+	frameContent.push_back(static_cast<uint8_t>(APICType));
+	
+	//Write the description to file and insert a null separating byte
+	frameContent.insert(frameContent.end(), textDescription.begin(), textDescription.end());
+	frameContent.push_back('\0');
+	
+	//Write the picture data to file
+	frameContent.insert(frameContent.end(), pictureData.begin(), pictureData.end());
 }
 
 ///@pkg ID3PictureFrame.h

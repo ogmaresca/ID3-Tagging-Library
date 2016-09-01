@@ -53,8 +53,10 @@ unsigned long long PlayCountFrame::playCount() const { return count; }
 
 ///@pkg ID3PlayCountFrame.h
 void PlayCountFrame::playCount(const unsigned long long newPlayCount) {
-	count = newPlayCount;
-	isEdited = true;
+	if(!flag(FrameFlag::READ_ONLY)) {
+		count = newPlayCount;
+		isEdited = true;
+	}
 }
 
 ///@pkg ID3PlayCountFrame.h
@@ -64,49 +66,15 @@ void PlayCountFrame::print() const {
 	std::cout << "Frame class:    PlayCountFrame" << std::endl;
 }
 
-///@pkg ID3TextFrame.h
-ByteArray PlayCountFrame::write() {
-	//TODO: Do something (like throw an exception) if the picture data is too
-	//      large for the frame
+///@pkg ID3PlayCountFrame.h
+void PlayCountFrame::writeBody() {
+	//A ByteArray of the play count encoded as a byte array
+	//The play count must be at least 32 bits (4 bytes) on file
+	//If the size parameter is 0, then the ByteArray will be as big as it needs to
+	ByteArray playCountArr = intToByteArray(count, count >= (1ULL << 32) ? 0 : 4, false);
 	
-	//Set the ID3 version to ID3::WRITE_VERSION
-	ID3Ver = WRITE_VERSION;
-	
-	//If the Frame is null don't write anything to file
-	if(isNull) {
-		frameContent = ByteArray();
-	} else {
-		//A ByteArray of the play count encoded as a byte array
-		ByteArray playCountArr = intToByteArray(count, 0, false);
-		
-		//The play count must be at least 32 bits (4 bytes) on file
-		//If it's smaller, then insert 0s at the beginning
-		if(playCountArr.size() < 4)
-			playCountArr.insert(playCountArr.begin(), 4 - playCountArr.size(), 0);
-		
-		//Create a ByteArray that fits the header and play count
-		const ulong NEW_FRAME_SIZE = HEADER_BYTE_SIZE + playCountArr.size();
-		
-		//Reset the frame ByteArray. This automatically clears any flags.
-		frameContent = ByteArray(NEW_FRAME_SIZE, '\0');
-		
-		//Save the frame name
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i] = id[i];
-		
-		//Save the frame size
-		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, true);
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i+4] = size[i];		
-		
-		//Insert the play count into the frame content
-		for(ulong i = 0; i < playCountArr.size() && i+HEADER_BYTE_SIZE < NEW_FRAME_SIZE; i++)
-			frameContent[HEADER_BYTE_SIZE + 1] = playCountArr[i];
-	}
-	
-	isEdited = false;
-	
-	return frameContent;
+	//Write the play count to file
+	frameContent.insert(frameContent.end(), playCountArr.begin(), playCountArr.end());
 }
 
 ///@pkg ID3PlayCountFrame.h
@@ -176,14 +144,16 @@ ushort PopularimeterFrame::rating() const { return fiveStarRating; }
 
 ///@pkg ID3PlayCountFrame.h
 void PopularimeterFrame::rating(const uint8_t newRating) {
-	     if(newRating <= 5)   fiveStarRating = newRating;
-	else if(newRating <= 31)  fiveStarRating = 1;
-	else if(newRating <= 95)  fiveStarRating = 2;
-	else if(newRating <= 159) fiveStarRating = 3;
-	else if(newRating <= 223) fiveStarRating = 4;
-	else                      fiveStarRating = 5;
-	
-	isEdited = true;
+	if(!flag(FrameFlag::READ_ONLY)) {
+			  if(newRating <= 5)   fiveStarRating = newRating;
+		else if(newRating <= 31)  fiveStarRating = 1;
+		else if(newRating <= 95)  fiveStarRating = 2;
+		else if(newRating <= 159) fiveStarRating = 3;
+		else if(newRating <= 223) fiveStarRating = 4;
+		else                      fiveStarRating = 5;
+		
+		isEdited = true;
+	}
 }
 
 ///@pkg ID3PlayCountFrame.h
@@ -191,8 +161,10 @@ std::string PopularimeterFrame::email() const { return emailAddress; }
 
 ///@pkg ID3PlayCountFrame.h
 void PopularimeterFrame::email(const std::string& newEmail) {
-	emailAddress = newEmail;
-	isEdited = true;
+	if(!flag(FrameFlag::READ_ONLY)) {
+		emailAddress = newEmail;
+		isEdited = true;
+	}
 }
 
 ///@pkg ID3PlayCountFrame.h
@@ -204,67 +176,32 @@ void PopularimeterFrame::print() const {
 	std::cout << "Frame class:    PopularimeterFrame" << std::endl;
 }
 
-///@pkg ID3TextFrame.h
-ByteArray PopularimeterFrame::write() {
-	//TODO: Do something (like throw an exception) if the picture data is too
-	//      large for the frame
-	//TODO: Don't just assume that the email address isn't LATIN-1
+///@pkg ID3PlayCountFrame.h
+void PopularimeterFrame::writeBody() {
+	//A ByteArray of the play count encoded as a byte array
+	//The play count must be at least 32 bits (4 bytes) on file
+	//If the size parameter is 0, then the ByteArray will be as big as it needs to
+	ByteArray playCountArr = intToByteArray(count, count >= (1ULL << 32) ? 0 : 4, false);
 	
-	//Set the ID3 version to ID3::WRITE_VERSION
-	ID3Ver = WRITE_VERSION;
+	//Reserve space for the header, email address, its null separator, the rating,
+	//and the play count
+	frameContent.reserve(frameContent.size() + emailAddress.size() + 2 + playCountArr.size());
 	
-	//If the Frame is null don't write anything to file
-	if(isNull) {
-		frameContent = ByteArray();
-	} else {
-		//A ByteArray of the play count encoded as a byte array
-		ByteArray playCountArr = intToByteArray(count, 0, false);
-		
-		//The play count must be at least 32 bits (4 bytes) on file
-		//If it's smaller, then insert 0s at the beginning
-		if(playCountArr.size() < 4)
-			playCountArr.insert(playCountArr.begin(), 4 - playCountArr.size(), 0);
-		
-		//The position that the email ends
-		const ulong EMAIL_END_BYTE = HEADER_BYTE_SIZE + emailAddress.size();
-		
-		//Create a ByteArray that fits the header, email, email separating byte,
-		//rating, and play count
-		const ulong NEW_FRAME_SIZE = EMAIL_END_BYTE + 2 + playCountArr.size();
-		
-		//Reset the frame ByteArray. This automatically clears any flags.
-		frameContent = ByteArray(NEW_FRAME_SIZE, '\0');
-		
-		//Save the frame name
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i] = id[i];
-		
-		//Save the frame size
-		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, true);
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i+4] = size[i];
-		
-		//Save the email address
-		for(ulong i = 0; i < emailAddress.size(); i++)
-			frameContent[HEADER_BYTE_SIZE + i] = emailAddress[i];
-		std::cout << "Wrote the email \"" << emailAddress << "\"" << std::endl;
-		//Save the rating
-		switch(fiveStarRating) {
-			case 5: { frameContent[EMAIL_END_BYTE + 1] = 255; break; }
-			case 4: { frameContent[EMAIL_END_BYTE + 1] = 196; break; }
-			case 3: { frameContent[EMAIL_END_BYTE + 1] = 128; break; }
-			case 2: { frameContent[EMAIL_END_BYTE + 1] = 64;  break; }
-			case 1: case 0: default: frameContent[EMAIL_END_BYTE + 1] = fiveStarRating;
-		}
-		
-		//Insert the play count into the frame content
-		for(ulong i = 0; i < playCountArr.size() && i+EMAIL_END_BYTE+2 < NEW_FRAME_SIZE; i++)
-			frameContent[EMAIL_END_BYTE + 2 + i] = playCountArr[i];
+	//Write the email address to file and its null separator
+	frameContent.insert(frameContent.end(), emailAddress.begin(), emailAddress.end());
+	frameContent.push_back('\0');
+	
+	//Add the rating to file
+	switch(fiveStarRating) {
+		case 5: { frameContent.push_back(255); break; }
+		case 4: { frameContent.push_back(196); break; }
+		case 3: { frameContent.push_back(128); break; }
+		case 2: { frameContent.push_back(64);  break; }
+		case 1: case 0: default: frameContent.push_back(fiveStarRating);
 	}
 	
-	isEdited = false;
-	
-	return frameContent;
+	//Write the play count to file
+	frameContent.insert(frameContent.end(), playCountArr.begin(), playCountArr.end());
 }
 
 ///@pkg ID3PlayCountFrame.h

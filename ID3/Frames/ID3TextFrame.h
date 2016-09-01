@@ -143,9 +143,9 @@ namespace ID3 {
 			virtual void print() const;
 			
 			/**
-			 * The write() method for TextFrame re-creates the frame header and the
-			 * frame text, with LATIN-1 as the encoding if the text is in ASCII and
-			 * UTF-8 if characters fall outside of the ASCII range.
+			 * The write() method for TextFrame converts the string separator
+			 * character in the text content if it will be different in ID3v2.4,
+			 * and then calls ID3::Frame::write().
 			 * 
 			 * @see ID3::Frame::write()
 			 */
@@ -201,11 +201,13 @@ namespace ID3 {
 			virtual void read();
 			
 			/**
-			 * When write()-ing the Frame, before updating the interal ID3v2
-			 * version call this function to convert any separating character to a
-			 * null character, if necessary.
+			 * The writeBody() method for TextFrame the frame text to the frame
+			 * content, with LATIN-1 as the encoding if the text is in ASCII or
+			 * UTF-8 if characters fall outside of the ASCII range.
+			 * 
+			 * @see ID3::Frame::writeBody()
 			 */
-			void convertSeparator();
+			virtual void writeBody();
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -506,8 +508,8 @@ namespace ID3 {
 			 * Set the language. Call write() to finalize changes.
 			 * 
 			 * NOTE: The language will only be set if the language option was
-			 *       passed to the constructor, and the new language string is
-			 *       either an empty string or 3 characters long.
+			 *       passed to the constructor. If the new language string is not
+			 *       3 characters long then the language will be set to "".
 			 * 
 			 * NOTE: The language is a ISO 639-2 code.
 			 * 
@@ -524,18 +526,6 @@ namespace ID3 {
 			 */
 			virtual void print() const;
 			
-			/**
-			 * The write() method for DescriptiveTextFrame re-creates the frame
-			 * header with UTF-8 encoding and its stored text content, description,
-			 * and language (if it has one). If the Frame has language enabled,
-			 * and the Frame's language is empty upon the call to write(), the
-			 * language will default to "xxx".
-			 * 
-			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write()
-			 */
-			virtual ByteArray write();
-		
 		protected:
 			/**
 			 * This constructor calls the identical constructor in the
@@ -588,6 +578,16 @@ namespace ID3 {
 			                     const std::string& description="",
 			                     const std::string& language="",
 			                     const ushort       options=0);
+			
+			/**
+			 * The writeBody() method for DescriptiveTextFrame the stored text
+			 * content, description, and language (if it has one) to the frame
+			 * content. If the Frame has language enabled, and the Frame's language
+			 * is empty upon the call to write(), the language will default to "xxx".
+			 * 
+			 * @see ID3::Frame::writeBody()
+			 */
+			virtual void writeBody();
 			
 			/**
 			 * The description of the frame.
@@ -688,15 +688,6 @@ namespace ID3 {
 			 */
 			virtual void print() const;
 			
-			/**
-			 * The write() method for URLTextFrame re-creates the frame
-			 * header with LATIN-1 encoding and its stored text content.
-			 * 
-			 * @todo Actually implement the function.
-			 * @see ID3::Frame::write()
-			 */
-			virtual ByteArray write();
-		
 		protected:
 			/**
 			 * This constructor calls the identical constructor in the
@@ -737,6 +728,14 @@ namespace ID3 {
 			 * @see ID3::Frame::read()
 			 */
 			virtual void read();
+			
+			/**
+			 * The writeBody() method for URLTextFrame appends its stored text
+			 * content to the frame content in LATIN-1 encoding.
+			 * 
+			 * @see ID3::Frame::writeBody()
+			 */
+			virtual void writeBody();
 	};
 }
 

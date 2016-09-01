@@ -76,54 +76,41 @@ void TextFrame::print() const {
 
 ///@pkg ID3TextFrame.h
 ByteArray TextFrame::write() {
-	//TODO: Trim strings that are too long
+	const char OLD_SEPARATOR = stringSeparator();
 	
-	//Convert the separating character if necessary
-	convertSeparator();
-	
-	//Set the ID3 version to ID3::WRITE_VERSION
-	ID3Ver = WRITE_VERSION;
-	
-	//If the Frame is empty, then don't write anything to file
-	if(empty()) {
-		frameContent = ByteArray();
-	} else {
-		//Create a ByteArray that fits the header, encoding, and text content size
-		const ulong NEW_FRAME_SIZE = HEADER_BYTE_SIZE + 1 + textContent.size();
-		
-		//Reset the frame ByteArray. This automatically clears any flags.
-		frameContent = ByteArray(NEW_FRAME_SIZE, '\0');
-		
-		//Save the frame name
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i] = id[i];
-		
-		//Save the frame size
-		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, ID3Ver >= 4);
-		for(ushort i = 0; i < 4 && i < size.size(); i++)
-			frameContent[i+4] = size[i];
-		
-		//Check if the text content is pure ASCII or if it has to be encoded in UTF-8
-		bool isASCII = true;
-		for(const char currentChar : textContent) {
-			if(static_cast<uint8_t>(currentChar) >= 0x80) {
-				isASCII = false;
-				break;
-			}
-		}
-		
-		//Set the encoding to LATIN-1 if it's pure ASCII, else UTF-8
-		frameContent[HEADER_BYTE_SIZE] = isASCII ? FrameEncoding::ENCODING_LATIN1 :
-		                                           FrameEncoding::ENCODING_UTF8;
-		
-		//Write the text string to file
-		for(ulong i = 0; i < textContent.size() && i + HEADER_BYTE_SIZE + 1 < NEW_FRAME_SIZE; i++)
-			frameContent[i + HEADER_BYTE_SIZE + 1] = textContent[i];
+	if(OLD_SEPARATOR != '\0') {
+		//Loop through the text and convert every slash to a null character
+		for(char& curChar : textContent)
+			if(curChar == OLD_SEPARATOR) curChar = '\0';
 	}
 	
-	isEdited = false;
+	//Write the content
+	return Frame::write();
+}
+
+///@pkg ID3TextFrame.h
+void TextFrame::writeBody() {
+	//TODO: If the LATIN-1 Text option is set, don't just automatically assume
+	//      that the text content string is in ASCII.
+	//TODO: Trim strings that are too long
 	
-	return frameContent;
+	//Reserve space in the ByteArray to fit the header, encoding, and text content
+	frameContent.reserve(frameContent.size() + 1 + textContent.size());
+	
+	//Check if the text content is pure ASCII or if it has to be encoded in UTF-8
+	bool isASCII = true;
+	for(const char currentChar : textContent) {
+		if(static_cast<uint8_t>(currentChar) >= 0x80) {
+			isASCII = false;
+			break;
+		}
+	}
+	
+	//Set the encoding to LATIN-1 if it's pure ASCII, else UTF-8
+	frameContent.push_back(isASCII ? FrameEncoding::ENCODING_LATIN1 : FrameEncoding::ENCODING_UTF8);
+	
+	//Write the text content to file
+	frameContent.insert(frameContent.end(), textContent.begin(), textContent.end());
 }
 
 ///@pkg ID3TextFrame.h
@@ -146,7 +133,7 @@ std::string TextFrame::content() const { return textContent; }
 
 ///@pkg ID3TextFrame.h
 void TextFrame::content(const std::string& newContent) {
-	if(!readOnly()) {
+	if(!flag(FrameFlag::READ_ONLY)) {
 		textContent = newContent;
 		isEdited = true;
 	}
@@ -190,22 +177,19 @@ std::vector<std::string> TextFrame::contents() const {
 
 ///@pkg ID3TextFrame.h
 void TextFrame::contents(const std::vector<std::string>& newContent) {
-	if(!readOnly())
-		return;
+	if(!flag(FrameFlag::READ_ONLY)) {
+		isEdited = true;
+		textContent = "";
 	
-	isEdited = true;
-	
-	textContent = "";
-	
-	if(newContent.size() == 0) return;
-	
-	//The separating character
-	const char SEPARATOR = stringSeparator();
-	
-	for(const std::string& currentStr : newContent) {
-		if(textContent != "")
-			textContent += SEPARATOR;
-		textContent != currentStr;
+		if(newContent.size() > 0) {	
+			//The separating character
+			const char SEPARATOR = stringSeparator();
+			//Concatenate the strings
+			for(const std::string& currentStr : newContent) {
+				if(textContent != "") textContent += SEPARATOR;
+				textContent != currentStr;
+			}
+		}
 	}
 }
 
@@ -225,19 +209,6 @@ char TextFrame::stringSeparator() const {
 	}
 	
 	return '\0';
-}
-
-///@pkg ID3TextFrame.h
-void TextFrame::convertSeparator() {
-	const char OLD_SEPARATOR = stringSeparator();
-	
-	if(OLD_SEPARATOR != '\0') {
-		//Loop through the text and convert every slash to a null character
-		for(char& curChar : textContent) {
-			if(curChar == OLD_SEPARATOR)
-				curChar = '\0';
-		}
-	}
 }
 
 ///@pkg ID3TextFrame.h
@@ -306,7 +277,7 @@ FrameClass NumericalTextFrame::type() const noexcept {
 
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::content(const std::string& newContent) {
-	if(!readOnly()) {
+	if(!flag(FrameFlag::READ_ONLY)) {
 		if(std::all_of(newContent.begin(), newContent.end(), ::isdigit))
 			textContent = newContent;
 		else
@@ -322,41 +293,37 @@ void NumericalTextFrame::content(long long newContent) {
 
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::contents(const std::vector<std::string>& newContent) {
-	if(!readOnly())
-		return;
-	
-	//Get a string vector of only valid numerical strings
-	std::vector<std::string> validNumericalContent;
-	validNumericalContent.reserve(newContent.size());
-	
-	//Go through newContent and only save integer strings
-	for(const std::string& currentStr : newContent) {
-		if(std::all_of(currentStr.begin(), currentStr.end(), ::isdigit))
-			validNumericalContent.push_back(currentStr);
+	if(!flag(FrameFlag::READ_ONLY)) {
+		//Get a string vector of only valid numerical strings
+		std::vector<std::string> validNumericalContent;
+		validNumericalContent.reserve(newContent.size());
+		
+		//Go through newContent and only save integer strings
+		for(const std::string& currentStr : newContent) {
+			if(std::all_of(currentStr.begin(), currentStr.end(), ::isdigit))
+				validNumericalContent.push_back(currentStr);
+		}
+		
+		//Use TextFrame's contents(std::vector<std::string>&) method
+		TextFrame::contents(validNumericalContent);
 	}
-	
-	//Use TextFrame's contents(std::vector<std::string>&) method
-	TextFrame::contents(validNumericalContent);
 }
 
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::contents(const std::vector<long long>& newContent) {
-	if(!readOnly())
-		return;
-	
-	isEdited = true;
-	
-	textContent = "";
-	
-	if(newContent.size() == 0) return;
-	
-	//The separating character
-	const char SEPARATOR = stringSeparator();
-	
-	for(const long currentStr : newContent) {
-		if(textContent != "")
-			textContent += SEPARATOR;
-		textContent != std::to_string(currentStr);
+	if(!flag(FrameFlag::READ_ONLY)) {
+		isEdited = true;
+		textContent = "";
+		
+		if(newContent.size() > 0) {
+			//The separating character
+			const char SEPARATOR = stringSeparator();
+			
+			for(const long currentStr : newContent) {
+				if(textContent != "") textContent += SEPARATOR;
+				textContent != std::to_string(currentStr);
+			}
+		}
 	}
 }
 
@@ -469,71 +436,34 @@ void DescriptiveTextFrame::print() const {
 }
 
 ///@pkg ID3TextFrame.h
-ByteArray DescriptiveTextFrame::write() {
+void DescriptiveTextFrame::writeBody() {
 	//TODO: If the LATIN-1 Text option is set, don't just automatically assume
 	//      that the text content string is in ASCII.
 	//TODO: Trim strings that are too long
 	
-	//Convert the separating character if necessary
-	convertSeparator();
+	//Reserve space in the ByteArray to fit the header, encoding, language,
+	//description, and text content
+	frameContent.reserve(frameContent.size() + 1 + (optionLanguage ? LANGUAGE_SIZE : 0)
+	                     + (optionNoDescription ? 0 : textDescription.size() + 1)
+	                     + textContent.size());
 	
-	//Set the ID3 version to ID3::WRITE_VERSION
-	ID3Ver = WRITE_VERSION;
+	//Set the encoding to UTF-8
+	frameContent.push_back(FrameEncoding::ENCODING_UTF8);
 	
-	//If the Frame is empty, then don't write anything to file
-	if(empty()) {
-		frameContent = ByteArray();
-	} else {
-		//The description starts after the header, encoding, and language (if it
-		//has one)
-		const ulong DESCRIPTION_START = HEADER_BYTE_SIZE + 1 + (optionLanguage ? LANGUAGE_SIZE : 0);
+	//Write the language to file
+	if(optionLanguage) {
+		if(textLanguage.size() != LANGUAGE_SIZE) textLanguage = "xxx";
+		frameContent.insert(frameContent.end(), textLanguage.begin(), textLanguage.end());
+	}
 		
-		//The text starts after where the description starts, plus the length of
-		//the description in bytes and a null character if there is a description
-		const ulong TEXT_START = DESCRIPTION_START + (optionNoDescription ? 0 : textDescription.size() + 1);
-		
-		//Create a ByteArray that fits the header, encoding, language, description
-		//size, and text content size
-		const ulong NEW_FRAME_SIZE = TEXT_START + textContent.size();
-		
-		//Reset the frame ByteArray. This automatically clears any flags.
-		frameContent = ByteArray(NEW_FRAME_SIZE, '\0');
-		
-		//Save the frame name
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i] = id[i];
-		
-		//Save the frame size
-		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, true);
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i+4] = size[i];		
-		
-		//Set the encoding to UTF-8
-		frameContent[HEADER_BYTE_SIZE] = FrameEncoding::ENCODING_UTF8;
-		
-		//Write the language to file
-		if(optionLanguage) {
-			if(textLanguage.size() != LANGUAGE_SIZE) textLanguage = "xxx";
-			
-			for(ushort i = 0; i < LANGUAGE_SIZE; i++)
-				frameContent[HEADER_BYTE_SIZE + 1 + i] = textLanguage[i];
-		}
-		
-		//Write the description to file. Since frameContent was initialized with
-		//null characters, the null separator is already in the array.
-		if(!optionNoDescription) {
-			for(ulong i = 0; i < textDescription.size(); i++)
-				frameContent[DESCRIPTION_START + i] = textDescription[i];
-		}
-		
-		//Write the text string to file
-		for(ulong i = 0; i < textContent.size() && TEXT_START + i < NEW_FRAME_SIZE; i++)
-			frameContent[TEXT_START + i] = textContent[i];
+	//Write the description and its null separator to file.
+	if(!optionNoDescription) {
+		frameContent.insert(frameContent.end(), textDescription.begin(), textDescription.end());
+		frameContent.push_back('\0');
 	}
 	
-	isEdited = false;
-	
-	return frameContent;
+	//Write the text content to file
+	frameContent.insert(frameContent.end(), textContent.begin(), textContent.end());
 }
 
 ///@pkg ID3TextFrame.h
@@ -548,7 +478,7 @@ std::string DescriptiveTextFrame::description() const { return textDescription; 
 
 ///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::description(const std::string& newDescription) {
-	if(!readOnly()) {
+	if(!flag(FrameFlag::READ_ONLY)) {
 		textDescription = newDescription;
 		isEdited = true;
 	}
@@ -559,9 +489,8 @@ std::string DescriptiveTextFrame::language() const { return textLanguage; }
 
 ///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::language(const std::string& newLanguage) {
-	if(!readOnly() && optionLanguage &&
-	   (newLanguage == "" || newLanguage.size() == LANGUAGE_SIZE)) {
-		textLanguage = newLanguage;
+	if(!flag(FrameFlag::READ_ONLY) && optionLanguage) {
+		textLanguage = newLanguage.size() == LANGUAGE_SIZE ? newLanguage : "";
 		isEdited = true;
 	}
 }
@@ -674,41 +603,13 @@ void URLTextFrame::print() const {
 }
 
 ///@pkg ID3TextFrame.h
-ByteArray URLTextFrame::write() {
+void URLTextFrame::writeBody() {
 	//TODO: Trim strings that are too long
 	//TODO: Actually encode the text content as LATIN-1, instead of just assuming
 	//it is in ASCII.
 	
-	//Set the ID3 version to ID3::WRITE_VERSION
-	ID3Ver = WRITE_VERSION;
-	
-	//If the Frame is empty, then don't write anything to file
-	if(empty()) {
-		frameContent = ByteArray();
-	} else {
-		//Create a ByteArray that fits the header and text content size
-		const ulong NEW_FRAME_SIZE = HEADER_BYTE_SIZE + textContent.size();
-		
-		//Reset the frame ByteArray. This automatically clears any flags.
-		frameContent = ByteArray(NEW_FRAME_SIZE, '\0');
-		
-		//Save the frame name
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i] = id[i];
-		
-		//Save the frame size
-		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, ID3Ver >= 4);
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i+4] = size[i];
-		
-		//Write the text string to file
-		for(ulong i = 0; i < textContent.size() && i + HEADER_BYTE_SIZE < NEW_FRAME_SIZE; i++)
-			frameContent[i + HEADER_BYTE_SIZE] = textContent[i];
-	}
-	
-	isEdited = false;
-	
-	return frameContent;
+	//Write the text content to file
+	frameContent.insert(frameContent.end(), textContent.begin(), textContent.end());
 }
 
 ///@pkg ID3TextFrame.h

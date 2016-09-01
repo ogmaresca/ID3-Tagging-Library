@@ -67,8 +67,10 @@ ulong EventTimingFrame::value(const TimingCodes timingCode) const {
 
 ///@pkg ID3EventTimingFrame.h
 void EventTimingFrame::value(const TimingCodes timingCode, const ulong time) {
-	map[static_cast<uint8_t>(timingCode)] = time;
-	isEdited = true;
+	if(!flag(FrameFlag::READ_ONLY)) {
+		map[static_cast<uint8_t>(timingCode)] = time;
+		isEdited = true;
+	}
 }
 
 ///@pkg ID3EventTimingFrame.h
@@ -88,52 +90,25 @@ void EventTimingFrame::print() const {
 }
 
 ///@pkg ID3EventTimingFrame.h
-ByteArray EventTimingFrame::write() {
-	//Set the ID3 version to ID3::WRITE_VERSION
-	ID3Ver = WRITE_VERSION;
-	
+void EventTimingFrame::writeBody() {
 	const ushort TIME_BYTE_LENGTH = 4;
+
+	//Expand the ByteArray to fit the header, timestamp format, and all the timing codes
+	frameContent.reserve(frameContent.size() + 1 + (map.size() * (1 + TIME_BYTE_LENGTH)));
 	
-	//If the Frame is empty or null, then don't write anything to file
-	if(empty() || isNull) {
-		frameContent = ByteArray();
-	} else {
-		//Create a ByteArray that fits the header, timestamp format, and all the
-		//timing codes
-		const ulong NEW_FRAME_SIZE = HEADER_BYTE_SIZE + 1 + (map.size() * (1 + TIME_BYTE_LENGTH));
+	//Save the timestamp format
+	frameContent.push_back(static_cast<uint8_t>(timeStampFormat));
+	
+	//Loop through the map and save each code
+	for(const std::pair<uint8_t, ulong>& eventCodePair : map) {
+		ByteArray valueArr = intToByteArray(eventCodePair.second, TIME_BYTE_LENGTH, false);
 		
-		//Reset the frame ByteArray. This automatically clears any flags.
-		frameContent = ByteArray(HEADER_BYTE_SIZE + 1, '\0');
-		//And reserve space for all the timing codes
-		frameContent.reserve(NEW_FRAME_SIZE);
+		//Add the timing code
+		frameContent.push_back(eventCodePair.first);
 		
-		//Save the frame name
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i] = id[i];
-		
-		//Save the frame size
-		ByteArray size = intToByteArray(NEW_FRAME_SIZE - HEADER_BYTE_SIZE, 4, true);
-		for(ushort i = 0; i < 4 && i < id.size(); i++)
-			frameContent[i+4] = size[i];
-		
-		//Save the timestamp format
-		frameContent[HEADER_BYTE_SIZE] = static_cast<uint8_t>(timeStampFormat);
-		
-		//Loop through the map and save each code
-		for(const std::pair<uint8_t, ulong>& eventCodePair : map) {
-			ByteArray valueArr = intToByteArray(eventCodePair.second, TIME_BYTE_LENGTH, false);
-			
-			//Add the timing code
-			frameContent.push_back(eventCodePair.first);
-			
-			//Add the value
-			frameContent.insert(frameContent.end(), valueArr.begin(), valueArr.end());
-		}
+		//Add the value
+		frameContent.insert(frameContent.end(), valueArr.begin(), valueArr.end());
 	}
-	
-	isEdited = false;
-	
-	return frameContent;
 }
 
 ///@pkg ID3EventTimingFrame.h

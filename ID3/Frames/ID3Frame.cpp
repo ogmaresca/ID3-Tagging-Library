@@ -41,7 +41,7 @@ Frame::Frame(const FrameID&   frameName,
                                             isNull(frameBytes.size() <= HEADER_BYTE_SIZE),
                                             isEdited(false),
                                             isFromFile(true) {
-	if(!isNull && (compressed() || encrypted()))
+	if(!isNull && (flag(FrameFlag::COMPRESSED) || flag(FrameFlag::ENCRYPTED)))
 		isNull = true;
 	else
 		unsynchronise();
@@ -98,77 +98,50 @@ bool Frame::edited() const { return isEdited; }
 ///@pkg ID3Frame.h
 bool Frame::createdFromFile() const { return isFromFile; }
 
-///@pkg ID3Frame.h
-bool Frame::discardUponTagAlterIfUnknown() const {
-	if(frameContent.size() < HEADER_BYTE_SIZE)
+bool Frame::flag(const FrameFlag flag) const {
+	//Verify that the frame is valid
+	if(frameContent.size() < HEADER_BYTE_SIZE || ID3Ver <= 3)
 		return false;
-	return ID3Ver <= 3 ?
-	       ((frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN)    == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN) :
-	       ((frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4) == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4);
-}
-
-///@pkg ID3Frame.h
-bool Frame::discardUponAudioAlter() const {
-	if(frameContent.size() < HEADER_BYTE_SIZE)
-		return false;
-	return ID3Ver <= 3 ?
-	       ((frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER)    == FLAG1_DISCARD_UPON_AUDIO_ALTER) :
-	       ((frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER_V4) == FLAG1_DISCARD_UPON_AUDIO_ALTER_V4);
-}
-
-///@pkg ID3Frame.h
-bool Frame::readOnly() const {
-	if(frameContent.size() < HEADER_BYTE_SIZE)
-		return false;
-	return ID3Ver <= 3 ?
-	       ((frameContent[8] & FLAG1_READ_ONLY)    == FLAG1_READ_ONLY) :
-	       ((frameContent[8] & FLAG1_READ_ONLY_V4) == FLAG1_READ_ONLY_V4);
-}
-
-///@pkg ID3Frame.h
-bool Frame::compressed() const {
-	if(frameContent.size() < HEADER_BYTE_SIZE)
-		return false;
-	return ID3Ver <= 3 ?
-	       ((frameContent[8] & FLAG2_COMPRESSED)    == FLAG2_COMPRESSED) :
-	       ((frameContent[8] & FLAG2_COMPRESSED_V4) == FLAG2_COMPRESSED_V4);
-}
-
-///@pkg ID3Frame.h
-bool Frame::encrypted() const {
-	if(frameContent.size() < HEADER_BYTE_SIZE)
-		return false;
-	return ID3Ver <= 3 ?
-	       ((frameContent[8] & FLAG2_ENCRYPTED)    == FLAG2_ENCRYPTED) :
-	       ((frameContent[8] & FLAG2_ENCRYPTED_V4) == FLAG2_ENCRYPTED_V4);
-}
-
-///@pkg ID3Frame.h
-bool Frame::groupingIdentity() const {
-	if(frameContent.size() < HEADER_BYTE_SIZE)
-		return false;
-	return ID3Ver <= 3 ?
-	       ((frameContent[8] & FLAG2_GROUPING_IDENTITY)    == FLAG2_GROUPING_IDENTITY) :
-	       ((frameContent[8] & FLAG2_GROUPING_IDENTITY_V4) == FLAG2_GROUPING_IDENTITY_V4);
-}
-
-///@pkg ID3Frame.h
-bool Frame::unsynchronised() const {
-	if(ID3Ver < 4 || frameContent.size() < HEADER_BYTE_SIZE)
-		return false;
-	return (frameContent[9] & FLAG2_UNSYNCHRONISED_V4) == FLAG2_UNSYNCHRONISED_V4;
-}
-
-///@pkg ID3Frame.h
-bool Frame::dataLengthIndicator() const {
-	if(ID3Ver < 4 || frameContent.size() < HEADER_BYTE_SIZE)
-		return false;
-	return (frameContent[9] & FLAG2_DATA_LENGTH_INDICATOR_V4) == FLAG2_DATA_LENGTH_INDICATOR_V4;
+	
+	const bool V4 = ID3Ver >= 4;
+	
+	switch(flag) {
+		case FrameFlag::DISCARD_UPON_TAG_ALTER_IF_UNKNOWN:
+			return V4 ?
+			       ((frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4) == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4) :
+	             ((frameContent[8] & FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V3) == FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V3);
+		case FrameFlag::DISCARD_UPON_AUDIO_ALTER:
+			return V4 ?
+			       ((frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER_V4) == FLAG1_DISCARD_UPON_AUDIO_ALTER_V4) :
+	             ((frameContent[8] & FLAG1_DISCARD_UPON_AUDIO_ALTER_V3) == FLAG1_DISCARD_UPON_AUDIO_ALTER_V3);
+	   case FrameFlag::READ_ONLY:
+			return V4 ?
+			       ((frameContent[8] & FLAG1_READ_ONLY_V4) == FLAG1_READ_ONLY_V4) :
+	             ((frameContent[8] & FLAG1_READ_ONLY_V3) == FLAG1_READ_ONLY_V3);
+	   case FrameFlag::COMPRESSED:
+			return V4 ?
+			       ((frameContent[8] & FLAG2_COMPRESSED_V4) == FLAG2_COMPRESSED_V4) :
+	             ((frameContent[8] & FLAG2_COMPRESSED_V3) == FLAG2_COMPRESSED_V3);
+	   case FrameFlag::ENCRYPTED:
+			return V4 ?
+			       ((frameContent[8] & FLAG2_ENCRYPTED_V4) == FLAG2_ENCRYPTED_V4) :
+	             ((frameContent[8] & FLAG2_ENCRYPTED_V3) == FLAG2_ENCRYPTED_V3);
+	   case FrameFlag::GROUPING_IDENTITY:
+			return V4 ?
+			       ((frameContent[8] & FLAG2_GROUPING_IDENTITY_V4) == FLAG2_GROUPING_IDENTITY_V4) :
+	             ((frameContent[8] & FLAG2_GROUPING_IDENTITY_V3) == FLAG2_GROUPING_IDENTITY_V3);
+	   case FrameFlag::UNSYNCHRONISED:
+			return V4 ? ((frameContent[8] & FLAG2_UNSYNCHRONISED_V4) == FLAG2_UNSYNCHRONISED_V4) : false;
+	   case FrameFlag::DATA_LENGTH_INDICATOR:
+			return V4 ? ((frameContent[8] & FLAG2_DATA_LENGTH_INDICATOR_V4) == FLAG2_DATA_LENGTH_INDICATOR_V4) : false;
+		default:
+			return false;
+	}
 }
 
 ///@pkg ID3Frame.h
 uint8_t Frame::groupIdentity() const {
-	if(frameContent.size() < headerSize() || !groupingIdentity())
+	if(frameContent.size() < headerSize() || !flag(FrameFlag::GROUPING_IDENTITY))
 		return 0;
 	//In ID3v2.3, the group identity is the last flag that adds bytes to the
 	//header, so it's at the very end. In ID3v2.4 it's the first, so get the byte
@@ -179,10 +152,10 @@ uint8_t Frame::groupIdentity() const {
 ///@pkg ID3Frame.h
 ushort Frame::headerSize() const {
 	return HEADER_BYTE_SIZE +
-	       (compressed() ? 4 : 0) +
-	       (encrypted() ? 1 : 0) +
-	       (groupingIdentity() ? 1 : 0) +
-	       (dataLengthIndicator() ? 4 : 0);
+	       (flag(FrameFlag::COMPRESSED) ? 4 : 0) +
+	       (flag(FrameFlag::ENCRYPTED) ? 1 : 0) +
+	       (flag(FrameFlag::GROUPING_IDENTITY) ? 1 : 0) +
+	       (flag(FrameFlag::DATA_LENGTH_INDICATOR) ? 4 : 0);
 }
 
 ///@pkg ID3Frame.h
@@ -206,16 +179,16 @@ void Frame::print() const {
 		return;
 	
 	std::cout << "Flags:          ";
-	if(discardUponTagAlterIfUnknown()) std::cout << " -discardIfUnknown";
-	if(discardUponAudioAlter())        std::cout << " -discardUponAudioAlter";
-	if(readOnly()) std::cout << " -readOnly";
-	if(compressed()) std::cout << " -compressed";
-	if(encrypted()) std::cout << " -encrypted";
-	if(groupingIdentity()) std::cout << " -groupingIdentity";
-	if(unsynchronised()) std::cout << " -unsynchronisation";
-	if(dataLengthIndicator()) std::cout << " -dataLengthIndicator";
+	if(flag(FrameFlag::DISCARD_UPON_TAG_ALTER_IF_UNKNOWN)) std::cout << " -discardIfUnknown";
+	if(flag(FrameFlag::DISCARD_UPON_AUDIO_ALTER)) std::cout << " -discardUponAudioAlter";
+	if(flag(FrameFlag::READ_ONLY))  std::cout << " -readOnly";
+	if(flag(FrameFlag::COMPRESSED)) std::cout << " -compressed";
+	if(flag(FrameFlag::ENCRYPTED))  std::cout << " -encrypted";
+	if(flag(FrameFlag::GROUPING_IDENTITY)) std::cout << " -groupingIdentity";
+	if(flag(FrameFlag::UNSYNCHRONISED)) std::cout << " -unsynchronisation";
+	if(flag(FrameFlag::DATA_LENGTH_INDICATOR)) std::cout << " -dataLengthIndicator";
 	std::cout << std::endl;
-	if(groupingIdentity())
+	if(flag(FrameFlag::GROUPING_IDENTITY))
 		std::cout << "Group identity: " << std::boolalpha << groupIdentity() << std::endl;
 	std::cout << "Header size:    " << std::dec << HEADER_SIZE << std::endl;
 	std::cout << "Header bytes:  ";
@@ -238,8 +211,51 @@ void Frame::print() const {
 }
 
 ///@pkg ID3Frame.h
+ByteArray Frame::write() {
+	const bool GROUPING_IDENTITY = flag(FrameFlag::GROUPING_IDENTITY);
+	const uint8_t GROUP_IDENTITY = groupIdentity();
+	
+	//The new header size has to fit the grouping identity if necessary
+	const ushort HEADER_SIZE = HEADER_BYTE_SIZE + (GROUPING_IDENTITY ? 1 : 0);
+	
+	//Set the ID3 version to ID3::WRITE_VERSION
+	ID3Ver = WRITE_VERSION;
+	
+	if(isNull || empty()) {
+		//If null or empty, clear the frame
+		frameContent = ByteArray();
+	} else {
+		//Recreate the frame content to fit the new header
+		//This automatically clears any flags
+		frameContent = ByteArray(HEADER_SIZE, '\0');
+		
+		//Save the frame name
+		for(ushort i = 0; i < 4 && i < id.size(); i++)
+			frameContent[i] = id[i];
+		
+		//Save the grouping identity
+		if(GROUPING_IDENTITY) {
+			frameContent[9] = FLAG2_GROUPING_IDENTITY_V4;
+			frameContent[HEADER_SIZE - 1] = GROUP_IDENTITY;
+		}
+		
+		//Call the abstract method to write the body
+		writeBody();
+		
+		//Save the frame size
+		ByteArray size = intToByteArray(frameContent.size() - HEADER_BYTE_SIZE, 4, true);
+		for(ushort i = 0; i < 4 && i < id.size(); i++)
+			frameContent[i+4] = size[i];
+	}
+	
+	isEdited = false;
+	
+	return frameContent;
+}
+
+///@pkg ID3Frame.h
 void Frame::unsynchronise() {
-	if(!unsynchronised())
+	if(!flag(FrameFlag::UNSYNCHRONISED))
 		return;
 	
 	//The current frame size
@@ -313,17 +329,20 @@ void UnknownFrame::print() const {
 ByteArray UnknownFrame::write() {
 	//Save the old version to take synchsafe-ness into account
 	const ushort OLD_VERSION = ID3Ver;
+	
 	//Set the ID3 version to ID3::WRITE_VERSION
 	ID3Ver = WRITE_VERSION;
+	
+	//Clear the isEdited variable
 	isEdited = false;
 	
 	//If the frame is invalid, or the Discard Frame Upon Tag Alter flag is set,
 	//then clear the frame
-	if(discardUponTagAlterIfUnknown() || isNull || empty() ||
+	if(flag(FrameFlag::DISCARD_UPON_TAG_ALTER_IF_UNKNOWN) || isNull || empty() ||
 	   frameContent.size() < HEADER_BYTE_SIZE) {
 		frameContent = ByteArray();
 		isNull = true;
-	} else if(OLD_VERSION == 3) {
+	} else if(OLD_VERSION <= 3) {
 		//Whether a frame size is synchsafe has been changed from ID3v2.3 to
 		//ID3v2.4, so it must be updated to report the correct frame size
 		ByteArray frameSize = intToByteArray(frameContent.size() - HEADER_BYTE_SIZE, 4, true);
@@ -332,6 +351,9 @@ ByteArray UnknownFrame::write() {
 	}
 	return frameContent;
 }
+
+///@pkg ID3Frame.h
+void UnknownFrame::writeBody() {}
 
 ///@pkg ID3Frame.h
 void UnknownFrame::read() {}

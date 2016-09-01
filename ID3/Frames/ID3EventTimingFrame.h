@@ -163,6 +163,8 @@ namespace ID3 {
 			/**
 			 * Set the value of a given event timing code.
 			 * 
+			 * The Frame will not be modified if it is read-only.
+			 * 
 			 * @param timingCode The relevant TimingCodes enum value that
 			 *                   represents the timing code you wish to set.
 			 * @param time       The new timing code value.
@@ -176,14 +178,6 @@ namespace ID3 {
 			 * @see ID3::Frame::print()
 			 */
 			virtual void print() const;
-			
-			/**
-			 * The write() method for PictureFrame writes a ByteArray with the
-			 * currently stored content.
-			 * 
-			 * @see ID3::Frame::write()
-			 */
-			virtual ByteArray write();
 			
 		protected:
 			/**
@@ -221,6 +215,14 @@ namespace ID3 {
 			 * @see ID3::Frame::read()
 			 */
 			virtual void read();
+			
+			/**
+			 * The writeBody() method for EventTimingFrame writes the time stamp
+			 * format and the event timing codes map contents to the frame.
+			 * 
+			 * @see ID3::Frame::writeBody()
+			 */
+			virtual void writeBody();
 			
 			/**
 			 * The time stamp format. The only formats that should be saved are
