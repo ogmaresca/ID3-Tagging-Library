@@ -10,17 +10,17 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#ifndef ID3_FRAME_FACTORY_H
-#define ID3_FRAME_FACTORY_H
+#ifndef ID3_FRAME_FACTORY_HPP
+#define ID3_FRAME_FACTORY_HPP
 
 #include <fstream>       //For std::ifstream
 #include <string>        //For std::string
 #include <unordered_map> //For std::unordered_map and std::pair
 #include <memory>        //For std::shared_ptr
 
-#include "Frames/ID3Frame.h"
-#include "Frames/ID3PictureFrame.h"
-#include "ID3FrameID.h"
+#include "Frames/ID3Frame.hpp"        //For the Frame class
+#include "Frames/ID3PictureFrame.hpp" //For the PictureType enum
+#include "ID3FrameID.hpp"             //For the FrameID class
 
 /**
  * The ID3 namespace defines everything related to reading and writing

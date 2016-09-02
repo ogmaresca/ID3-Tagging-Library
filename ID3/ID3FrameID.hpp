@@ -10,8 +10,8 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#ifndef ID3_FRAME_ID_H
-#define ID3_FRAME_ID_H
+#ifndef ID3_FRAME_ID_HPP
+#define ID3_FRAME_ID_HPP
 
 #include <vector>        //For std::vector
 #include <unordered_map> //For std::unordered_map and std::pair

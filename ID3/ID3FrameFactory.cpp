@@ -10,14 +10,13 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include "ID3.h"
-#include "ID3FrameFactory.h"
-#include "Frames/ID3TextFrame.h"
-#include "Frames/ID3PictureFrame.h"
-#include "Frames/ID3PlayCountFrame.h"
-#include "Frames/ID3EventTimingFrame.h"
-#include "ID3Functions.h"
-#include "ID3Constants.h"
+#include "ID3FrameFactory.hpp"            //For the class definition
+#include "Frames/ID3TextFrame.hpp"        //For TextFrame
+#include "Frames/ID3PictureFrame.hpp"     //For PictureFrame and PictureType
+#include "Frames/ID3PlayCountFrame.hpp"   //For PlayCountFrame
+#include "Frames/ID3EventTimingFrame.hpp" //For EventTimingFrame
+#include "ID3Functions.hpp"               //For translating numbers from char arrays to ints and vice verse
+#include "ID3Constants.hpp"               //For constants such as HEADER_BYTE_SIZE
 
 using namespace ID3;
 

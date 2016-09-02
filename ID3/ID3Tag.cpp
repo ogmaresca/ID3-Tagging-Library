@@ -16,13 +16,13 @@
 #include <regex>     //For regular expressions
 #include <algorithm> //For std::all_of()
 
-#include "ID3.h"
-#include "ID3Functions.h"
-#include "ID3FrameFactory.h"
-#include "Frames/ID3TextFrame.h"
-#include "Frames/ID3PictureFrame.h"
-#include "Frames/ID3PlayCountFrame.h"
-#include "ID3Constants.h"
+#include "ID3.hpp"                      //For the Tag class definition
+#include "ID3Functions.hpp"             //For assorted functions
+#include "ID3FrameFactory.hpp"          //For FrameFactory
+#include "Frames/ID3TextFrame.hpp"      //For TextFrame
+#include "Frames/ID3PictureFrame.hpp"   //For PictureFrame
+#include "Frames/ID3PlayCountFrame.hpp" //For PlayCountFrame
+#include "ID3Constants.hpp"             //For constants such as HEADER_BYTE_SIZE
 
 using namespace ID3;
 

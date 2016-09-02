@@ -12,10 +12,9 @@
 
 #include <iostream>  //For printing
 
-#include "ID3Frame.h"
-#include "../ID3.h"
-#include "../ID3Functions.h"
-#include "../ID3Constants.h"
+#include "ID3Frame.hpp" //For the class definitions
+#include "../ID3Functions.hpp" //For intToByteArray
+#include "../ID3Constants.hpp" //For HEADER_BYTE_SIZE and WRITE_VERSION
 
 using namespace ID3;
 

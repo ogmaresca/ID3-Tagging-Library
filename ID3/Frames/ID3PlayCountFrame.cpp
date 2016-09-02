@@ -13,9 +13,8 @@
 #include <iostream>  //For printing
 #include <algorithm> //For std::all_of
 
-#include "ID3PlayCountFrame.h"
-#include "../ID3Functions.h"
-#include "../ID3Constants.h"
+#include "ID3PlayCountFrame.hpp" //For the class definitions
+#include "../ID3Functions.hpp"   //For intToByteArray(), byteIntVal(), and getUTF8String()
 
 using namespace ID3;
 

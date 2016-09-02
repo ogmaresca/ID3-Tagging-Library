@@ -10,8 +10,8 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include "ID3Constants.h"
-#include "ID3.h"
+#include "ID3Constants.hpp" //For the constant definitions
+#include "ID3.hpp"          //For the Tag, ExtendedTag, and Header structs
 
 using namespace ID3;
 
@@ -72,12 +72,12 @@ const std::vector<std::string> ID3::V1::GENRES = {
 	"Death Metal",         //22
 	"Pranks",              //23
 	"Soundtrack",          //24
-	"Euro-Techno",
-	"Ambient",
-	"Trip-Hop",
-	"Vocal",
-	"Jazz+Funk",
-	"Fusion",
+	"Euro-Techno",         //25
+	"Ambient",             //26
+	"Trip-Hop",            //27
+	"Vocal",               //28
+	"Jazz+Funk",           //29
+	"Fusion",              //30
 	"Trance",
 	"Classical",
 	"Instrumental",

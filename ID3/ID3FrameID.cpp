@@ -10,8 +10,7 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include "ID3FrameID.h"
-#include "ID3.h"
+#include "ID3FrameID.hpp" //For the FrameID class definition
 
 using namespace ID3;
 

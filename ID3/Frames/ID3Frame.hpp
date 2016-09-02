@@ -10,13 +10,13 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#ifndef ID3_FRAME_H
-#define ID3_FRAME_H
+#ifndef ID3_FRAME_HPP
+#define ID3_FRAME_HPP
 
 #include <vector> //For std::vector
 #include <string> //For std::string
 
-#include "../ID3FrameID.h"
+#include "../ID3FrameID.hpp" //For the FrameID class
 
 /**
  * The ID3 namespace defines everything related to reading and writing

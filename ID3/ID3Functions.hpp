@@ -10,8 +10,8 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#ifndef ID3_FUNCTIONS_H
-#define ID3_FUNCTIONS_H
+#ifndef ID3_FUNCTIONS_HPP
+#define ID3_FUNCTIONS_HPP
 
 #include <string> //For std::string
 #include <vector> //For std::vector

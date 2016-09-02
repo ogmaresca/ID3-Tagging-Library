@@ -12,10 +12,9 @@
 
 #include <iostream>  //For printing
 
-#include "ID3EventTimingFrame.h"
-#include "../ID3.h"
-#include "../ID3Functions.h"
-#include "../ID3Constants.h"
+#include "ID3EventTimingFrame.hpp" //For the class definition
+#include "../ID3.hpp"              //For EventTimingCode
+#include "../ID3Functions.hpp"     //For intToByteArray() and byteIntVal()
 
 using namespace ID3;
 

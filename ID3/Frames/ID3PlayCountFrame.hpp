@@ -10,10 +10,10 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#ifndef ID3_PLAY_COUNT_FRAME_H
-#define ID3_PLAY_COUNT_FRAME_H
+#ifndef ID3_PLAY_COUNT_FRAME_HPP
+#define ID3_PLAY_COUNT_FRAME_HPP
 
-#include "ID3Frame.h"
+#include "ID3Frame.hpp" //For the Frame base class definition
 
 /**
  * The ID3 namespace defines everything related to reading and writing

@@ -13,11 +13,9 @@
 #include <iostream>  //For printing
 #include <algorithm> //For std::all_of
 
-#include "ID3TextFrame.h"
-#include "ID3PictureFrame.h"
-#include "../ID3.h"
-#include "../ID3Functions.h"
-#include "../ID3Constants.h"
+#include "ID3PictureFrame.hpp" //For the class definitions
+#include "../ID3.hpp"          //For the Picture struct
+#include "../ID3Functions.hpp" //For getUTF8String()
 
 using namespace ID3;
 

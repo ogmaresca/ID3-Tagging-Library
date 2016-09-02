@@ -14,9 +14,9 @@
 #include <unicode/unistr.h> //For icu::UnicodeString
 #include <algorithm>        //For std::reverse()
 
-#include "ID3Functions.h"
-#include "ID3Constants.h" //For ID3::GENRES
-#include "Frames/ID3Frame.h"     //For encoding types
+#include "ID3Functions.hpp"    //For the function definitions
+#include "ID3Constants.hpp"    //For ID3::GENRES
+#include "Frames/ID3Frame.hpp" //For the FrameEncoding enum
 
 using namespace ID3;
 
@@ -139,7 +139,7 @@ std::string ID3::utf16toutf8(const ByteArray& u16s,
 	icuStr.toUTF8String(toReturn);
 	
 	//Prevent memory leaks.
-	delete utf16CharArr;
+	delete [] utf16CharArr;
 	
 	return toReturn;
 }
@@ -200,7 +200,7 @@ std::string ID3::latin1toutf8(const ByteArray& latin1s, long start, long end) {
 	std::string toReturn(utf8CharArr, curPos);
 	
 	//Prevent memory leaks
-	delete utf8CharArr;
+	delete [] utf8CharArr;
 	
 	//Return the string
 	return toReturn;

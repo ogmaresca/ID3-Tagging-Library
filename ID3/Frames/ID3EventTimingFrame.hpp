@@ -10,12 +10,12 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#ifndef ID3_EVENT_TIMING_FRAME_H
-#define ID3_EVENT_TIMING_FRAME_H
+#ifndef ID3_EVENT_TIMING_FRAME_HPP
+#define ID3_EVENT_TIMING_FRAME_HPP
 
 #include <unordered_map> //For std::unordered_map
 
-#include "ID3Frame.h"
+#include "ID3Frame.hpp" //For the Frame base class definition
 
 /**
  * The ID3 namespace defines everything related to reading and writing
