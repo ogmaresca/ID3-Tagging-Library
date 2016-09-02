@@ -195,7 +195,7 @@ namespace ID3 {
 		/**
 		 * Create a EventTimingCode struct.
 		 * 
-		 * Defined in EventTimingFrame.cpp.
+		 * Defined in ID3EventTimingFrame.cpp.
 		 * 
 		 * @param code The event timing code.
 		 * @param val  The event timing code value (optional, defaults to 0).
@@ -217,6 +217,8 @@ namespace ID3 {
 		 * Create a Text struct. Every paramter is optional, and the respective
 		 * field will default to an empty string.
 		 * 
+		 * Defined in ID3TextFrame.cpp.
+		 * 
 		 * @param textContent The content string of the frame.
 		 * @param descText    The description of the frame.
 		 * @param langText    The language of the frame. It should be a ISO 639-2
@@ -224,9 +226,7 @@ namespace ID3 {
 		 */
 		Text(const std::string& textContent="",
 		     const std::string& descText="",
-		     const std::string& langText="") : text(textContent),
-		                                       description(descText),
-		                                       language(langText) {}
+		     const std::string& langText="");
 		std::string text;
 		std::string description;
 		std::string language;
@@ -246,8 +246,6 @@ namespace ID3 {
 	 * Defined in ID3Tag.cpp.
 	 */	
 	class Tag {
-		friend class FrameFactory;
-		
 		public:
 			/**
 			 * Constructor that takes a filename and opens the file.

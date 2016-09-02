@@ -121,8 +121,6 @@ namespace ID3 {
 			/**
 			 * Get the picture type. Call write() to finalize changes.
 			 * 
-			 * The Frame will not be modified if it is read-only.
-			 * 
 			 * @return newType The new PictureType enum value.
 			 */
 			void pictureType(PictureType newType);
@@ -136,8 +134,6 @@ namespace ID3 {
 			
 			/**
 			 * Set the description. Call write() to finalize changes.
-			 * 
-			 * The Frame will not be modified if it is read-only.
 			 * 
 			 * @param newDescription The new description.
 			 */
@@ -154,10 +150,8 @@ namespace ID3 {
 			 * Update the picture. Call write() to finalize changes.
 			 * 
 			 * NOTE: If the MIME type is not valid as defined in
-			 * ID3::TextFrame::allowedMIMEType(std::string&), then this Frame will
-			 * become "null".
-			 * 
-			 * The Frame will not be modified if it is read-only.
+			 *       ID3::TextFrame::allowedMIMEType(std::string&), then this Frame
+			 *       will become "null".
 			 * 
 			 * @param newPictureData The new PNG or JPG picture, as a uint8_t vector.
 			 * @param newMIMEType The new MIME type.

@@ -20,6 +20,13 @@
 
 using namespace ID3;
 
+///@pkg ID3.h
+Text::Text(const std::string& textContent,
+		     const std::string& descText,
+		     const std::string& langText) : text(textContent),
+		                                    description(descText),
+		                                    language(langText) {}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////  T E X T F R A M E //////////////////////////////
@@ -133,10 +140,8 @@ std::string TextFrame::content() const { return textContent; }
 
 ///@pkg ID3TextFrame.h
 void TextFrame::content(const std::string& newContent) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		textContent = newContent;
-		isEdited = true;
-	}
+	textContent = newContent;
+	isEdited = true;
 }
 
 ///@pkg ID3TextFrame.h
@@ -177,18 +182,16 @@ std::vector<std::string> TextFrame::contents() const {
 
 ///@pkg ID3TextFrame.h
 void TextFrame::contents(const std::vector<std::string>& newContent) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		isEdited = true;
-		textContent = "";
-	
-		if(newContent.size() > 0) {	
-			//The separating character
-			const char SEPARATOR = stringSeparator();
-			//Concatenate the strings
-			for(const std::string& currentStr : newContent) {
-				if(textContent != "") textContent += SEPARATOR;
-				textContent != currentStr;
-			}
+	isEdited = true;
+	textContent = "";
+
+	if(newContent.size() > 0) {	
+		//The separating character
+		const char SEPARATOR = stringSeparator();
+		//Concatenate the strings
+		for(const std::string& currentStr : newContent) {
+			if(textContent != "") textContent += SEPARATOR;
+			textContent != currentStr;
 		}
 	}
 }
@@ -220,7 +223,7 @@ bool TextFrame::operator==(const Frame* const frame) const noexcept {
 	const TextFrame* const castFrame = dynamic_cast<const TextFrame* const>(frame);
 	//If it's not a TextFrame return false
 	if(castFrame == nullptr) return false;
-	return isNull ? true : textContent == castFrame->content();
+	return isNull ? true : textContent == castFrame->textContent;
 }
 
 ///@pkg ID3TextFrame.h
@@ -277,13 +280,7 @@ FrameClass NumericalTextFrame::type() const noexcept {
 
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::content(const std::string& newContent) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		if(std::all_of(newContent.begin(), newContent.end(), ::isdigit))
-			textContent = newContent;
-		else
-			textContent = "";
-		isEdited = true;
-	}
+	TextFrame::content(std::all_of(newContent.begin(), newContent.end(), ::isdigit) ? newContent : "");
 }
 
 ///@pkg ID3TextFrame.h
@@ -293,36 +290,32 @@ void NumericalTextFrame::content(long long newContent) {
 
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::contents(const std::vector<std::string>& newContent) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		//Get a string vector of only valid numerical strings
-		std::vector<std::string> validNumericalContent;
-		validNumericalContent.reserve(newContent.size());
-		
-		//Go through newContent and only save integer strings
-		for(const std::string& currentStr : newContent) {
-			if(std::all_of(currentStr.begin(), currentStr.end(), ::isdigit))
-				validNumericalContent.push_back(currentStr);
-		}
-		
-		//Use TextFrame's contents(std::vector<std::string>&) method
-		TextFrame::contents(validNumericalContent);
+	//Get a string vector of only valid numerical strings
+	std::vector<std::string> validNumericalContent;
+	validNumericalContent.reserve(newContent.size());
+	
+	//Go through newContent and only save integer strings
+	for(const std::string& currentStr : newContent) {
+		if(std::all_of(currentStr.begin(), currentStr.end(), ::isdigit))
+			validNumericalContent.push_back(currentStr);
 	}
+	
+	//Use TextFrame's contents(std::vector<std::string>&) method
+	TextFrame::contents(validNumericalContent);
 }
 
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::contents(const std::vector<long long>& newContent) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		isEdited = true;
-		textContent = "";
+	isEdited = true;
+	textContent = "";
+	
+	if(newContent.size() > 0) {
+		//The separating character
+		const char SEPARATOR = stringSeparator();
 		
-		if(newContent.size() > 0) {
-			//The separating character
-			const char SEPARATOR = stringSeparator();
-			
-			for(const long currentStr : newContent) {
-				if(textContent != "") textContent += SEPARATOR;
-				textContent != std::to_string(currentStr);
-			}
+		for(const long currentStr : newContent) {
+			if(textContent != "") textContent += SEPARATOR;
+			textContent != std::to_string(currentStr);
 		}
 	}
 }
@@ -355,7 +348,7 @@ bool NumericalTextFrame::operator==(const Frame* const frame) const noexcept {
 	const NumericalTextFrame* const castFrame = dynamic_cast<const NumericalTextFrame* const>(frame);
 	//If it's not a NumericalTextFrame return false
 	if(castFrame == nullptr) return false;
-	return isNull ? true : textContent == castFrame->TextFrame::content();
+	return isNull ? true : textContent == castFrame->textContent;
 }
 
 ///@pkg ID3TextFrame.h
@@ -478,10 +471,8 @@ std::string DescriptiveTextFrame::description() const { return textDescription; 
 
 ///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::description(const std::string& newDescription) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		textDescription = newDescription;
-		isEdited = true;
-	}
+	textDescription = newDescription;
+	isEdited = true;
 }
 
 ///@pkg ID3TextFrame.h
@@ -489,7 +480,7 @@ std::string DescriptiveTextFrame::language() const { return textLanguage; }
 
 ///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::language(const std::string& newLanguage) {
-	if(!flag(FrameFlag::READ_ONLY) && optionLanguage) {
+	if(optionLanguage) {
 		textLanguage = newLanguage.size() == LANGUAGE_SIZE ? newLanguage : "";
 		isEdited = true;
 	}

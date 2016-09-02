@@ -67,10 +67,8 @@ ulong EventTimingFrame::value(const TimingCodes timingCode) const {
 
 ///@pkg ID3EventTimingFrame.h
 void EventTimingFrame::value(const TimingCodes timingCode, const ulong time) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		map[static_cast<uint8_t>(timingCode)] = time;
-		isEdited = true;
-	}
+	map[static_cast<uint8_t>(timingCode)] = time;
+	isEdited = true;
 }
 
 ///@pkg ID3EventTimingFrame.h

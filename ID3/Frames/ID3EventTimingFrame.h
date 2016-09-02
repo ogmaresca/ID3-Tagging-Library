@@ -93,14 +93,6 @@ namespace ID3 {
 		NULL_FORMAT        = 0xFF
 	};
 	
-	/*
-	 *struct TimingCode {
-	 *		bool usingMilliseconds;
-	 *		TimingCodes timingCode;
-	 * 	ulong value;
-	 *}; 
-	 */
-	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
 	////////////////////// E V E N T T I M I N G F R A M E //////////////////////
@@ -162,8 +154,6 @@ namespace ID3 {
 			
 			/**
 			 * Set the value of a given event timing code.
-			 * 
-			 * The Frame will not be modified if it is read-only.
 			 * 
 			 * @param timingCode The relevant TimingCodes enum value that
 			 *                   represents the timing code you wish to set.

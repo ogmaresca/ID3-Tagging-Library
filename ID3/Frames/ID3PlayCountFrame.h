@@ -79,8 +79,6 @@ namespace ID3 {
 			/**
 			 * Set the play count. Call write() to finalize changes.
 			 * 
-			 * The Frame will not be modified if it is read-only.
-			 * 
 			 * @param newPlayCount The new play count.
 			 */
 			void playCount(const unsigned long long newPlayCount);
@@ -184,8 +182,6 @@ namespace ID3 {
 			/**
 			 * Set the email address. Call write() to finalize changes.
 			 * 
-			 * The Frame will not be modified if it is read-only.
-			 * 
 			 * @param newEmail The new email address.
 			 */
 			void email(const std::string& newEmail);
@@ -208,8 +204,6 @@ namespace ID3 {
 			 * 96-159:  3
 			 * 169-223: 4
 			 * 224-255: 5
-			 * 
-			 * The Frame will not be modified if it is read-only.
 			 * 
 			 * @param newRating The new rating.
 			 */

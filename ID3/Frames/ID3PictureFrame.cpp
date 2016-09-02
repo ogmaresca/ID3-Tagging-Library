@@ -77,10 +77,8 @@ PictureType PictureFrame::pictureType() const { return APICType; }
 
 ///@pkg ID3PictureFrame.h
 void PictureFrame::pictureType(PictureType newType) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		APICType = newType;
-		isEdited = true;
-	}
+	APICType = newType;
+	isEdited = true;
 }
 
 ///@pkg ID3PictureFrame.h
@@ -88,10 +86,8 @@ std::string PictureFrame::description() const { return textDescription; }
 
 ///@pkg ID3PictureFrame.h
 void PictureFrame::description(const std::string& newDescription) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		textDescription = newDescription;
-		isEdited = true;
-	}
+	textDescription = newDescription;
+	isEdited = true;
 }
 
 ///@pkg ID3PictureFrame.h
@@ -100,11 +96,9 @@ ByteArray PictureFrame::picture() const { return pictureData; }
 ///@pkg ID3PictureFrame.h
 void PictureFrame::picture(const ByteArray& newPictureData,
                            const std::string& newMIMEType) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		isNull = !allowedMIMEType(newMIMEType);
-		pictureData = newPictureData;
-		textMIME = newMIMEType;
-	}
+	isNull = !allowedMIMEType(newMIMEType);
+	pictureData = newPictureData;
+	textMIME = newMIMEType;
 }
 
 ///@pkg ID3PictureFrame.h

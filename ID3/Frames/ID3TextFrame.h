@@ -102,8 +102,6 @@ namespace ID3 {
 			/**
 			 * Set the text content. Call write() to finalize changes.
 			 * 
-			 * NOTE: The content will not be modified if the Frame is read-only.
-			 * 
 			 * @param newContent The new text content.
 			 */
 			virtual void content(const std::string& newContent);
@@ -120,8 +118,6 @@ namespace ID3 {
 			 * Set the text content with a string vector. The vector will be
 			 * contatenated by the frame's separating character.
 			 * Call write() to finalize changes.
-			 * 
-			 * NOTE: The content will not be modified if the Frame is read-only.
 			 * 
 			 * @param newContent The new text content.
 			 */
@@ -287,8 +283,6 @@ namespace ID3 {
 			/**
 			 * Set the numerical content. Call write() to finalize changes.
 			 * 
-			 * NOTE: The content will not be modified if the Frame is read-only.
-			 * 
 			 * @param newContent The new numerical content.
 			 */
 			virtual void content(long long newContent);
@@ -299,8 +293,6 @@ namespace ID3 {
 			 * NOTE: If the string is not an int value, then the NumericalTextFrame
 			 *       object will store an empty string instead.
 			 * 
-			 * NOTE: The content will not be modified if the Frame is read-only.
-			 * 
 			 * @param newContent The new text content.
 			 */
 			virtual void content(const std::string& newContent);
@@ -309,8 +301,6 @@ namespace ID3 {
 			 * Set the text content with a string vector. The vector will be
 			 * contatenated by the frame's separating character.
 			 * Call write() to finalize changes.
-			 * 
-			 * NOTE: The content will not be modified if the Frame is read-only.
 			 * 
 			 * NOTE: Any strings stored in the vector that are not an integer value
 			 *       will not be set.
@@ -323,8 +313,6 @@ namespace ID3 {
 			 * Set the text content with a integer vector. The vector will be
 			 * contatenated by the frame's separating character.
 			 * Call write() to finalize changes.
-			 * 
-			 * NOTE: The content will not be modified if the Frame is read-only.
 			 * 
 			 * @param newContent The new text content.
 			 */
@@ -471,9 +459,6 @@ namespace ID3 {
 			 * Set the text content and optionally description.
 			 * Call write() to finalize changes.
 			 * 
-			 * NOTE: The content and description will not be modified if the Frame 
-			 *       is read-only.
-			 * 
 			 * @param newContent The new text content.
 			 * @param newDescription The new description.
 			 */
@@ -490,8 +475,6 @@ namespace ID3 {
 			/**
 			 * Set the description. Call write() to finalize changes.
 			 * 
-			 * NOTE: The description will not be modified if the Frame is read-only.
-			 * 
 			 * @param newDescription The new description.
 			 */
 			virtual void description(const std::string& newDescription);
@@ -507,13 +490,11 @@ namespace ID3 {
 			/**
 			 * Set the language. Call write() to finalize changes.
 			 * 
+			 * NOTE: The language is a ISO 639-2 code.
+			 * 
 			 * NOTE: The language will only be set if the language option was
 			 *       passed to the constructor. If the new language string is not
 			 *       3 characters long then the language will be set to "".
-			 * 
-			 * NOTE: The language is a ISO 639-2 code.
-			 * 
-			 * NOTE: The language will not be modified if the Frame is read-only.
 			 * 
 			 * @param newLanguage The new language.
 			 */

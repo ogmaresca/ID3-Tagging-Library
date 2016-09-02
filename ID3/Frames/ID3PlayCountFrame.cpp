@@ -53,10 +53,8 @@ unsigned long long PlayCountFrame::playCount() const { return count; }
 
 ///@pkg ID3PlayCountFrame.h
 void PlayCountFrame::playCount(const unsigned long long newPlayCount) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		count = newPlayCount;
-		isEdited = true;
-	}
+	count = newPlayCount;
+	isEdited = true;
 }
 
 ///@pkg ID3PlayCountFrame.h
@@ -144,16 +142,14 @@ ushort PopularimeterFrame::rating() const { return fiveStarRating; }
 
 ///@pkg ID3PlayCountFrame.h
 void PopularimeterFrame::rating(const uint8_t newRating) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-			  if(newRating <= 5)   fiveStarRating = newRating;
-		else if(newRating <= 31)  fiveStarRating = 1;
-		else if(newRating <= 95)  fiveStarRating = 2;
-		else if(newRating <= 159) fiveStarRating = 3;
-		else if(newRating <= 223) fiveStarRating = 4;
-		else                      fiveStarRating = 5;
-		
-		isEdited = true;
-	}
+		  if(newRating <= 5)   fiveStarRating = newRating;
+	else if(newRating <= 31)  fiveStarRating = 1;
+	else if(newRating <= 95)  fiveStarRating = 2;
+	else if(newRating <= 159) fiveStarRating = 3;
+	else if(newRating <= 223) fiveStarRating = 4;
+	else                      fiveStarRating = 5;
+	
+	isEdited = true;
 }
 
 ///@pkg ID3PlayCountFrame.h
@@ -161,10 +157,8 @@ std::string PopularimeterFrame::email() const { return emailAddress; }
 
 ///@pkg ID3PlayCountFrame.h
 void PopularimeterFrame::email(const std::string& newEmail) {
-	if(!flag(FrameFlag::READ_ONLY)) {
-		emailAddress = newEmail;
-		isEdited = true;
-	}
+	emailAddress = newEmail;
+	isEdited = true;
 }
 
 ///@pkg ID3PlayCountFrame.h

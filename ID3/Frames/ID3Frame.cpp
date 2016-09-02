@@ -215,6 +215,30 @@ ByteArray Frame::write() {
 	const bool GROUPING_IDENTITY = flag(FrameFlag::GROUPING_IDENTITY);
 	const uint8_t GROUP_IDENTITY = groupIdentity();
 	
+	//Some frames have the Discard Upon Audio Alter flag set by default
+	bool discardUponAudioAlter;
+	switch(id) {
+		case FRAME_AUDIO_ENCRYPTION:
+		case FRAME_AUDIO_SEEK_POINT_INDEX:
+		case FRAME_EVENT_TIMING_CODES:
+		case FRAME_EQUALISATION:
+		case FRAME_EQUALISATION_2:
+		case FRAME_MPEG_LOCATION_LOOKUP_TABLE:
+		case FRAME_POSITION_SYNCHRONISATION:
+		case FRAME_SEEK:
+		case FRAME_SYNCHRONISED_LYRICS:
+		case FRAME_SYNCHRONISED_TEMPO_CODES:
+		case FRAME_RELATIVE_VOLUME_ADJUSTMENT:
+		case FRAME_RELATIVE_VOLUME_ADJUSTMENT_2:
+		case FRAME_ENCODED_BY:
+		case FRAME_LENGTH:
+		case FRAME_SIZE: {
+			discardUponAudioAlter = true; break;
+		} default: {
+			discardUponAudioAlter = false;
+		}
+	}
+	
 	//The new header size has to fit the grouping identity if necessary
 	const ushort HEADER_SIZE = HEADER_BYTE_SIZE + (GROUPING_IDENTITY ? 1 : 0);
 	
@@ -232,6 +256,10 @@ ByteArray Frame::write() {
 		//Save the frame name
 		for(ushort i = 0; i < 4 && i < id.size(); i++)
 			frameContent[i] = id[i];
+		
+		//Save the discard upon audio alter flag
+		if(discardUponAudioAlter)
+			frameContent[9] = FLAG1_DISCARD_UPON_AUDIO_ALTER_V4;
 		
 		//Save the grouping identity
 		if(GROUPING_IDENTITY) {
