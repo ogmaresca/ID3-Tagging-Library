@@ -80,10 +80,9 @@ void EventTimingFrame::print() const {
 		default:                              std::cout << "Unknown";
 	}
 	for(const std::pair<uint8_t, ulong>& eventCodePair : map)
-		std::cout << std::endl << "Event code pair:  (Timing code " <<
-		          eventCodePair.first << ", Value " << eventCodePair.second <<
-		          ")" << std::endl;
-	std::cout << "Frame class:    EventTimingFrame" << std::endl;
+		std::cout << "\nEvent code pair:  (Timing code " <<
+		          eventCodePair.first << ", Value " << eventCodePair.second << ")\n";
+	std::cout << "Frame class:    EventTimingFrame\n";
 }
 
 ///@pkg ID3EventTimingFrame.h

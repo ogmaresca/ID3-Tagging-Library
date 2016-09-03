@@ -102,6 +102,9 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 		//Get the ID3v2.2 frame ID, and then convert it to its ID3v2.4 equivalent
 		id = FrameID(terminatedstring(header.id, 4), ID3Ver);
 		
+		//Get the class the Frame should be
+		frameType = FrameFactory::frameType(id);
+		
 		//Create the ByteArray with room for the entire frame content, if it were
 		//a new ID3v2 tag
 		frameBytes = ByteArray(frameSize + HEADER_BYTE_SIZE, '\0');

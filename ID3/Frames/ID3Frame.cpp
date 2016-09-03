@@ -163,19 +163,18 @@ void Frame::print() const {
 	const ulong BODY_SIZE = size();
 	const ulong FRAME_SIZE = size(true);
 	
-	std::cout << std::showbase << "Information about " << id.description() << " frame " << id << ": " << std::endl;
-	std::cout << "Edited:         " << std::boolalpha << isEdited << std::endl;
-	std::cout << "Read from file: " << std::boolalpha << isFromFile << std::endl;
-	std::cout << "Null:           " << std::boolalpha << isNull << std::endl;
+	std::cout << std::showbase << "Information about " << id.description() << " frame " << id << ": \n";
+	std::cout << "Edited:         " << std::boolalpha << isEdited << '\n';
+	std::cout << "Read from file: " << std::boolalpha << isFromFile << '\n';
+	std::cout << "Null:           " << std::boolalpha << isNull << '\n';
 	
 	if(isNull) {
 		std::cout << std::noboolalpha << std::noshowbase;
 		return;
 	}
 	
-	std::cout << "Frame size:     " << FRAME_SIZE << std::endl;
-	if(FRAME_SIZE == 0)
-		return;
+	std::cout << "Frame size:     " << FRAME_SIZE << '\n';
+	if(FRAME_SIZE == 0) return;
 	
 	std::cout << "Flags:          ";
 	if(flag(FrameFlag::DISCARD_UPON_TAG_ALTER_IF_UNKNOWN)) std::cout << " -discardIfUnknown";
@@ -186,17 +185,17 @@ void Frame::print() const {
 	if(flag(FrameFlag::GROUPING_IDENTITY)) std::cout << " -groupingIdentity";
 	if(flag(FrameFlag::UNSYNCHRONISED)) std::cout << " -unsynchronisation";
 	if(flag(FrameFlag::DATA_LENGTH_INDICATOR)) std::cout << " -dataLengthIndicator";
-	std::cout << std::endl;
+	std::cout << '\n';
 	if(flag(FrameFlag::GROUPING_IDENTITY))
-		std::cout << "Group identity: " << std::boolalpha << groupIdentity() << std::endl;
-	std::cout << "Header size:    " << std::dec << HEADER_SIZE << std::endl;
+		std::cout << "Group identity: " << std::boolalpha << groupIdentity() << '\n';
+	std::cout << "Header size:    " << std::dec << HEADER_SIZE << '\n';
 	std::cout << "Header bytes:  ";
 	for(ulong i = 0; i < HEADER_SIZE && i < FRAME_SIZE; i++)
 		std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
-	std::cout << std::endl;
+	std::cout << '\n';
 	
-	std::cout << "Empty:          " << std::boolalpha << empty() << std::endl;
-	std::cout << "Body size:      " << std::dec << BODY_SIZE << std::endl;
+	std::cout << "Empty:          " << std::boolalpha << empty() << '\n';
+	std::cout << "Body size:      " << std::dec << BODY_SIZE << '\n';
 	std::cout << "Body bytes:    ";
 	if(BODY_SIZE <= 100) {
 		for(ulong i = HEADER_SIZE; i < FRAME_SIZE; i++)
@@ -206,7 +205,7 @@ void Frame::print() const {
 		for(ulong i = HEADER_SIZE; i < HEADER_SIZE + 100UL && i < FRAME_SIZE; i++)
 			std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
 	}
-	std::cout << std::endl << std::noboolalpha << std::dec << std::noshowbase;
+	std::cout << '\n' << std::noboolalpha << std::dec << std::noshowbase;
 }
 
 ///@pkg ID3Frame.h
@@ -349,7 +348,7 @@ bool UnknownFrame::empty() const {
 ///@pkg ID3Frame.h
 void UnknownFrame::print() const {
 	Frame::print();
-	std::cout << "Frame class:    UnknownFrame" << std::endl;
+	std::cout << "Frame class:    UnknownFrame\n";
 }
 
 ///@pkg ID3Frame.h

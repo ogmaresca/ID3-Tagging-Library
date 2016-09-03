@@ -61,7 +61,7 @@ bool TextFrame::empty() const {
 ///@pkg ID3TextFrame.h
 void TextFrame::print() const {
 	Frame::print();
-	std::cout << "Content:        " << textContent << std::endl;
+	std::cout << "Content:        " << textContent << '\n';
 	if(frameContent.size() > headerSize()) {
 		std::cout << "Encoding:       ";
 		switch(frameContent[headerSize()]) {
@@ -75,9 +75,9 @@ void TextFrame::print() const {
 				std::cout << "LATIN-1"; break;
 			}
 		}
-		std::cout << std::endl;
+		std::cout << '\n';
 	}
-	std::cout << "Frame class:    TextFrame" << std::endl;
+	std::cout << "Frame class:    TextFrame\n";
 }
 
 ///@pkg ID3TextFrame.h
@@ -190,7 +190,7 @@ void TextFrame::contents(const std::vector<std::string>& newContent) {
 		//Concatenate the strings
 		for(const std::string& currentStr : newContent) {
 			if(textContent != "") textContent += SEPARATOR;
-			textContent != currentStr;
+			textContent += currentStr;
 		}
 	}
 }
@@ -314,7 +314,7 @@ void NumericalTextFrame::contents(const std::vector<long long>& newContent) {
 		
 		for(const long currentStr : newContent) {
 			if(textContent != "") textContent += SEPARATOR;
-			textContent != std::to_string(currentStr);
+			textContent += std::to_string(currentStr);
 		}
 	}
 }
@@ -322,8 +322,8 @@ void NumericalTextFrame::contents(const std::vector<long long>& newContent) {
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::print() const {
 	Frame::print();
-	std::cout << "Content:        " << textContent << std::endl;
-	std::cout << "Frame class:    NumericalTextFrame" << std::endl;
+	std::cout << "Content:        " << textContent << '\n';
+	std::cout << "Frame class:    NumericalTextFrame\n";
 }
 
 ///@pkg ID3TextFrame.h
@@ -421,10 +421,10 @@ FrameClass DescriptiveTextFrame::type() const noexcept {
 void DescriptiveTextFrame::print() const {
 	Frame::print();
 	if(textLanguage != "")
-		std::cout << "Language:       " << textLanguage << std::endl;
-	std::cout << "Description:    " << textDescription << std::endl;
-	std::cout << "Content:        " << textContent << std::endl;
-	std::cout << "Frame class:    DescriptiveTextFrame" << std::endl;
+		std::cout << "Language:       " << textLanguage << '\n';
+	std::cout << "Description:    " << textDescription << '\n';
+	std::cout << "Content:        " << textContent << '\n';
+	std::cout << "Frame class:    DescriptiveTextFrame\n";
 }
 
 ///@pkg ID3TextFrame.h
@@ -588,8 +588,8 @@ FrameClass URLTextFrame::type() const noexcept {
 ///@pkg ID3TextFrame.h
 void URLTextFrame::print() const {
 	Frame::print();
-	std::cout << "URL:            " << textContent << std::endl;
-	std::cout << "Frame class:    URLTextFrame" << std::endl;
+	std::cout << "URL:            " << textContent << '\n';
+	std::cout << "Frame class:    URLTextFrame\n";
 }
 
 ///@pkg ID3TextFrame.h

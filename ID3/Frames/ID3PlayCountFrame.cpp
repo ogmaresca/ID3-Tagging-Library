@@ -59,8 +59,8 @@ void PlayCountFrame::playCount(const unsigned long long newPlayCount) {
 ///@pkg ID3PlayCountFrame.h
 void PlayCountFrame::print() const {
 	Frame::print();
-	std::cout << "Play count:     " << count << std::endl;
-	std::cout << "Frame class:    PlayCountFrame" << std::endl;
+	std::cout << "Play count:     " << count << '\n';
+	std::cout << "Frame class:    PlayCountFrame\n";
 }
 
 ///@pkg ID3PlayCountFrame.h
@@ -163,10 +163,10 @@ void PopularimeterFrame::email(const std::string& newEmail) {
 ///@pkg ID3PlayCountFrame.h
 void PopularimeterFrame::print() const {
 	Frame::print();
-	std::cout << "Play count:     " << count << std::endl;
-	std::cout << "Rating:         " << (fiveStarRating == 0 ? "N/A" : std::to_string(fiveStarRating)) << std::endl;
-	std::cout << "Email:          " << emailAddress << std::endl;
-	std::cout << "Frame class:    PopularimeterFrame" << std::endl;
+	std::cout << "Play count:     " << count << '\n';
+	std::cout << "Rating:         " << (fiveStarRating == 0 ? "N/A" : std::to_string(fiveStarRating)) << '\n';
+	std::cout << "Email:          " << emailAddress << '\n';
+	std::cout << "Frame class:    PopularimeterFrame\n";
 }
 
 ///@pkg ID3PlayCountFrame.h

@@ -102,10 +102,10 @@ void PictureFrame::picture(const ByteArray& newPictureData,
 ///@pkg ID3PictureFrame.h
 void PictureFrame::print() const {
 	Frame::print();
-	std::cout << "Picture type:   " << (short)APICType << std::endl;
-	std::cout << "MIME type:      " << textMIME << std::endl;
-	std::cout << "Description:    " << textDescription << std::endl;
-	std::cout << "Frame class:    PictureFrame" << std::endl;
+	std::cout << "Picture type:   " << (short)APICType << '\n';
+	std::cout << "MIME type:      " << textMIME << '\n';
+	std::cout << "Description:    " << textDescription << '\n';
+	std::cout << "Frame class:    PictureFrame\n";
 }
 
 ///@pkg ID3TextFrame.h

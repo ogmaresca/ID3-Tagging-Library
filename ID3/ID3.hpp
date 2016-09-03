@@ -511,7 +511,8 @@ namespace ID3 {
 			std::vector<std::string> albumArtists() const;
 			
 			/**
-			 * Get the year tag.
+			 * Get the year tag. It first looks for the original recording time
+			 * frame, and if it can't find that then it looks for the year frame.
 			 * 
 			 * @return The year of the music file, or "" if there is
 			 *         no year set.
