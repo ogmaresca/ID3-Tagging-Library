@@ -67,25 +67,25 @@ namespace {
 }
 
 ///@pkg ID3.h
-Tag::Tag(std::ifstream& file) : isNull(true) {
-	if(!file.is_open()) return;
-	file.seekg(0, std::ifstream::end);
-	filesize = file.tellg();
-	readFile(file);
+Tag::Tag(std::ifstream& file) {
+	if(file && file.is_open()) readFile(file);
 }
 
 ///@pkg ID3.h
-Tag::Tag(const std::string& fileLoc) : filename(fileLoc), isNull(true) {
+Tag::Tag(std::fstream& file) {
+	if(file && file.is_open()) readFile(file);
+}
+
+///@pkg ID3.h
+Tag::Tag(const std::string& fileLoc) : filename(fileLoc) {
 	//Check if the file is an MP3 file
-	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase |
-	                                                     std::regex::ECMAScript)))
+	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase|std::regex::ECMAScript)))
 		return;
 	
 	std::ifstream file;
 	
 	try {
 		file.open(fileLoc, std::ios::binary | std::ios::ate);
-		filesize = file.tellg();
 		readFile(file);
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::Tag(std::string&): " << e.what() << '\n';
@@ -99,7 +99,28 @@ Tag::Tag(const std::string& fileLoc) : filename(fileLoc), isNull(true) {
 }
 
 ///@pkg ID3.h
-Tag::Tag() : isNull(true) {}
+Tag::Tag() {}
+
+///@pkg ID3.h
+void Tag::write() {}
+
+///@pkg ID3.h
+void Tag::write(const std::string& fileLoc) {}
+
+///@pkg ID3.h
+void Tag::write(std::fstream& file) {}
+
+///@pkg ID3.h
+void Tag::revert() {
+	//Loop through every Frame and revert it
+	auto itr = frames.begin();
+	while(itr != frames.end()) {
+		itr->second->revert();
+		//If the Frame is null or empty then remove it
+		if(itr->second->null() || itr->second->empty()) itr = frames.erase(itr);
+		else                                            itr++;
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -502,9 +523,10 @@ std::string Tag::getVersionString(bool verbose) const {
 }
 
 ///@pkg ID3.h
-const bool Tag::null() const {
-	return isNull;
-}
+size_t Tag::size() const { return frames.size(); }
+
+///@pkg ID3.h
+std::string Tag::file() const { return filename; }
 
 ///@pkg ID3.h
 void Tag::print() const {
@@ -521,14 +543,7 @@ void Tag::print() const {
 	std::cout << "\n......................\n";
 	if(filename == "") std::cout << "Printing information about ID3 File:\n";
 	else               std::cout << "Printing information about file " << filename << ":\n";
-	std::cout << "Filesize:                 " << filesize << '\n';
 	std::cout << "Tag size:                 " << v2TagInfo.size << '\n';
-	std::cout << "Null:                     " << std::boolalpha << isNull << '\n';
-	
-	if(isNull) {
-		std::cout << ".........................." << '\n' << std::noboolalpha;
-		return;
-	}
 	
 	std::cout << "ID3 version(s) and flags: " << getVersionString(true) << '\n';
 	std::cout << "Number of frames:         " << frames.size() << '\n';
@@ -612,15 +627,17 @@ std::vector<DerivedFrame*> Tag::getFrames(const FrameID& frameName) const {
 }
 
 ///@pkg ID3.h
-void Tag::readFile(std::ifstream& file) {
-	if(!file.good()) return;
-	isNull = false;
-	readFileV2(file);
-	readFileV1(file);
+void Tag::readFile(std::istream& file) {
+	if(file) {
+		file.seekg(0, std::ifstream::end);
+		ulong filesize = file.tellg();
+		readFileV2(file, filesize);
+		readFileV1(file, filesize);
+	}
 }
 
 ///@pkg ID3.h
-void Tag::readFileV1(std::ifstream& file) {
+void Tag::readFileV1(std::istream& file, const ulong filesize) {
 	V1::Tag tags;
 	V1::ExtendedTag extTags;
 	bool extTagsSet = false;
@@ -653,7 +670,7 @@ void Tag::readFileV1(std::ifstream& file) {
 }
 
 ///@pkg ID3.h
-void Tag::readFileV2(std::ifstream& file) {
+void Tag::readFileV2(std::istream& file, const ulong filesize) {
 	Header tagsHeader;
 	
 	if(filesize < HEADER_BYTE_SIZE) return;

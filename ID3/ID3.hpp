@@ -13,7 +13,7 @@
 #ifndef ID3_HPP
 #define ID3_HPP
 
-#include <fstream>       //For std::ifstream
+#include <fstream>       //For std::ifstream, std::ofstream, and std::fstream
 #include <vector>        //For std::vector
 #include <unordered_map> //For std::unordered_map and std::pair
 #include <memory>        //For std::shared_ptr
@@ -250,32 +250,155 @@ namespace ID3 {
 			/**
 			 * Constructor that takes a filename and opens the file.
 			 * 
+			 * NOTE: If the file does not exist a ID3::ID3FileNotFoundException
+			 *       will be thrown.
+			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
+			 *       be larger than the file itself, an ID3::FormatException will
+			 *       be thrown.
+			 * NOTE: If the file is not an MP3 or MP4 file an ID3::NotMP3Exception
+			 *       will be thrown.
+			 * 
 			 * @param fileLoc The file path.
+			 * @throws ID3::ID3FileNotFoundException if the file does not exist.
+			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
+			 *         bigger than the file itself.
+			 * @throws ID3::NotMP3Exception if the file is not an MP3 or MP4 file.
+			 * @todo Implement the exceptions.
 			 */
 			Tag(const std::string& fileLoc);
 			
 			/**
 			 * Constructor that takes an ifstream file object and reads the ID3 data.
-			 * NOTE: This does NOT close the file. You must call file_obj.close() after
+			 * NOTE: This does NOT close the file. You must call file.close() after
 			 *       instantiating an ID3::Tag object with this constructor.
-			 * NOTE: The file must be open to read the tags.
-			 * NOTE: This constructor does not check to see if the file
-			 *       is an MP3 file or not.
+			 * NOTE: The file must be open to read the tags. If it is not open, an
+			 *       ID3::FileNotOpenException is thrown.
+			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
+			 *       be larger than the file itself, an ID3::FormatException will
+			 *       be thrown.
+			 * NOTE: This constructor does not check to see if the given file is an
+			 *       MP3 or MP4 file.
 			 * 
 			 * @param file The ifstream file object.
+			 * @throws ID3::FileNotOpenException if the file is not open.
+			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
+			 *         bigger than the file itself.
+			 * @todo Implement the exceptions.
 			 */
 			Tag(std::ifstream& file);
 			
 			/**
-			 * A constructor to set default values.
-			 * Creating a frame with this constructor will result in a "null" frame.
+			 * Constructor that takes an fstream file object and reads the ID3 data.
+			 * NOTE: This does NOT close the file. You must call file.close() after
+			 *       instantiating an ID3::Tag object with this constructor.
+			 * NOTE: The file must be open to read the tags. If it is not open, an
+			 *       ID3::FileNotOpenException is thrown.
+			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
+			 *       be larger than the file itself, an ID3::FormatException will
+			 *       be thrown.
+			 * NOTE: This constructor does not check to see if the given file is an
+			 *       MP3 or MP4 file.
+			 * 
+			 * @param file The fstream file object.
+			 * @throws ID3::FileNotOpenException if the file is not open.
+			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
+			 *         bigger than the file itself.
+			 * @todo Implement the exceptions.
+			 */
+			Tag(std::fstream& file);
+			
+			/**
+			 * A constructor that creates a blank Tag object without a file.
 			 */
 			Tag();
 			
+			/**
+			 * Write the tags to the file. This method will write to the file
+			 * location that was given in the constructor. If the constructor
+			 * ID3::Tag::Tag(std::string&) was not used when creating this object,
+			 * or the file at that location has been renamed, an
+			 * ID3::FileNotFoundException will be thrown.
+			 * 
+			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
+			 *       be larger than the file itself, an ID3::FormatException will
+			 *       be thrown.
+			 * NOTE: If another Tag object or another program has edited the ID3
+			 *       tags on the file between the creation of this object and the
+			 *       call to this method, the new tags will be overriden with the
+			 *       tags in this object.
+			 * 
+			 * @throws ID3::FileNotFoundException if the file location saved in
+			 *         this object does not exist.
+			 * @throws ID3::NotMP3Exception if the file is not an MP3 file.
+			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
+			 *         bigger than the file itself.
+			 * @todo Implement the method and its exceptions.
+			 */
+			void write();
+			
+			/**
+			 * Write the tags to the file location given.
+			 * 
+			 * NOTE: If a file does not exist at the location a
+			 *       ID3::FileNotFoundException will be thrown.
+			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
+			 *       be larger than the file itself, an ID3::FormatException will
+			 *       be thrown.
+			 * NOTE: If the file is not an MP3 or MP4 file an ID3::NotMP3Exception
+			 *       will be thrown.
+			 * NOTE: If another Tag object or another program has edited the ID3
+			 *       tags on the file between the creation of this object and the
+			 *       call to this method, the new tags will be overriden with the
+			 *       tags in this object.
+			 * 
+			 * @param fileLoc The file to write to.
+			 * @throws ID3::FileNotFoundException if the file location saved in
+			 *         this object does not exist.
+			 * @throws ID3::NotMP3Exception if the file is not an MP3 file.
+			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
+			 *         bigger than the file itself.
+			 * @todo Implement the method and its exceptions.
+			 */
+			void write(const std::string& fileLoc);
+			
+			/**
+			 * Write the tags to the given file object.
+			 * 
+			 * NOTE: This does NOT close the file. You must call file.close() after
+			 *       instantiating an ID3::Tag object with this constructor.
+			 * NOTE: The file must be open to read the tags. If it is not open, an
+			 *       ID3::FileNotOpenException is thrown.
+			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
+			 *       be larger than the file itself, an ID3::FormatException will
+			 *       be thrown.
+			 * NOTE: This constructor does not check to see if the given file is an
+			 *       MP3 or MP4 file.
+			 * NOTE: If another Tag object or another program has edited the ID3
+			 *       tags on the file between the creation of this object and the
+			 *       call to this method, the new tags will be overriden with the
+			 *       tags in this object.
+			 * 
+			 * @param file The fstream file object.
+			 * @throws ID3::FileNotOpenException if the file is not open.
+			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
+			 *         bigger than the file itself.
+			 * @todo Implement the method and its exceptions.
+			 */
+			void write(std::fstream& file);
+			
+			//protected
+			//void write(std::ostream& file)
+			
+			/**
+			 * Revert any changes made to the tags since the last call to a
+			 * write() method, or since the creation of the Tag object if a write()
+			 * method has never been called.
+			 */
+			void revert();
+			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
-			//////////////////////// S T A R T   F R A M E ////////////////////////
-			////////////////// G E T T E R S   &   S E T T E R S //////////////////
+			//////////////// S T A R T   F R A M E   G E T T E R S ////////////////
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
 			
@@ -717,8 +840,19 @@ namespace ID3 {
 			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
-			////////////////////////// E N D   F R A M E //////////////////////////
-			////////////////// G E T T E R S   &   S E T T E R S //////////////////
+			////////////////// E N D   F R A M E   G E T T E R S //////////////////
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			//////////////// S T A R T   F R A M E   S E T T E R S ////////////////
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			////////////////// E N D   F R A M E   S E T T E R S //////////////////
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
 			
@@ -731,10 +865,17 @@ namespace ID3 {
 			std::string getVersionString(bool verbose=false) const;
 			
 			/**
-			 * @returns true if the given file is a valid MP3 file, false
-			 *          otherwise.
+			 * @returns The number of frames stored in the Tag object.
 			 */
-			const bool null() const;
+			size_t size() const;
+			
+			/**
+			 * @returns The filename last given in write(std::string&), or the
+			 *          filename given in the constructor
+			 *          ID3::Tag::Tag(std::string&) in the write method was never
+			 *          called, or "" if neither were called.
+			 */
+			std::string file() const;
 			
 			/**
 			 * Print all the tag information.
@@ -758,8 +899,8 @@ namespace ID3 {
 			 */
 			struct TagInfo {
 				TagInfo();                  //Constructor
-				ushort majorVer;             //ID3v2 major version
-				ushort minorVer;             //ID3v2 minor version
+				ushort majorVer;            //ID3v2 major version
+				ushort minorVer;            //ID3v2 minor version
 				bool flagUnsynchronisation; //Unsynchronisation flag
 				bool flagExtHeader;         //Extended header flag
 				bool flagExperimental;      //Experimental flag
@@ -787,16 +928,6 @@ namespace ID3 {
 				uint8_t flagBytes;
 				uint8_t flags;
 			};
-			
-			/**
-			 * The filesize of the music file.
-			 */
-			ulong filesize;
-			
-			/**
-			 * The filename (if not getting the file via an ifstream object).			 
-			 */
-			std::string filename;
 			
 			/**
 			 * Add a frame to the FrameMap. If there already exists a frame with
@@ -848,27 +979,30 @@ namespace ID3 {
 			std::vector<DerivedFrame*> getFrames(const FrameID& frameName) const;
 			
 			/**
-			 * A constructor helper method that gets the tag information from the given file.
+			 * A constructor helper method that gets the tag information from the
+			 * given file.
 			 * 
-			 * @param file The file object.
+			 * @param file     The file stream object.
 			 */
-			void readFile(std::ifstream& file);
+			void readFile(std::istream& file);
 			
 			/**
 			 * A constructor helper method that reads the ID3v1 tags from
 			 * the file.
 			 * 
-			 * @param file The file object.
+			 * @param file     The file stream object.
+			 * @param filesize The size of the stream object.
 			 */
-			void readFileV1(std::ifstream& file);
+			void readFileV1(std::istream& file, const ulong filesize);
 			
 			/**
 			 * A constructor helper method that reads the ID3v2 tags from
 			 * the file.
 			 * 
-			 * @param file The file object.
+			 * @param file     The file stream object.
+			 * @param filesize The size of the stream object.
 			 */
-			void readFileV2(std::ifstream& file);
+			void readFileV2(std::istream& file, const ulong filesize);
 			
 			/**
 			 * A constructor helper method that gets a v1 tag struct and sets the class'
@@ -900,14 +1034,6 @@ namespace ID3 {
 			void setTags(const V1::ExtendedTag& tags);
 			
 			/**
-			 * This will be true if the given file is a valid MP3 file, and
-			 * false otherwise. Call null() to check the value externally.
-			 * 
-			 * @see ID3::Tag::null()
-			 */
-			bool isNull;
-			
-			/**
 			 * A TagsOnFile struct that records all the ID3 versions
 			 * that were found on the file.
 			 */
@@ -920,8 +1046,7 @@ namespace ID3 {
 			TagInfo v2TagInfo;
 			
 			/**
-			 * A map of all frames created from ID3v1 tags and read from
-			 * ID3v2 frames.
+			 * A map of all frames stored in the tag.
 			 */
 			FrameMap frames;
 			
@@ -929,6 +1054,13 @@ namespace ID3 {
 			 * The FrameFactory to create Frame objects.
 			 */
 			FrameFactory factory;
+			
+			/**
+			 * The filename (if not getting the file via an ifstream object).
+			 * 
+			 * @see ID3::Tag::file()		 
+			 */
+			std::string filename;
 	};
 }
 

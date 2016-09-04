@@ -21,7 +21,7 @@
 using namespace ID3;
 
 ///@pkg ID3FrameFactory.h
-FrameFactory::FrameFactory(std::ifstream& file,
+FrameFactory::FrameFactory(std::istream&  file,
                            const ushort   version,
                            const ulong    tagEnd) : musicFile(&file),
                                                     ID3Ver(version),
@@ -40,9 +40,7 @@ FrameFactory::FrameFactory() : musicFile(nullptr),
 ///@pkg ID3FrameFactory.h
 FramePtr FrameFactory::create(const ulong readpos) const {
 	//Validate the file
-	if(readpos + HEADER_BYTE_SIZE > ID3Size ||
-	   musicFile == nullptr ||
-	   !musicFile->is_open())
+	if(readpos + HEADER_BYTE_SIZE > ID3Size || musicFile == nullptr || !musicFile->good())
 		return FramePtr(new UnknownFrame());
 	
 	//Seek to the read position

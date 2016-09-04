@@ -68,7 +68,7 @@ namespace ID3 {
 			friend class Tag;
 			
 			/**
-			 * The public constructor to create a FrameFactory.
+			 * The protected constructor to create a FrameFactory.
 			 * 
 			 * @param file    An fstream file object.
 			 * @param version The ID3 major version to use.
@@ -76,7 +76,7 @@ namespace ID3 {
 			 *                assumed that the tag size has already been checked to
 			 *                be smaller than the filesize.
 			 */
-			FrameFactory(std::ifstream& file,
+			FrameFactory(std::istream&  file,
 			             const ushort   version,
 			             const ulong    tagEnd);
 			
@@ -257,9 +257,9 @@ namespace ID3 {
 			static ushort frameOptions(const FrameID& frameID);
 			
 			/**
-			 * A pointer to the fstream object given in the public constructor.
+			 * A pointer to the istream object given in the protected constructor.
 			 */
-			std::ifstream* musicFile;
+			std::istream* musicFile;
 			
 			/**
 			 * The ID3v2 major version given in the constructor.
