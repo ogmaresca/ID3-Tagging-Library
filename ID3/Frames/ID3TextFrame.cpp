@@ -11,11 +11,10 @@
  **********************************************************************/
 
 #include <iostream>  //For printing
-#include <algorithm> //For std::all_of
 
 #include "ID3TextFrame.hpp"    //For the class definitions
 #include "../ID3.hpp"          //For the Text struct
-#include "../ID3Functions.hpp" //For getUTF8String()
+#include "../ID3Functions.hpp" //For getUTF8String() and numericalString()
 
 using namespace ID3;
 
@@ -38,8 +37,7 @@ TextFrame::TextFrame(const FrameID&   frameName,
                      const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                                  version,
                                                                  frameBytes) {
-	//If the frame content isn't null, then get the text content
-	if(!isNull) read();
+	if(!isNull) read(); //If the frame content is not null, then get the text content
 }
 
 ///@pkg ID3TextFrame.h
@@ -49,14 +47,20 @@ TextFrame::TextFrame(const FrameID&     frameName,
 }
 
 ///@pkg ID3TextFrame.h
-FrameClass TextFrame::type() const noexcept {
-	return FrameClass::CLASS_TEXT;
+TextFrame::TextFrame(const FrameID&                  frameName,
+                     const std::vector<std::string>& values) : Frame::Frame(frameName) {
+	contents(values);
+	isEdited = false; //Undo isEdited
 }
 
 ///@pkg ID3TextFrame.h
-bool TextFrame::empty() const {
-	return textContent == "";
-}
+TextFrame::~TextFrame() {}
+
+///@pkg ID3TextFrame.h
+FrameClass TextFrame::type() const noexcept { return FrameClass::CLASS_TEXT; }
+
+///@pkg ID3TextFrame.h
+bool TextFrame::empty() const { return textContent == ""; }
 
 ///@pkg ID3TextFrame.h
 void TextFrame::print() const {
@@ -254,38 +258,46 @@ NumericalTextFrame::NumericalTextFrame(const FrameID&   frameName,
                                        const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                                                    version,
                                                                                    frameBytes) {
-	//If the frame content is not null
-	if(!isNull)
-		read();
+	if(!isNull) read(); //If the frame content is not null
 }
 
 ///@pkg ID3TextFrame.h
 NumericalTextFrame::NumericalTextFrame(const FrameID&     frameName,
                                        const std::string& value) : TextFrame::TextFrame(frameName,
-                                                                                        value) {
-	if(!std::all_of(textContent.begin(), textContent.end(), ::isdigit))
-		textContent = "";
+                                                                                        numericalString(value)?value:"") {}
+
+///@pkg ID3TextFrame.h
+NumericalTextFrame::NumericalTextFrame(const FrameID&  frameName,
+                                       const long long value) : TextFrame::TextFrame(frameName,
+                                                                                     std::to_string(value)) {}
+
+///@pkg ID3TextFrame.h
+NumericalTextFrame::NumericalTextFrame(const FrameID&                  frameName,
+                                       const std::vector<std::string>& values) : Frame::Frame(frameName) {
+	contents(values);
+	isEdited = false; //Undo isEdited
 }
 
 ///@pkg ID3TextFrame.h
-NumericalTextFrame::NumericalTextFrame(const FrameID& frameName,
-                                       const long     value) : TextFrame::TextFrame(frameName,
-                                                                                    std::to_string(value)) {}
+NumericalTextFrame::NumericalTextFrame(const FrameID&                  frameName,
+                                       const std::vector<long long>& values) : Frame::Frame(frameName) {
+	contents(values);
+	isEdited = false; //Undo isEdited
+}
 
 ///@pkg ID3TextFrame.h
-FrameClass NumericalTextFrame::type() const noexcept {
-	return FrameClass::CLASS_NUMERICAL;
-}
+NumericalTextFrame::~NumericalTextFrame() {}
+
+///@pkg ID3TextFrame.h
+FrameClass NumericalTextFrame::type() const noexcept { return FrameClass::CLASS_NUMERICAL; }
 
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::content(const std::string& newContent) {
-	TextFrame::content(std::all_of(newContent.begin(), newContent.end(), ::isdigit) ? newContent : "");
+	TextFrame::content(numericalString(newContent) ? newContent : "");
 }
 
 ///@pkg ID3TextFrame.h
-void NumericalTextFrame::content(long long newContent) {
-	TextFrame::content(std::to_string(newContent));
-}
+void NumericalTextFrame::content(long long newContent) { TextFrame::content(std::to_string(newContent)); }
 
 ///@pkg ID3TextFrame.h
 void NumericalTextFrame::contents(const std::vector<std::string>& newContent) {
@@ -294,10 +306,8 @@ void NumericalTextFrame::contents(const std::vector<std::string>& newContent) {
 	validNumericalContent.reserve(newContent.size());
 	
 	//Go through newContent and only save integer strings
-	for(const std::string& currentStr : newContent) {
-		if(std::all_of(currentStr.begin(), currentStr.end(), ::isdigit))
-			validNumericalContent.push_back(currentStr);
-	}
+	for(const std::string& currentStr : newContent)
+		if(numericalString(currentStr)) validNumericalContent.push_back(currentStr);
 	
 	//Use TextFrame's contents(std::vector<std::string>&) method
 	TextFrame::contents(validNumericalContent);
@@ -351,14 +361,10 @@ bool NumericalTextFrame::operator==(const Frame* const frame) const noexcept {
 }
 
 ///@pkg ID3TextFrame.h
-bool NumericalTextFrame::operator==(long long val) const noexcept {
-	return textContent == std::to_string(val);
-}
+bool NumericalTextFrame::operator==(long long val) const noexcept { return textContent == std::to_string(val); }
 
 ///@pkg ID3TextFrame.h
-NumericalTextFrame::operator long long() const noexcept {
-	return atoll(textContent.c_str());
-}
+NumericalTextFrame::operator long long() const noexcept { return atoll(textContent.c_str()); }
 
 ///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator+=(long long val) noexcept {
@@ -369,7 +375,7 @@ NumericalTextFrame& NumericalTextFrame::operator+=(long long val) noexcept {
 
 ///@pkg ID3TextFrame.h
 NumericalTextFrame& NumericalTextFrame::operator+=(const std::string& str) noexcept {
-	if(std::all_of(str.begin(), str.end(), ::isdigit)) {
+	if(numericalString(str)) {
 		textContent += stringSeparator() + str;
 		isEdited = true;
 	}
@@ -386,15 +392,11 @@ NumericalTextFrame& NumericalTextFrame::operator+=(const std::string& str) noexc
 DescriptiveTextFrame::DescriptiveTextFrame(const FrameID& frameName,
                                            const ushort version,
                                            const ByteArray& frameBytes,
-                                           const ushort options) : Frame::Frame(frameName,
-                                                                                version,
-                                                                                frameBytes),
+                                           const ushort options) : Frame::Frame(frameName, version, frameBytes),
                                                                    optionLanguage((options & OPTION_LANGUAGE) == OPTION_LANGUAGE),
                                                                    optionLatin1((options & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT),
                                                                    optionNoDescription((options & OPTION_NO_DESCRIPTION)==OPTION_NO_DESCRIPTION) {
-	//If the frame content is not null
-	if(!isNull)
-		read();
+	if(!isNull) read(); //If the frame content is not null
 }
 
 ///@pkg ID3TextFrame.h
@@ -402,27 +404,36 @@ DescriptiveTextFrame::DescriptiveTextFrame(const FrameID& frameName,
                                            const std::string& value,
                                            const std::string& description,
                                            const std::string& language,
-                                           const ushort options) : TextFrame::TextFrame(frameName,
-                                                                                        value),
-                                                                   optionLanguage((options & OPTION_LANGUAGE) == OPTION_LANGUAGE),
-                                                                   optionLatin1((options & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT),
-                                                                   optionNoDescription((options & OPTION_NO_DESCRIPTION)==OPTION_NO_DESCRIPTION) {
-	textDescription = description;
-	if(language == "" || language.size() == LANGUAGE_SIZE)
-		textLanguage = language;
-}
+                                           const ushort options) noexcept : TextFrame::TextFrame(frameName, value),
+                                                                            textDescription(description),
+                                                                            textLanguage(language.size() == LANGUAGE_SIZE ? language : ""),
+                                                                            optionLanguage((options & OPTION_LANGUAGE) == OPTION_LANGUAGE),
+                                                                            optionLatin1((options & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT),
+                                                                            optionNoDescription((options & OPTION_NO_DESCRIPTION)==OPTION_NO_DESCRIPTION) {}
 
 ///@pkg ID3TextFrame.h
-FrameClass DescriptiveTextFrame::type() const noexcept {
-	return FrameClass::CLASS_DESCRIPTIVE;
-}
+DescriptiveTextFrame::DescriptiveTextFrame(const FrameID& frameName,
+                                           const std::vector<std::string>& values,
+                                           const std::string& description,
+                                           const std::string& language,
+                                           const ushort options) : TextFrame::TextFrame(frameName, values),
+                                                                   textDescription(description),
+                                                                   textLanguage(language.size() == LANGUAGE_SIZE ? language : ""),
+                                                                   optionLanguage((options & OPTION_LANGUAGE) == OPTION_LANGUAGE),
+                                                                   optionLatin1((options & OPTION_LATIN1_TEXT)==OPTION_LATIN1_TEXT),
+                                                                   optionNoDescription((options & OPTION_NO_DESCRIPTION)==OPTION_NO_DESCRIPTION) {}
+
+///@pkg ID3TextFrame.h
+DescriptiveTextFrame::~DescriptiveTextFrame() {}
+
+///@pkg ID3TextFrame.h
+FrameClass DescriptiveTextFrame::type() const noexcept { return FrameClass::CLASS_DESCRIPTIVE; }
 
 ///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::print() const {
 	Frame::print();
-	if(textLanguage != "")
-		std::cout << "Language:       " << textLanguage << '\n';
-	std::cout << "Description:    " << textDescription << '\n';
+	if(optionLanguage) std::cout << "Language:       " << textLanguage << '\n';
+	if(!optionNoDescription) std::cout << "Description:    " << textDescription << '\n';
 	std::cout << "Content:        " << textContent << '\n';
 	std::cout << "Frame class:    DescriptiveTextFrame\n";
 }
@@ -459,6 +470,9 @@ void DescriptiveTextFrame::writeBody() {
 }
 
 ///@pkg ID3TextFrame.h
+void DescriptiveTextFrame::content(const std::string& newContent) { TextFrame::content(newContent); }
+
+///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::content(const std::string& newContent,
                                    const std::string& newDescription) {
 	TextFrame::content(newContent);
@@ -466,12 +480,22 @@ void DescriptiveTextFrame::content(const std::string& newContent,
 }
 
 ///@pkg ID3TextFrame.h
+void DescriptiveTextFrame::content(const std::string& newContent,
+                                   const std::string& newDescription,
+                                   const std::string& newLanguage) {
+	content(newContent, newDescription);
+	language(newLanguage);
+}
+
+///@pkg ID3TextFrame.h
 std::string DescriptiveTextFrame::description() const { return textDescription; }
 
 ///@pkg ID3TextFrame.h
 void DescriptiveTextFrame::description(const std::string& newDescription) {
-	textDescription = newDescription;
-	isEdited = true;
+	if(!optionNoDescription) {
+		textDescription = newDescription;
+		isEdited = true;
+	}
 }
 
 ///@pkg ID3TextFrame.h
@@ -570,15 +594,21 @@ URLTextFrame::URLTextFrame(const FrameID&   frameName,
                            const ByteArray& frameBytes) : Frame::Frame(frameName,
                                                                        version,
                                                                        frameBytes) {
-	//If the frame content is not null
-	if(!isNull)
-		read();
+	if(!isNull) read(); //If the frame content is not null
 }
 
 ///@pkg ID3TextFrame.h
 URLTextFrame::URLTextFrame(const FrameID&     frameName,
-                           const std::string& value) : TextFrame::TextFrame(frameName,
-                                                                            value) {}
+                           const std::string& value) noexcept : TextFrame::TextFrame(frameName,
+                                                                                     value) {}
+
+///@pkg ID3TextFrame.h
+URLTextFrame::URLTextFrame(const FrameID&                  frameName,
+                           const std::vector<std::string>& values) : TextFrame::TextFrame(frameName,
+                                                                                          values) {}
+
+///@pkg ID3TextFrame.h
+URLTextFrame::~URLTextFrame() {}
 
 ///@pkg ID3TextFrame.h
 FrameClass URLTextFrame::type() const noexcept {

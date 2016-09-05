@@ -60,6 +60,8 @@ PictureFrame::PictureFrame(const ByteArray pictureBytes,
 PictureFrame::PictureFrame() noexcept : Frame::Frame(FRAME_PICTURE),
                                         APICType(PictureType::OTHER) {}
 
+///@pkg ID3PictureFrame.h
+PictureFrame::~PictureFrame() {}
 
 ///@pkg ID3PictureFrame.h
 FrameClass PictureFrame::type() const noexcept { return FrameClass::CLASS_PICTURE; }

@@ -40,6 +40,9 @@ PlayCountFrame::PlayCountFrame(const unsigned long long playCount) noexcept : Fr
                                                                               count(playCount) {}
 
 ///@pkg ID3PlayCountFrame.h
+PlayCountFrame::~PlayCountFrame() {}
+
+///@pkg ID3PlayCountFrame.h
 FrameClass PlayCountFrame::type() const noexcept {
 	return FrameClass::CLASS_PLAY_COUNT;
 }
@@ -130,6 +133,9 @@ PopularimeterFrame::PopularimeterFrame(const unsigned long long playCount,
 	this->rating(rating);
 	isEdited = false;
 }
+
+///@pkg ID3PlayCountFrame.h
+PopularimeterFrame::~PopularimeterFrame() {}
 
 ///@pkg ID3PlayCountFrame.h
 FrameClass PopularimeterFrame::type() const noexcept {

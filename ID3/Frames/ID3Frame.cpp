@@ -324,6 +324,9 @@ UnknownFrame::UnknownFrame(const FrameID&   frameName,
 UnknownFrame::UnknownFrame(const FrameID& frameName) noexcept : Frame::Frame(frameName) {}
 
 ///@pkg ID3Frame.h
+UnknownFrame::~UnknownFrame() {}
+
+///@pkg ID3Frame.h
 bool UnknownFrame::operator==(const Frame* const frame) const noexcept {
 	//Check if the frame IDs or "null" statuses match
 	if(frame == nullptr || frame->frame() != id || isNull != frame->null())

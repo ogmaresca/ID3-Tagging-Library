@@ -14,7 +14,6 @@
 #include <exception> //For exceptions
 #include <cstring>   //For memcmp()
 #include <regex>     //For regular expressions
-#include <algorithm> //For std::all_of()
 
 #include "ID3.hpp"                      //For the Tag class definition
 #include "ID3Functions.hpp"             //For assorted functions
@@ -38,7 +37,7 @@ namespace {
 		
 		std::string genreString;
 		
-		if(std::all_of(genre.begin(), genre.end(), ::isdigit)) {
+		if(numericalString(genre)) {
 			genreString = V1::getGenreString(atoi(genre.c_str()));
 		} else {
 			//This regex matches any digit surrounded by a single pair of
@@ -82,19 +81,18 @@ Tag::Tag(const std::string& fileLoc) : filename(fileLoc) {
 	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase|std::regex::ECMAScript)))
 		return;
 	
-	std::ifstream file;
+	std::ifstream file(fileLoc, std::ios::binary | std::ios::ate);
 	
-	try {
-		file.open(fileLoc, std::ios::binary | std::ios::ate);
-		readFile(file);
-	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::Tag(std::string&): " << e.what() << '\n';
-	}
-	
-	try {
-		file.close();
-	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::Tag(std::string&) closing the file: " << e.what() << '\n';
+	if(file.is_open()) {
+		try {
+			readFile(file);
+		} catch(const std::exception& e) {
+			std::cerr << "Error in ID3::Tag::Tag(std::string&): " << e.what() << '\n';
+		} try {
+			file.close();
+		} catch(const std::exception& e) {
+			std::cerr << "Error in ID3::Tag::Tag(std::string&) closing the file: " << e.what() << '\n';
+		}
 	}
 }
 
@@ -124,8 +122,7 @@ void Tag::revert() {
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////  S T A R T   F R A M E ////////////////////////////
-//////////////////////  G E T T E R S   &   S E T T E R S //////////////////////
+////////////////////  S T A R T   F R A M E   G E T T E R S ////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -176,25 +173,7 @@ std::vector<std::string> Tag::textStrings(const FrameID& frameName) const {
 
 ///@pkg ID3.h
 Text Tag::text(const FrameID& frameName) const {
-	//Get the Frame
-	TextFrame* textFrameObj = getFrame<TextFrame>(frameName);
-	
-	//If it's not a TextFrame, return a default Text struct
-	if(textFrameObj == nullptr) return Text();
-	
-	//Get the Frame's text content
-	std::string textContent = textFrameObj->content();
-	
-	//Try casting the Frame to a DescriptiveTextFrame
-	DescriptiveTextFrame* descFrameObj = dynamic_cast<DescriptiveTextFrame*>(textFrameObj);
-	
-	//If the Frame is a DescriptiveTextFrame, then return a Text struct with its
-	//description and language. If it's a different TextFrame class, then let
-	//those fields default to empty strings.
-	if(descFrameObj == nullptr) return Text(textContent);
-	else                        return Text(textContent,
-		                                     descFrameObj->description(),
-		                                     descFrameObj->language());
+	return getTextStruct(getFrame<TextFrame>(frameName));
 }
 
 ///@pkg ID3.h
@@ -211,12 +190,9 @@ Text Tag::text(const FrameID& frameName,
 	if(descTextFrames.size() == 0) return text(frameName);
 	
 	for(const DescriptiveTextFrame* const currentFrame : descTextFrames) {
-		Text currentText(currentFrame->TextFrame::content(),
-		                 currentFrame->description(),
-		                 currentFrame->language());
-		
-		//Test the Text struct with the given filter function
-		if(filterFunc(currentText.description, currentText.language)) return currentText;
+		//Test the frame's description and language with the given filter function
+		if(filterFunc(currentFrame->description(), currentFrame->language()))
+			return getTextStruct(currentFrame);
 	}
 	
 	//No matching Frame found
@@ -237,22 +213,9 @@ std::vector<Text> Tag::texts(const FrameID& frameName) const {
 	//Reserve slots in toReturn for each Frame in the textFrames vector
 	toReturn.reserve(textFrames.size());
 	
-	//Loop through every text frame
-	for(TextFrame* currentFrame : textFrames) {
-		//Get the Frame's text content
-		std::string textContent = currentFrame->content();
-		
-		//Try casting the Frame to a DescriptiveTextFrame
-		DescriptiveTextFrame* descFrameObj = dynamic_cast<DescriptiveTextFrame*>(currentFrame);
-		
-		//If the Frame is a DescriptiveTextFrame, then add a Text struct with
-		//its description and language. If it's a different TextFrame class, then
-		//let those fields default to empty strings.
-		if(descFrameObj == nullptr) toReturn.push_back(Text(textContent));
-		else                        toReturn.push_back(Text(textContent,
-							                                     descFrameObj->description(),
-							                                     descFrameObj->language()));
-	}
+	//Loop through every text frame and add a Text struct for each Frame
+	for(TextFrame* currentFrame : textFrames)
+		toReturn.push_back(getTextStruct(currentFrame));
 	
 	//Return the Text vector
 	return toReturn;
@@ -326,8 +289,7 @@ std::string Tag::track(bool process) const {
 		size_t slashPos = trackString.find_first_of('/');
 		if(slashPos != std::string::npos)
 			trackString = trackString.substr(0, slashPos);
-		if(!std::all_of(trackString.begin(), trackString.end(), ::isdigit))
-			return "";
+		if(!numericalString(trackString)) return "";
 	}
 	return trackString;
 }
@@ -337,7 +299,7 @@ std::string Tag::trackTotal(bool process) const {
 	size_t slashPos = trackString.find_first_of('/');
 	if(slashPos == std::string::npos) return "";
 	trackString = trackString.substr(slashPos + 1);
-	if(process && !std::all_of(trackString.begin(), trackString.end(), ::isdigit)) return "";
+	if(process && !numericalString(trackString)) return "";
 	return trackString;
 }
 
@@ -348,8 +310,7 @@ std::string Tag::disc(bool process) const {
 		size_t slashPos = discString.find_first_of('/');
 		if(slashPos != std::string::npos)
 			discString = discString.substr(0, slashPos);
-		if(!std::all_of(discString.begin(), discString.end(), ::isdigit))
-			return "";
+		if(!numericalString(discString)) return "";
 	}
 	return discString;
 }
@@ -359,8 +320,7 @@ std::string Tag::discTotal(bool process) const {
 	size_t slashPos = discString.find_first_of('/');
 	if(slashPos == std::string::npos) return "";
 	discString = discString.substr(slashPos + 1);
-	if(process && !std::all_of(discString.begin(), discString.end(), ::isdigit)) return "";
-	return discString;
+	return process && !numericalString(discString) ? "" : discString;
 }
 
 ///@pkg ID3.h
@@ -494,8 +454,157 @@ EventTimingCode Tag::timingCode(const TimingCodes code) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////  E N D   F R A M E //////////////////////////////
-//////////////////////  G E T T E R S   &   S E T T E R S //////////////////////
+//////////////////////  E N D   F R A M E   G E T T E R S //////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////  S T A R T   F R A M E   S E T T E R S ////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+///@pkg ID3.h
+void Tag::text(const FrameID& frameID, const Text& text) {
+	//Get the text frame. If a UnknownFrame exists at the position, delete it.
+	TextFrame* textFrameObj = getFrame<TextFrame>(frameID, true);
+	
+	if(textFrameObj == nullptr) {
+		//If the Frame doesn't exist, create it
+		//If the FrameID shouldn't be a TextFrame, then this will be ignored.
+		addFrame(frameID, factory.create(frameID, text.text, text.description, text.language));
+	} else {		
+		//See if it's a DescriptiveTextFrame
+		DescriptiveTextFrame* descFrameObj = getFrame<DescriptiveTextFrame>(frameID);
+		
+		//Set the content
+		if(descFrameObj == nullptr) textFrameObj->content(text.text);
+		else                        descFrameObj->content(text.text, text.description, text.language);
+	}
+}
+
+///@pkg ID3.h
+void Tag::text(const FrameID& frameID, const std::string& text) {
+	//Get the text frame. If a UnknownFrame exists at the position, delete it.
+	TextFrame* textFrameObj = getFrame<TextFrame>(frameID, true);
+	
+	if(textFrameObj == nullptr)
+		//If the Frame doesn't exist, create it
+		//If the FrameID shouldn't be a TextFrame, then this will be ignored.
+		addFrame(frameID, factory.create(frameID, text));
+	else
+		textFrameObj->content(text);
+}
+
+///@pkg ID3.h
+void Tag::text(const FrameID& frameID, const std::vector<std::string>& text) {
+	//Get the text frame. If a UnknownFrame exists at the position, delete it.
+	TextFrame* textFrameObj = getFrame<TextFrame>(frameID, true);
+	
+	if(textFrameObj == nullptr)
+		//If the Frame doesn't exist, create it
+		//If the FrameID shouldn't be a TextFrame, then this will be ignored.
+		addFrame(frameID, factory.create(frameID, text));
+	else
+		textFrameObj->contents(text);
+}
+
+///@pkg ID3.h
+void Tag::text(const FrameID&                           frameID,
+			      const Text&                              text,
+			      const std::function<bool (const Text&)>& filterFunc) {
+	std::vector<TextFrame*> frameVector = getFrames<TextFrame>(frameID);
+	ulong hits = 0;
+	for(TextFrame* currentFrame : frameVector) {
+		if(filterFunc(getTextStruct(currentFrame))) {
+			hits++;
+			DescriptiveTextFrame* descFrameObj = dynamic_cast<DescriptiveTextFrame*>(currentFrame);
+			if(descFrameObj == nullptr) currentFrame->content(text.text);
+			else                        descFrameObj->content(text.text, text.description, text.language);
+		}
+	}
+	//If no frame matched, try to create a new frame
+	if(!hits) addFrame(frameID, factory.create(frameID, text.text, text.description, text.language));
+}
+
+///@pkg ID3.h
+void Tag::text(const FrameID& frameID,
+			      const Text&    text,
+			      const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc) {
+	std::vector<TextFrame*> frameVector = getFrames<TextFrame>(frameID);
+	ulong hits = 0;
+	for(TextFrame* currentFrame : frameVector) {
+		Text frameText = getTextStruct(currentFrame);
+		if(filterFunc(frameText.text, frameText.description, frameText.language)) {
+			hits++;
+			DescriptiveTextFrame* descFrameObj = dynamic_cast<DescriptiveTextFrame*>(currentFrame);
+			if(descFrameObj == nullptr) currentFrame->content(text.text);
+			else                        descFrameObj->content(text.text, text.description, text.language);
+		}
+	}
+	//If no frame matched, try to create a new frame
+	if(!hits) addFrame(frameID, factory.create(frameID, text.text, text.description, text.language));
+}
+
+///@pkg ID3.h
+void Tag::text(const FrameID&                           frameID,
+			      const std::function<Text (const Text&)>& transformFunc) {
+	std::vector<TextFrame*> frameVector = getFrames<TextFrame>(frameID);
+	for(TextFrame* currentFrame : frameVector) {
+		Text text = transformFunc(getTextStruct(currentFrame));
+		DescriptiveTextFrame* descFrameObj = dynamic_cast<DescriptiveTextFrame*>(currentFrame);
+		if(descFrameObj == nullptr) currentFrame->content(text.text);
+		else                        descFrameObj->content(text.text, text.description, text.language);
+	}
+}
+
+///@pkg ID3.h
+void Tag::text(const FrameID&                           frameID,
+			      const std::string&                       text,
+			      const std::function<bool (const Text&)>& filterFunc) {
+	std::vector<TextFrame*> frameVector = getFrames<TextFrame>(frameID);
+	ulong hits = 0;
+	for(TextFrame* currentFrame : frameVector) {
+		if(filterFunc(getTextStruct(currentFrame))) {
+			hits++;
+			currentFrame->content(text);
+		}
+	}
+	//If no frame matched, try to create a new frame
+	if(!hits) addFrame(frameID, factory.create(frameID, text));
+}
+
+///@pkg ID3.h
+void Tag::text(const FrameID&     frameID,
+			      const std::string& text,
+			      const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc) {
+	std::vector<TextFrame*> frameVector = getFrames<TextFrame>(frameID);
+	ulong hits = 0;
+	for(TextFrame* currentFrame : frameVector) {
+		Text frameText = getTextStruct(currentFrame);
+		if(filterFunc(frameText.text, frameText.description, frameText.language)) {
+			hits++;
+			currentFrame->content(text);
+		}
+	}
+	//If no frame matched, try to create a new frame
+	if(!hits) addFrame(frameID, factory.create(frameID, text));
+}
+
+///@pkg ID3.h
+void Tag::text(const FrameID&  frameID,
+			      const std::function<std::string (const std::string&, const std::string&, const std::string&)>& transformFunc) {
+	std::vector<TextFrame*> frameVector = getFrames<TextFrame>(frameID);
+	for(TextFrame* currentFrame : frameVector) {
+		Text frameText = getTextStruct(currentFrame);
+		std::string text = transformFunc(frameText.text, frameText.description, frameText.language);
+		currentFrame->content(text);
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////  E N D   F R A M E   S E T T E R S //////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -603,6 +712,35 @@ DerivedFrame* Tag::getFrame(const FrameID& frameName) const {
 
 ///@pkg ID3.h
 template<typename DerivedFrame>
+DerivedFrame* Tag::getFrame(const FrameID& frameName, const bool mismatchDelete) {
+	//Check if the Frame is in the map
+	const FrameMap::const_iterator result = frames.find(frameName);
+	if(result == frames.end()) return nullptr;
+	
+	//If the frame is in the map, get it
+	FramePtr frameObj = result->second;
+	
+	//If the frame is "null" then return nullptr
+	if(result->second->null()) {
+		if(mismatchDelete) frames.erase(result);
+		return nullptr;
+	}
+	
+	//Get the requested frame class
+	DerivedFrame* derivedFrameObj = dynamic_cast<DerivedFrame*>(result->second.get());
+	
+	//If mismatchDelete, then check if it's an UnknownFrame, and if so erase it
+	if(mismatchDelete && derivedFrameObj == nullptr) {
+		UnknownFrame* unknownFrameObj = dynamic_cast<UnknownFrame*>(result->second.get());
+		if(unknownFrameObj != nullptr) frames.erase(result);
+	}
+	
+	//If the Frame is not a DerivedFrame then nullptr will be returned
+	return derivedFrameObj;
+}
+
+///@pkg ID3.h
+template<typename DerivedFrame>
 std::vector<DerivedFrame*> Tag::getFrames(const FrameID& frameName) const {
 	//Get the range.
 	//Each const_iterator has a first variable, which stores the Frames value,
@@ -624,6 +762,28 @@ std::vector<DerivedFrame*> Tag::getFrames(const FrameID& frameName) const {
 	
 	//Return the vector
 	return derivedFrameVector;
+}
+
+///@pkg ID3.h
+Text Tag::getTextStruct(const Frame* const frame) const {
+	//If a nullptr, return a default Text struct
+	if(frame == nullptr) return Text();
+	
+	//Cast the frame to a TextFrame
+	const TextFrame* const textFrameObj = dynamic_cast<const TextFrame* const>(frame);
+	
+	//If it's not a TextFrame, return a default Text struct
+	if(textFrameObj == nullptr) return Text();
+	
+	//Try casting the Frame to a DescriptiveTextFrame
+	const DescriptiveTextFrame* const descFrameObj = dynamic_cast<const DescriptiveTextFrame* const>(frame);
+	
+	//If the Frame is a DescriptiveTextFrame, then return a Text struct with its
+	//description and language. If it's a different TextFrame class, then let
+	//those fields default to empty strings.
+	return descFrameObj == nullptr ?
+	       Text(textFrameObj->content()) :
+	       Text(descFrameObj->TextFrame::content(), descFrameObj->description(), descFrameObj->language());
 }
 
 ///@pkg ID3.h

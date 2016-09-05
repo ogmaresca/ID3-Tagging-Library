@@ -202,6 +202,39 @@ FramePair FrameFactory::createPair(const FrameID&     frameName,
 }
 
 ///@pkg ID3FrameFactory.h
+FramePtr FrameFactory::create(const FrameID&                  frameName,
+                              const std::vector<std::string>& textContents,
+                              const std::string&              description,
+                              const std::string&              language) const {
+	FrameClass frameType = FrameFactory::frameType(frameName);
+	
+	switch(frameType) {
+		case FrameClass::CLASS_TEXT:
+			return FramePtr(new TextFrame(frameName, textContents));
+		case FrameClass::CLASS_NUMERICAL:
+			return FramePtr(new NumericalTextFrame(frameName, textContents));
+		case FrameClass::CLASS_DESCRIPTIVE:
+			return FramePtr(new DescriptiveTextFrame(frameName,
+			                                         textContents,
+			                                         description,
+			                                         language,
+			                                         frameOptions(frameName)));
+		case FrameClass::CLASS_URL:
+			return FramePtr(new URLTextFrame(frameName, textContents));
+		default:
+			return FramePtr(new UnknownFrame(frameName));
+	}
+}
+
+///@pkg ID3FrameFactory.h
+FramePair FrameFactory::createPair(const FrameID&                  frameName,
+                                   const std::vector<std::string>& textContents,
+                                   const std::string&              description,
+                                   const std::string&              language) const {
+	return FramePair(frameName, create(frameName, textContents, description, language));
+}
+
+///@pkg ID3FrameFactory.h
 FramePtr FrameFactory::create(const FrameID&     frameName,
                               const long long    frameValue,
                               const std::string& description,

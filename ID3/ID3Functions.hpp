@@ -144,6 +144,14 @@ namespace ID3 {
 	                          const ByteArray& bytes,
 	                          long start=-1,
 	                          long end=-1);
+	
+	/**
+	 * Check if a string contains only digits.
+	 * 
+	 * @param str The string to check.
+	 * @return If the string is numerical.
+	 */
+	bool numericalString(const std::string& str);
 }
 
 #endif

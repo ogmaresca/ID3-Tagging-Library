@@ -503,6 +503,11 @@ namespace ID3 {
 		
 		public:
 			/**
+			 * The destructor.
+			 */
+			virtual ~UnknownFrame();
+			
+			/**
 			 * Checks if the given Frame is an UnknownFrame with the same frame ID,
 			 * "null" status, and if frame content match (when neither of the
 			 * Frames are "null").

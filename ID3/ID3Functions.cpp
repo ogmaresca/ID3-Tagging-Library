@@ -12,7 +12,7 @@
 
 #include <cstring>          //For ::strlen()
 #include <unicode/unistr.h> //For icu::UnicodeString
-#include <algorithm>        //For std::reverse()
+#include <algorithm>        //For std::reverse() and std::all_of()
 
 #include "ID3Functions.hpp"    //For the function definitions
 #include "ID3Constants.hpp"    //For ID3::GENRES
@@ -235,4 +235,9 @@ std::string ID3::getUTF8String(uint8_t encoding,
 		                                                                  start,
 		                                                                  end);
 	}
+}
+
+///@pkg ID3Functions.h
+bool ID3::numericalString(const std::string& str) {
+	return std::all_of(str.begin(), str.end(), ::isdigit);
 }

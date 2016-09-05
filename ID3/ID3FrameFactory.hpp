@@ -140,7 +140,7 @@ namespace ID3 {
 			 * @param description The frame description. Only applies to text
 			 *                    frames with descriptions.
 			 * @param language    The frame language. Only applied to text frames
-			 *                    with languages. 
+			 *                    with languages.
 			 * @return A FramePair, with the Frame ID in the first slot and the
 			 *         FramePtr in the second slot.
 			 * @see ID3::FrameFactory::create(FrameID&,
@@ -152,6 +152,43 @@ namespace ID3 {
 			                     const std::string& textContent="",
 			                     const std::string& description="",
 			                     const std::string& language="") const;
+			
+			/**
+			 * Creates a text-content Frame. If the Frame ID is not a
+			 * valid ID for an ID3 frame with string content, then a
+			 * "null" UnknownFrame will be returned.
+			 * 
+			 * @param frameName    The ID3 frame ID.
+			 * @param textContents The string contents.
+			 * @param description The frame description. Only applies to text
+			 *                    frames with descriptions.
+			 * @param language    The frame language. Only applied to text frames
+			 *                    with languages.
+			 * @return A FramePtr containing a relevant Frame object.
+			 */
+			FramePtr create(const FrameID&                  frameName,
+			                const std::vector<std::string>& textContents,
+			                const std::string&              description="",
+			                const std::string&              language="") const;
+			
+			/**
+			 * Creates a relevant FramePair object.
+			 * 
+			 * @param frameName    The ID3 frame ID.
+			 * @param textContents The string contents.
+			 * @param description The frame description. Only applies to text
+			 *                    frames with descriptions.
+			 * @param language    The frame language. Only applied to text frames
+			 *                    with languages.
+			 * @return A FramePair, with the Frame ID in the first slot and the
+			 *         FramePtr in the second slot.
+			 * @see ID3::FrameFactory::create(FrameID&,
+			 *                                std::vector<std::string>&)
+			 */
+			FramePair createPair(const FrameID&                  frameName,
+			                     const std::vector<std::string>& textContents,
+			                     const std::string&              description,
+			                     const std::string&              language) const;
 			
 			/**
 			 * Creates a text content or numerical Frame. If the Frame ID is not a

@@ -45,6 +45,8 @@ EventTimingFrame::EventTimingFrame(const ushort version,
 EventTimingFrame::EventTimingFrame() noexcept : Frame::Frame(FRAME_EVENT_TIMING_CODES),
                                                 timeStampFormat(TimeStampFormat::MILLISECONDS) {}
 
+///@pkg ID3EventTimingFrame.h
+EventTimingFrame::~EventTimingFrame() {}
 
 ///@pkg ID3EventTimingFrame.h
 FrameClass EventTimingFrame::type() const noexcept { return FrameClass::CLASS_EVENT_TIMING; }

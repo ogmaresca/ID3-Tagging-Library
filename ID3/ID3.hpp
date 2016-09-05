@@ -386,6 +386,7 @@ namespace ID3 {
 			 */
 			void write(std::fstream& file);
 			
+			//TODO
 			//protected
 			//void write(std::ostream& file)
 			
@@ -850,6 +851,111 @@ namespace ID3 {
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
 			
+			/**
+			 * Set the text content of a frame. If the frame ID is not for text
+			 * content, this method will do nothing.
+			 * 
+			 * NOTE: If there are more than one instance of the frame ID in the
+			 *       tag, only the first frame will be modified.
+			 * 
+			 * @param frameID The ID3v2 frame ID.
+			 * @param text    A Text struct containing new text content.
+			 */
+			void text(const FrameID& frameID, const Text& text);
+			
+			/** @see ID3::Tag::text(FrameID&, Text&) */
+			void text(const FrameID& frameID, const std::string& text);
+			
+			/** @see ID3::Tag::text(FrameID&, Text&) */
+			void text(const FrameID& frameID, const std::vector<std::string>& text);
+			
+			/**
+			 * Set the text content of a frame.
+			 * 
+			 * NOTE: The function takes in a Text struct of the frame currently
+			 *       being iterated over, and returns whether the given frame
+			 *       should have its values changed to the Text struct given in the
+			 *       method call.
+			 * 
+			 * NOTE: The method will loop over all frames with the given frame ID
+			 *       and will not terminate after the first true return value from
+			 *       the provided filter function. If no frame matches the given
+			 *       filter function, a frame will be created from the Text struct,
+			 *       provided the frame ID supports multiple instances of the frame
+			 *       or no instance of the frame already exists.
+			 * 
+			 * @param frameID    The ID3v2 frame ID.
+			 * @param text       The text to set.
+			 * @param filterFunc The filter function (see above).
+			 */
+			void text(const FrameID&                           frameID,
+			          const Text&                              text,
+			          const std::function<bool (const Text&)>& filterFunc);
+			
+			/**
+			 * Set the text content of a frame.
+			 * 
+			 * NOTE: The first parameter of the filter function is the text content
+			 *       of the frame being iterated over, the second paramter is its
+			 *       description, and the third its language. It returns whether
+			 *       the given frame should have its values changed to the Text
+			 *       struct given in the method call.
+			 * 
+			 * NOTE: The method will loop over all frames with the given frame ID
+			 *       and will not terminate after the first true return value from
+			 *       the provided filter function. If no frame matches the given
+			 *       filter function, a frame will be created from the Text struct,
+			 *       provided the frame ID supports multiple instances of the frame
+			 *       or no instance of the frame already exists.
+			 * 
+			 * @param frameID    The ID3v2 frame ID.
+			 * @param text       The text to set.
+			 * @param filterFunc The filter function (see above).
+			 */
+			void text(const FrameID& frameID,
+			          const Text&    text,
+			          const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc);
+			
+			/**
+			 * Set the text content of frames.
+			 * 
+			 * NOTE: The function takes in a Text struct of the frame currently
+			 *       being iterated over, and returns a Text struct of what the
+			 *       frame's value should be.
+			 * 
+			 * @param frameID       The ID3v2 frame ID.
+			 * @param transformFunc The transformation function (see above).
+			 */
+			void text(const FrameID&                           frameID,
+			          const std::function<Text (const Text&)>& transformFunc);
+			
+			/** @see ID3::text(FrameID&, Text&, std::function<bool (Text&)>&) */
+			void text(const FrameID&                           frameID,
+			          const std::string&                       text,
+			          const std::function<bool (const Text&)>& filterFunc);
+			
+			/**
+			 * @see ID3::text(FrameID&,
+			 *                Text&,
+			 *                std::function<bool (std::string&, std::string&, std::string&)>&)
+			 */
+			void text(const FrameID&     frameID,
+			          const std::string& text,
+			          const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc);
+			
+			/**
+			 * Set the text content of frames.
+			 * 
+			 * NOTE: The function takes in the text content, description, and
+			 *       language of the frame currently being iterated over, and
+			 *       returns a string of what the frame's text content should be.
+			 * 
+			 * @param frameID       The ID3v2 frame ID.
+			 * @param transformFunc The transformation function (see above).
+			 */
+			void text(const FrameID& frameID,
+			          const std::function<std::string (const std::string&, const std::string&, const std::string&)>& transformFunc);
+			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
 			////////////////// E N D   F R A M E   S E T T E R S //////////////////
@@ -956,11 +1062,32 @@ namespace ID3 {
 			 * If there is more than one Frame with the same frame name in the
 			 * map, only the first Frame in the map will be returned.
 			 * 
-			 * @param frameName The name of the frame.
+			 * @param frameName      The name of the frame.
 			 * @return The Frame in the map, or nullptr.
 			 */
 			template<typename DerivedFrame>
 			DerivedFrame* getFrame(const FrameID& frameName) const;
+			
+			/**
+			 * A protected method to get a Frame from the FrameMap.
+			 * If the requested frame is not in the map, "null", or if it's not the
+			 * same class as the template class, then a null pointer will be
+			 * returned. This method uses dynamic_cast() to cast the Frame to the
+			 * derived Frame class.
+			 * 
+			 * If there is more than one Frame with the same frame name in the
+			 * map, only the first Frame in the map will be returned.
+			 * 
+			 * @param frameName      The name of the frame.
+			 * @param mismatchDelete If there is a frame at frameName, but it is a
+			 *                       UnknownFrame instead of a DerivedFrame, or it
+			 *                       is "null", then delete the frame at FrameID.
+			 *                       the class DerivedFrame, delete it.
+			 * @return The Frame in the map, or nullptr.
+			 */
+			template<typename DerivedFrame>
+			DerivedFrame* getFrame(const FrameID& frameName,
+			                       const bool mismatchDelete=false);
 			
 			/**
 			 * A protected method to get a Frame* vector from the FrameMap.
@@ -977,6 +1104,16 @@ namespace ID3 {
 			 */
 			template<typename DerivedFrame>
 			std::vector<DerivedFrame*> getFrames(const FrameID& frameName) const;
+			
+			/**
+			 * Create a Text struct from a Frame object.
+			 * 
+			 * @param frame The Frame object.
+			 * @return An empty Text struct if the Frame is not a TextFrame, and a
+			 *         Text struct with a blank description and language if not a
+			 *         DescriptiveTextFrame.
+			 */
+			inline Text getTextStruct(const Frame* const frame) const;
 			
 			/**
 			 * A constructor helper method that gets the tag information from the

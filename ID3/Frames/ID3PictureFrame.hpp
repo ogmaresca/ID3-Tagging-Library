@@ -79,6 +79,11 @@ namespace ID3 {
 		
 		public:
 			/**
+			 * The destructor.
+			 */
+			virtual ~PictureFrame();
+			
+			/**
 			 * Checks if the given Frame is a PictureFrame with the same frame ID,
 			 * "null" status, and if the MIME type and picture data match
 			 * (when neither of the Frames are "null").

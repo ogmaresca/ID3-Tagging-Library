@@ -44,6 +44,11 @@ namespace ID3 {
 		
 		public:
 			/**
+			 * The destructor.
+			 */
+			virtual ~TextFrame();
+			
+			/**
 			 * Checks if the given Frame is a TextFrame with the same frame ID,
 			 * "null" status, and if text content match (when neither of the Frames
 			 * are "null").
@@ -173,11 +178,19 @@ namespace ID3 {
 			 * NOTE: The frame ID is not checked to verify that the
 			 *       frame ID is a valid text frame.
 			 * 
-			 * @param frameName The frame ID.
-			 * @param value The text of the frame (optional).
+			 * @param frameName The frame ID (optional).
+			 * @param value     The text of the frame (optional).
 			 */
 			TextFrame(const FrameID&     frameName=Frames::FRAME_UNKNOWN_FRAME,
 			          const std::string& value="") noexcept;
+			
+			/**
+			 * @param frameName The frame ID.
+			 * @param values    The text of the frame.
+			 * @see ID3::TextFrame::TextFrame(FrameID&, std::string&)
+			 */
+			TextFrame(const FrameID&                  frameName,
+			          const std::vector<std::string>& values);
 			
 			/**
 			 * The content of the frame.
@@ -226,6 +239,11 @@ namespace ID3 {
 		friend class FrameFactory;
 		
 		public:
+			/**
+			 * The destructor.
+			 */
+			virtual ~NumericalTextFrame();
+			
 			/**
 			 * Checks if the given Frame is a NumericalTextFrame with the same,
 			 * frame ID, "null" status, and if text content match (when neither of
@@ -380,8 +398,24 @@ namespace ID3 {
 			 * @param textContent The numerical text content of the frame.
 			 * @param description The frame description (optional).
 			 */
-			NumericalTextFrame(const FrameID& frameName,
-			                   const long     intContent);
+			NumericalTextFrame(const FrameID&  frameName,
+			                   const long long intContent);
+			
+			/**
+			 * @param frameName The frame ID.
+			 * @param values    The text of the frame.
+			 * @see ID3::NumericalTextFrame::NumericalTextFrame(FrameID&, std::string&)
+			 */
+			NumericalTextFrame(const FrameID&                  frameName,
+			                   const std::vector<std::string>& values);
+			
+			/**
+			 * @param frameName The frame ID.
+			 * @param values    The numerical text of the frame.
+			 * @see ID3::NumericalTextFrame::NumericalTextFrame(FrameID&, long long)
+			 */
+			NumericalTextFrame(const FrameID&                frameName,
+			                   const std::vector<long long>& values);
 			
 			/**
 			 * The read() method for NumericalTextFrame first gets the text
@@ -415,6 +449,11 @@ namespace ID3 {
 		friend class FrameFactory;
 		
 		public:
+			/**
+			 * The destructor.
+			 */
+			virtual ~DescriptiveTextFrame();
+			
 			/**
 			 * An option value used when reading USLT, USER, and COMM frames, as
 			 * they have a 3-byte language string after the encoding byte.
@@ -456,14 +495,36 @@ namespace ID3 {
 			virtual FrameClass type() const noexcept;
 			
 			/**
-			 * Set the text content and optionally description.
-			 * Call write() to finalize changes.
+			 * Set the text content. Call write() to finalize changes.
 			 * 
 			 * @param newContent The new text content.
+			 */
+			virtual void content(const std::string& newContent);
+			
+			/**
+			 * Set the text content and the description.
+			 * Call write() to finalize changes.
+			 * 
+			 * @param newContent     The new text content.
 			 * @param newDescription The new description.
+			 * @see ID3::DescriptiveTextFrame::description(std::string&)
 			 */
 			virtual void content(const std::string& newContent,
-			                     const std::string& newDescription="");
+			                     const std::string& newDescription);
+			
+			/**
+			 * Set the text content, description, and language.
+			 * Call write() to finalize changes.
+			 * 
+			 * @param newContent     The new text content.
+			 * @param newDescription The new description.
+			 * @param newLanguage    The new language.
+			 * @see ID3::DescriptiveTextFrame::description(std::string&)
+			 * @see ID3::DescriptiveTextFrame::language(std::string&)
+			 */
+			virtual void content(const std::string& newContent,
+			                     const std::string& newDescription,
+			                     const std::string& newLanguage);
 			
 			/**
 			 * Get the description.
@@ -474,6 +535,9 @@ namespace ID3 {
 			
 			/**
 			 * Set the description. Call write() to finalize changes.
+			 * 
+			 * NOTE: If the no description option was passed to the constructor,
+			 *       this method does nothing.
 			 * 
 			 * @param newDescription The new description.
 			 */
@@ -558,7 +622,29 @@ namespace ID3 {
 			                     const std::string& value="",
 			                     const std::string& description="",
 			                     const std::string& language="",
-			                     const ushort       options=0);
+			                     const ushort       options=0) noexcept;
+			
+			/**
+			 * @param frameName The frame ID.
+			 * @param values    The text of the frame.
+			 * @param description The frame description (optional).
+			 * @param language    The frame language (optional).
+			 * @param options Optional options for decoding the ByteArray, where
+			 *                the option values checked for are
+			 *                ID3::DescriptiveTextFrame::OPTION_LANGUAGE and
+			 *                ID3::DescriptiveTextFrame::OPTION_LATIN1_TEXT (optional).
+			 *                For multiple values, OR (option | option) them together.
+			 * @see ID3::DescriptiveTextFrame::DescriptiveTextFrame(FrameID&,
+			 *                                                      std::string&,
+			 *                                                      std::string&,
+			 *                                                      std::string&,
+			 *                                                      ushort)
+			 */
+			DescriptiveTextFrame(const FrameID&                  frameName,
+			                     const std::vector<std::string>& values,
+			                     const std::string&              description="",
+			                     const std::string&              language="",
+			                     const ushort                    options=0);
 			
 			/**
 			 * The writeBody() method for DescriptiveTextFrame the stored text
@@ -646,6 +732,11 @@ namespace ID3 {
 		
 		public:
 			/**
+			 * The destructor.
+			 */
+			virtual ~URLTextFrame();
+			
+			/**
 			 * Checks if the given Frame is a URLTextFrame with the same frame ID,
 			 * "null" status, and if text content match (when neither of the Frames
 			 * are "null").
@@ -699,7 +790,15 @@ namespace ID3 {
 			 * @param value The text of the frame (optional).
 			 */
 			URLTextFrame(const FrameID&     frameName=Frames::FRAME_UNKNOWN_FRAME,
-			             const std::string& value="");
+			             const std::string& value="") noexcept;
+			
+			/**
+			 * @param frameName The frame ID.
+			 * @param values    The text of the frame.
+			 * @see ID3::URLTextFrame::URLTextFrame(FrameID&, std::string&)
+			 */
+			URLTextFrame(const FrameID&                  frameName,
+			             const std::vector<std::string>& values);
 			
 			/**
 			 * The read() method for URLTextFrame saves every byte following the

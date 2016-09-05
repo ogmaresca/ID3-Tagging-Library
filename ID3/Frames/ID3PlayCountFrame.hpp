@@ -44,6 +44,11 @@ namespace ID3 {
 		
 		public:
 			/**
+			 * The destructor.
+			 */
+			virtual ~PlayCountFrame();
+			
+			/**
 			 * Checks if the given Frame is a PlayCounterFrame with the same frame
 			 * ID, "null" status, and if the play counts match (when neither of the
 			 * Frames are "null").
@@ -155,6 +160,11 @@ namespace ID3 {
 		friend class FrameFactory;
 		
 		public:
+			/**
+			 * The destructor.
+			 */
+			virtual ~PopularimeterFrame();
+			
 			/**
 			 * Checks if the given Frame is a PopularimeterFrame with the same
 			 * frame frame ID, "null" status, and if the email address, ratings,
