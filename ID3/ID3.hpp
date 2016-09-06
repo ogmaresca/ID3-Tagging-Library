@@ -313,30 +313,6 @@ namespace ID3 {
 			Tag();
 			
 			/**
-			 * Write the tags to the file. This method will write to the file
-			 * location that was given in the constructor. If the constructor
-			 * ID3::Tag::Tag(std::string&) was not used when creating this object,
-			 * or the file at that location has been renamed, an
-			 * ID3::FileNotFoundException will be thrown.
-			 * 
-			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
-			 *       be larger than the file itself, an ID3::FormatException will
-			 *       be thrown.
-			 * NOTE: If another Tag object or another program has edited the ID3
-			 *       tags on the file between the creation of this object and the
-			 *       call to this method, the new tags will be overriden with the
-			 *       tags in this object.
-			 * 
-			 * @throws ID3::FileNotFoundException if the file location saved in
-			 *         this object does not exist.
-			 * @throws ID3::NotMP3Exception if the file is not an MP3 file.
-			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
-			 *         bigger than the file itself.
-			 * @todo Implement the method and its exceptions.
-			 */
-			void write();
-			
-			/**
 			 * Write the tags to the file location given.
 			 * 
 			 * NOTE: If a file does not exist at the location a
@@ -360,6 +336,18 @@ namespace ID3 {
 			 * @todo Implement the method and its exceptions.
 			 */
 			void write(const std::string& fileLoc);
+			
+			/**
+			 * Write the tags to the file. This method will write to the last valid
+			 * file location given in ID3::Tag::write(std::string&), or if was
+			 * never called the lcoation that was that was given in the constructor.
+			 * Then, if the constructor ID3::Tag::Tag(std::string&) was not used
+			 * when creating this object, or the file at that location has been
+			 * renamed, an ID3::FileNotFoundException will be thrown.
+			 * 
+			 * @see ID3::Tag::write(std::string&)
+			 */
+			inline void write() { write(fileName()); }
 			
 			/**
 			 * Write the tags to the given file object.
@@ -556,10 +544,9 @@ namespace ID3 {
 			/**
 			 * Get the title tag.
 			 * 
-			 * @return The title of the music file, or "" if there is
-			 *         no title set.
+			 * @return The title of the tag, or "" if no title is set.
 			 */
-			std::string title() const;
+			inline std::string title() const { return textString(FRAME_TITLE); }
 			
 			/**
 			 * Get the genre tag.
@@ -572,8 +559,7 @@ namespace ID3 {
 			 *                corresponding ID3v1 genre will be returned.
 			 *                If false, the raw genre string as it appears on file
 			 *                will be returned.
-			 * @return The genre of the music file, or "" if there is
-			 *         no title set.
+			 * @return The genre of the tag, or "" if no genre is set.
 			 */
 			std::string genre(bool process=true) const;
 			
@@ -588,10 +574,9 @@ namespace ID3 {
 			/**
 			 * Get the artist tag.
 			 * 
-			 * @return The artist of the music file, or "" if there is
-			 *         no title set.
+			 * @return The artist of the tag, or "" if no artist is set.
 			 */
-			std::string artist() const;
+			inline std::string artist() const { return textString(FRAME_ARTIST); }
 			
 			/**
 			 * Get the artist tag as a vector of artist string(s).
@@ -599,15 +584,14 @@ namespace ID3 {
 			 * @see ID3::Tag::artist()
 			 * @see ID3::Tag::textStrings(Frames)
 			 */
-			std::vector<std::string> artists() const;
+			inline std::vector<std::string> artists() const { return textStrings(FRAME_ARTIST); }
 			
 			/**
 			 * Get the album tag.
 			 * 
-			 * @return The album of the music file, or "" if there is
-			 *         no title set.
+			 * @return The album of the tag, or "" if no album is set.
 			 */
-			std::string album() const;
+			inline std::string album() const { return textString(FRAME_ALBUM); }
 			
 			/**
 			 * Get the album tag as a vector of album string(s).
@@ -615,15 +599,14 @@ namespace ID3 {
 			 * @see ID3::Tag::album()
 			 * @see ID3::Tag::textStrings(Frames)
 			 */
-			std::vector<std::string> albums() const;
+			inline std::vector<std::string> albums() const { return textStrings(FRAME_ALBUM); }
 			
 			/**
 			 * Get the album artist/band/orchestra/accompaniment tag.
 			 * 
-			 * @return The Album artist of the music file, or "" if
-			 *         there is no tag set.
+			 * @return The album artist of the tag, or "" if no album artist is set.
 			 */
-			std::string albumArtist() const;
+			inline std::string albumArtist() const  { return textString(FRAME_ALBUM_ARTIST); }
 			
 			/**
 			 * Get the album artist/band/orchestra/accompaniment tag as a vector of
@@ -632,86 +615,68 @@ namespace ID3 {
 			 * @see ID3::Tag::albumArtist()
 			 * @see ID3::Tag::textStrings(Frames)
 			 */
-			std::vector<std::string> albumArtists() const;
+			inline std::vector<std::string> albumArtists() const { return textStrings(FRAME_ALBUM_ARTIST); }
 			
 			/**
 			 * Get the year tag. It first looks for the original recording time
 			 * frame, and if it can't find that then it looks for the year frame.
 			 * 
-			 * @return The year of the music file, or "" if there is
-			 *         no year set.
+			 * @return The year of the tag, or "" if no year is set.
 			 */
-			std::string year() const;
+			inline std::string year() const { return exists(FRAME_RECORDING_TIME) ?
+				                                      textString(FRAME_RECORDING_TIME).substr(0,4) :
+				                                      textString(FRAME_YEAR); }
 			
 			/**
 			 * Get the track tag.
 			 * 
-			 * @param process If true, this method will return an empty
-			 *                string if the frame value is not an integer.
-			 *                It will also ignore any text after a slash
-			 *                ('/') in the frame content, 
-			 *                If false, the raw track string as it
-			 *                appears in the TRCK frame on file will be
-			 *                returned.
-			 * @return The track of the music file, or "" if there is
-			 *         no track set.
-			 * @see ID3::Tag::trackTotal(bool)
+			 * NOTE: If there is a slash ('/') in the track, it and the following
+			 *       text will not be returned. See ID3::Tag::trackTotal() to get
+			 *       the track total.
+			 * 
+			 * @return The track of the tag, or "" if no track is set.
+			 * @see ID3::Tag::trackTotal()
 			 */
-			std::string track(bool process=true) const;
+			std::string track() const;
 			
 			/**
 			 * Get the total number of tracks in the set of the original recording.
 			 * This is taken from the TRCK frame, and consists of text
 			 * located after a slash ('/') in the frame content.
 			 * 
-			 * @param process If true, this method will return an empty
-			 *                string if the value is not an integer.
-			 *                If false, the raw string as it appears
-			 *                on file after a slash will be returned.
-			 * @return The track total of the music file, or "" if there
-			 *         is no track total set.
-			 * @see ID3::Tag::track(bool)
+			 * @return The track total of the tag, or "" if no track total is set.
+			 * @see ID3::Tag::track()
 			 */
-			std::string trackTotal(bool process=true) const;
+			std::string trackTotal() const;
 			
 			/**
-			 * Get the disc tag.
+			 * Get the disc number tag.
 			 * 
-			 * @param process If true, this method will return an empty
-			 *                string if the frame value is not an integer.
-			 *                It will also ignore any text after a slash
-			 *                ('/') in the frame content, 
-			 *                If false, the raw disc string as it
-			 *                appears in the TPOS frame on file will be
-			 *                returned.
-			 * @return The disc number of the music file, or "" if there
-			 *         is no disc number set.
-			 * @see ID3::Tag::discTotal(bool)
+			 * NOTE: If there is a slash ('/') in the disc number, it and the
+			 *       following text will not be returned. See ID3::Tag::discTotal()
+			 *       to get the disc total.
+			 * 
+			 * @return The disc number of the tag, or "" if no disc is set.
+			 * @see ID3::Tag::discTotal()
 			 */
-			std::string disc(bool process=true) const;
+			std::string disc() const;
 			
 			/**
 			 * Get the total number of discs in the set of the original recording.
 			 * This is taken from the TPOS frame, and consists of text
 			 * located after a slash ('/') in the frame content.
 			 * 
-			 * @param process If true, this method will return an empty
-			 *                string if the value is not an integer.
-			 *                If false, the raw string as it appears
-			 *                on file after a slash will be returned.
-			 * @return The disc total of the music file, or "" if there is
-			 *         no disc total set.
-			 * @see ID3::Tag::disc(bool)
+			 * @return The disc total of the tag, or "" if no disc total is set.
+			 * @see ID3::Tag::disc()
 			 */
-			std::string discTotal(bool process=true) const;
+			std::string discTotal() const;
 			
 			/**
 			 * Get the composer tag.
 			 * 
-			 * @return The composer of the music file, or "" if there is
-			 *         no composer set.
+			 * @return The composer of the tag, or "" if no composer is set.
 			 */
-			std::string composer() const;
+			inline std::string composer() const { return textString(FRAME_COMPOSER); }
 			
 			/**
 			 * Get the composer tag as a vector of composer string(s).
@@ -719,22 +684,21 @@ namespace ID3 {
 			 * @see ID3::Tag::composer()
 			 * @see ID3::Tag::textStrings(Frames)
 			 */
-			std::vector<std::string> composers() const;
+			inline std::vector<std::string> composers() const { return textStrings(FRAME_COMPOSER); }
 			
 			/**
 			 * Get the BPM tag.
 			 * 
-			 * @return The bpm of the music file, or "" if there is
-			 *         no bpm set.
+			 * @return The BPM of the tag, or "" if no BPM is set.
 			 */
-			std::string bpm() const;
+			inline std::string bpm() const { return textString(FRAME_BPM); }
 			
 			/**
 			 * Get the tag comments as a vector of Text structs.
 			 * 
 			 * @see ID3::Tag::texts(FrameID&)
 			 */
-			std::vector<Text> comments() const;
+			inline std::vector<Text> comments() const { return texts(FRAME_COMMENT); }
 			
 			/**
 			 * Get a specific comment in the tag as a Text struct.
@@ -742,7 +706,7 @@ namespace ID3 {
 			 * @see ID3::Tag::comments()
 			 * @see ID3::Tag::text(FrameID&, std::function&)
 			 */
-			Text comment(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const;
+			Text comment(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const { return text(FRAME_COMMENT, filterFunc); }
 			
 			/**
 			 * Get the attached picture.
@@ -769,9 +733,8 @@ namespace ID3 {
 			/**
 			 * Get a vector of all attached pictures.
 			 * 
-			 * NOTE: Unlike the getter methods for text frames, if there are no
-			 *       pictures stored in the tag then the returned vector will be
-			 *       empty.
+			 * NOTE: If there are no pictures in the tag then the returned vector
+			 *       will be empty.
 			 * 
 			 * @return A vector of Picture structs.
 			 */
@@ -956,6 +919,184 @@ namespace ID3 {
 			void text(const FrameID& frameID,
 			          const std::function<std::string (const std::string&, const std::string&, const std::string&)>& transformFunc);
 			
+			/**
+			 * Set the title tag.
+			 * 
+			 * @param newTitle The new title.
+			 */
+			inline void title(const std::string& newTitle) { text(FRAME_TITLE, newTitle); }
+			
+			/**
+			 * Set the genre tag.
+			 * 
+			 * @param newGenre The new genre.
+			 */
+			inline void genre(const std::string& newGenre) { text(FRAME_GENRE, newGenre); }
+			/**
+			 * Set the genre tag.
+			 * 
+			 * @param newGenre The new genre, which is an ID3v1 genre ID.
+			 */
+			void genre(const ushort newGenre);
+			/** @see ID3::Tag::genre(std::string&) */
+			inline void genres(const std::vector<std::string>& newGenres) { text(FRAME_GENRE, newGenres); }
+			
+			/**
+			 * Set the artist tag.
+			 * 
+			 * @param newArtist The new artist.
+			 */
+			inline void artist(const std::string& newArtist) { text(FRAME_ARTIST, newArtist); }
+			/** @see ID3::Tag::artist(std::string&) */
+			inline void artist(const std::vector<std::string>& newArtists) { text(FRAME_ARTIST, newArtists); }
+			/** @see ID3::Tag::artist(std::string&) */
+			inline void artists(const std::vector<std::string>& newArtists) { text(FRAME_ARTIST, newArtists); }
+			
+			/**
+			 * Set the album tag.
+			 * 
+			 * @param newAlbum The new album.
+			 */
+			inline void album(const std::string& newAlbum) { text(FRAME_ALBUM, newAlbum); }
+			/** @see ID3::Tag::album(std::string&) */
+			inline void album(const std::vector<std::string>& newAlbums) { text(FRAME_ALBUM, newAlbums); }
+			/** @see ID3::Tag::album(std::string&) */
+			inline void albums(const std::vector<std::string>& newAlbums) { text(FRAME_ALBUM, newAlbums); }
+			
+			/**
+			 * Set the album artist/band/orchestra/accompaniment tag.
+			 * 
+			 * @param newAlbumArtist The new album artist.
+			 */
+			inline void albumArtist(const std::string& newAlbumArtist) { text(FRAME_ALBUM_ARTIST, newAlbumArtist); }
+			/** @see ID3::Tag::albumArtist(std::string&) */
+			inline void albumArtist(const std::vector<std::string>& newAlbumArtists) { text(FRAME_ALBUM_ARTIST, newAlbumArtists); }
+			/** @see ID3::Tag::albumArtist(std::string&) */
+			inline void albumArtists(const std::vector<std::string>& newAlbumArtists) { text(FRAME_ALBUM_ARTIST, newAlbumArtists); }
+			
+			/**
+			 * Set the year tag. This sets both the ID3v2.3 year frame, and the
+			 * ID3v2.4 recording time frame.
+			 * 
+			 * NOTE: The year must be a valid integer number, or else the year will
+			 *       be set to a blank string. If it is not a valid integer, then
+			 *       the TDRC (recording time) frame will be reset. If the year is
+			 *       more than 4 digits long the fifth and beyond digits will be
+			 *       trimmed off, and if below and not an empty string 0's will be
+			 *       prepended until it is four characters long.
+			 * 
+			 * @param newYear The new year.
+			 */
+			void year(const std::string& newYear);
+			
+			/** @see ID3::Tag::year(std::string&) */
+			inline void year(const ushort newYear) { year(std::to_string(newYear)); }
+			
+			/**
+			 * Set the track tag.
+			 * 
+			 * NOTE: The track must be a valid integer. The track total can also be
+			 *       set if added after a slash ('/') after the track number, or
+			 *       ID3::Tag::trackTotal(std::string&) can be used. The track
+			 *       total must also be a valid integer number.
+			 * 
+			 * @param newTrack The new track.
+			 * @see ID3::Tag::trackTotal(std::string&)
+			 */
+			void track(const std::string& newTrack);
+			
+			/** @see ID3::Tag::track(std::string&) */
+			inline void track(const ulong newTrack) { track(std::to_string(newTrack)); }
+			
+			/**
+			 * Set the track total of the track tag.
+			 * 
+			 * NOTE: The track total must be a valid integer.
+			 * 
+			 * @param newTrackTotal The new track total.
+			 * @see ID3::Tag::track(std::string&)
+			 */
+			void trackTotal(const std::string& newTrackTotal);
+			
+			/** @see ID3::Tag::trackTotal(std::string&) */
+			inline void trackTotal(const ulong newTrackTotal) { text(FRAME_TRACK, track()+'/'+std::to_string(newTrackTotal)); }
+			
+			/**
+			 * Set the disc tag.
+			 * 
+			 * NOTE: The disc must be a valid integer. The disc total can also be
+			 *       set if added after a slash ('/') after the disc number, or
+			 *       ID3::Tag::discTotal(std::string&) can be used. The disc
+			 *       total must also be a valid integer number.
+			 * 
+			 * @param newDisc The new disc number.
+			 * @see ID3::Tag::discTotal(std::string&)
+			 */
+			void disc(const std::string& newDisc);
+			
+			/** @see ID3::Tag::track(std::string&) */
+			inline void disc(const ulong newDisc) { disc(std::to_string(newDisc)); }
+			
+			/**
+			 * Set the disc total of the disc tag.
+			 * 
+			 * NOTE: The disc total must be a valid integer.
+			 * 
+			 * @param newDiscTotal The new disc total.
+			 * @see ID3::Tag::track(std::string&)
+			 */
+			void discTotal(const std::string& newDiscTotal);
+			
+			/** @see ID3::Tag::discTotal(std::string&) */
+			inline void discTotal(const ulong newDiscTotal) { text(FRAME_DISC, disc()+'/'+std::to_string(newDiscTotal)); }
+			
+			/**
+			 * Set the composer tag.
+			 * 
+			 * @param newComposer The new composer.
+			 */
+			inline void composer(const std::string& newComposer) { text(FRAME_COMPOSER, newComposer); }
+			/** @see ID3::Tag::composer(std::string&) */
+			inline void composer(const std::vector<std::string>& newComposers) { text(FRAME_COMPOSER, newComposers); }
+			/** @see ID3::Tag::composer(std::string&) */
+			inline void composers(const std::vector<std::string>& newComposers) { text(FRAME_COMPOSER, newComposers); }
+			
+			/**
+			 * Set the BPM tag.
+			 * 
+			 * NOTE: The BPM must be a valid integer.
+			 * 
+			 * @param newBPM The new BPM.
+			 */
+			inline void bpm(const std::string& newBPM) { text(FRAME_BPM, newBPM); }
+			/** @see ID3::Tag::bpm(std::string&) */
+			inline void bpm(const ulong newBPM) { text(FRAME_BPM, std::to_string(newBPM)); }
+			
+			/**
+			 * Set or create the first comment tag.
+			 * 
+			 * @see ID3::Tag::text(FrameID&, Text&)
+			 */
+			inline void comment(const Text& newComment) { text(FRAME_COMMENT, newComment); }
+			
+			/**
+			 * Set a specific comment tag.
+			 * 
+			 * @see ID3::Tag::text(FrameID&, Text&, std::function<bool (Text&)>&)
+			 */
+			inline void comment(const Text& newComment,
+			                    const std::function<bool (const Text&)>& filterFunc) { text(FRAME_COMMENT, newComment, filterFunc); }
+			
+			/**
+			 * Set a specific comment tag.
+			 * 
+			 * @see ID3::Tag::text(FrameID&, Text&, std::function<bool (std::string&, std::string&, std::string&)>&)
+			 */
+			inline void comment(const Text& newComment,
+			                    const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc) {
+				text(FRAME_COMMENT, newComment, filterFunc);
+			}
+			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
 			////////////////// E N D   F R A M E   S E T T E R S //////////////////
@@ -978,17 +1119,25 @@ namespace ID3 {
 			/**
 			 * @returns The filename last given in write(std::string&), or the
 			 *          filename given in the constructor
-			 *          ID3::Tag::Tag(std::string&) in the write method was never
+			 *          ID3::Tag::Tag(std::string&) if the write method was never
 			 *          called, or "" if neither were called.
 			 */
-			std::string file() const;
+			std::string fileName() const;
+			
+			/**
+			 * @returns The size of the file last given in a write method, or the
+			 *          size of the file given in the constructor if a write method
+			 *          hasn't been called, or 0 if a write method hasn't been
+			 *          called and the Tag was created with the empty constructor.
+			 */
+			ulong fileSize() const;
 			
 			/**
 			 * Print all the tag information.
 			 */
 			void print() const;
 			
-		protected:
+		private:
 			/**
 			 * A struct that records what ID3 versions a file contains.
 			 */
@@ -1128,18 +1277,16 @@ namespace ID3 {
 			 * the file.
 			 * 
 			 * @param file     The file stream object.
-			 * @param filesize The size of the stream object.
 			 */
-			void readFileV1(std::istream& file, const ulong filesize);
+			void readFileV1(std::istream& file);
 			
 			/**
 			 * A constructor helper method that reads the ID3v2 tags from
 			 * the file.
 			 * 
 			 * @param file     The file stream object.
-			 * @param filesize The size of the stream object.
 			 */
-			void readFileV2(std::istream& file, const ulong filesize);
+			void readFileV2(std::istream& file);
 			
 			/**
 			 * A constructor helper method that gets a v1 tag struct and sets the class'
@@ -1193,11 +1340,18 @@ namespace ID3 {
 			FrameFactory factory;
 			
 			/**
-			 * The filename (if not getting the file via an ifstream object).
+			 * The filename (if not getting the file via an istream object).
 			 * 
 			 * @see ID3::Tag::file()		 
 			 */
 			std::string filename;
+			
+			/**
+			 * The size of the file.
+			 * 
+			 * @see ID3::Tag::filesize()
+			 */
+			ulong filesize;
 	};
 }
 

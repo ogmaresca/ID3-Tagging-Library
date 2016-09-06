@@ -66,17 +66,17 @@ namespace {
 }
 
 ///@pkg ID3.h
-Tag::Tag(std::ifstream& file) {
+Tag::Tag(std::ifstream& file) : filesize(0) {
 	if(file && file.is_open()) readFile(file);
 }
 
 ///@pkg ID3.h
-Tag::Tag(std::fstream& file) {
+Tag::Tag(std::fstream& file) : filesize(0) {
 	if(file && file.is_open()) readFile(file);
 }
 
 ///@pkg ID3.h
-Tag::Tag(const std::string& fileLoc) : filename(fileLoc) {
+Tag::Tag(const std::string& fileLoc) : filename(fileLoc), filesize(0) {
 	//Check if the file is an MP3 file
 	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase|std::regex::ECMAScript)))
 		return;
@@ -97,10 +97,7 @@ Tag::Tag(const std::string& fileLoc) : filename(fileLoc) {
 }
 
 ///@pkg ID3.h
-Tag::Tag() {}
-
-///@pkg ID3.h
-void Tag::write() {}
+Tag::Tag() : filesize(0) {}
 
 ///@pkg ID3.h
 void Tag::write(const std::string& fileLoc) {}
@@ -172,9 +169,7 @@ std::vector<std::string> Tag::textStrings(const FrameID& frameName) const {
 }
 
 ///@pkg ID3.h
-Text Tag::text(const FrameID& frameName) const {
-	return getTextStruct(getFrame<TextFrame>(frameName));
-}
+Text Tag::text(const FrameID& frameName) const { return getTextStruct(getFrame<TextFrame>(frameName)); }
 
 ///@pkg ID3.h
 Text Tag::text(const FrameID& frameName,
@@ -233,14 +228,10 @@ std::vector<ByteArray> Tag::binaryDatas(const FrameID& frameName) const {
 	std::vector<ByteArray> toReturn;
 	if(frames.size() > 0) {
 		toReturn.reserve(frames.size());
-		for(const Frame* const frame : frames)
-			toReturn.push_back(frame->bytes());
+		for(const Frame* const frame : frames) toReturn.push_back(frame->bytes());
 	}
 	return toReturn;
 }
-
-///@pkg ID3.h
-std::string Tag::title() const { return textString(Frames::FRAME_TITLE); }
 
 ///@pkg ID3.h
 std::string Tag::genre(bool process) const {
@@ -258,83 +249,28 @@ std::vector<std::string> Tag::genres(bool process) const {
 }
 
 ///@pkg ID3.h
-std::string Tag::artist() const { return textString(Frames::FRAME_ARTIST); }
-///@pkg ID3.h
-std::vector<std::string> Tag::artists() const { return textStrings(Frames::FRAME_ARTIST); }
-
-///@pkg ID3.h
-std::string Tag::albumArtist() const { return textString(Frames::FRAME_ALBUM_ARTIST); }
-///@pkg ID3.h
-std::vector<std::string> Tag::albumArtists() const { return textStrings(Frames::FRAME_ALBUM_ARTIST); }
-
-///@pkg ID3.h
-std::string Tag::album() const { return textString(Frames::FRAME_ALBUM); }
-///@pkg ID3.h
-std::vector<std::string> Tag::albums() const { return textStrings(Frames::FRAME_ALBUM); }
-
-///@pkg ID3.h
-std::string Tag::year() const {
-	if(exists(Frames::FRAME_RECORDING_TIME))
-		return textString(Frames::FRAME_RECORDING_TIME).substr(0, 4); //Extract the year from the TDRC frame
-	else if(exists(Frames::FRAME_YEAR))
-		return textString(Frames::FRAME_YEAR);
-	else
-		return "";
-}
-
-///@pkg ID3.h
-std::string Tag::track(bool process) const {
+std::string Tag::track() const {
 	std::string trackString = textString(Frames::FRAME_TRACK);
-	if(process) {
-		size_t slashPos = trackString.find_first_of('/');
-		if(slashPos != std::string::npos)
-			trackString = trackString.substr(0, slashPos);
-		if(!numericalString(trackString)) return "";
-	}
-	return trackString;
+	return trackString.substr(0, trackString.find_first_of('/'));
 }
 ///@pkg ID3.h
-std::string Tag::trackTotal(bool process) const {
+std::string Tag::trackTotal() const {
 	std::string trackString = textString(Frames::FRAME_TRACK);
 	size_t slashPos = trackString.find_first_of('/');
-	if(slashPos == std::string::npos) return "";
-	trackString = trackString.substr(slashPos + 1);
-	if(process && !numericalString(trackString)) return "";
-	return trackString;
+	return slashPos == std::string::npos ? "" : trackString.substr(slashPos + 1);
 }
 
 ///@pkg ID3.h
-std::string Tag::disc(bool process) const {
+std::string Tag::disc() const {
 	std::string discString = textString(Frames::FRAME_DISC);
-	if(process) {
-		size_t slashPos = discString.find_first_of('/');
-		if(slashPos != std::string::npos)
-			discString = discString.substr(0, slashPos);
-		if(!numericalString(discString)) return "";
-	}
-	return discString;
+	return discString.substr(0, discString.find_first_of('/'));
 }
 ///@pkg ID3.h
-std::string Tag::discTotal(bool process) const {
+std::string Tag::discTotal() const {
 	std::string discString = textString(Frames::FRAME_DISC);
 	size_t slashPos = discString.find_first_of('/');
-	if(slashPos == std::string::npos) return "";
-	discString = discString.substr(slashPos + 1);
-	return process && !numericalString(discString) ? "" : discString;
+	return slashPos == std::string::npos ? "" : discString.substr(slashPos + 1);
 }
-
-///@pkg ID3.h
-std::string Tag::composer() const { return textString(Frames::FRAME_COMPOSER); }
-///@pkg ID3.h
-std::vector<std::string> Tag::composers() const { return textStrings(Frames::FRAME_COMPOSER); }
-
-///@pkg ID3.h
-std::string Tag::bpm() const { return textString(Frames::FRAME_BPM); }
-
-///@pkg ID3.h
-std::vector<Text> Tag::comments() const { return texts(Frames::FRAME_COMMENT); }
-///@pkg ID3.h
-Text Tag::comment(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const { return text(Frames::FRAME_COMMENT, filterFunc); }
 
 ///@pkg ID3.h
 Picture Tag::picture() const {
@@ -602,6 +538,56 @@ void Tag::text(const FrameID&  frameID,
 	}
 }
 
+///@pkg ID3.h
+void Tag::genre(const ushort newGenre) { text(FRAME_GENRE, V1::getGenreString(newGenre)); }
+
+///@pkg ID3.h
+void Tag::year(const std::string& newYear) {
+	static const ushort YEAR_LENGTH = 4;
+	//First chop off any additional characters
+	std::string yearString = newYear.substr(0, YEAR_LENGTH);
+	if(yearString != "" && numericalString(yearString)) {
+		//Prepend zeros to make it four characters long
+		while(yearString.size() < YEAR_LENGTH) yearString = '0' + yearString;
+		const std::string tdrc = textString(FRAME_RECORDING_TIME);
+		//If there is more to the TDRC than the year, preserve it
+		if(tdrc.size() > YEAR_LENGTH) text(FRAME_RECORDING_TIME, yearString+tdrc.substr(YEAR_LENGTH+1));
+		else                          text(FRAME_RECORDING_TIME, yearString);
+	} else {
+		yearString = "";
+		text(FRAME_RECORDING_TIME, yearString);
+	}
+	text(FRAME_YEAR, yearString);
+}
+
+///@pkg ID3.h
+void Tag::track(const std::string& newTrack) {
+	std::string	trackString = numericalString(newTrack) ? newTrack : "",
+	            total       = trackTotal();
+	text(FRAME_TRACK, total == "" ? trackString : trackString + '/' + total);
+}
+
+///@pkg ID3.h
+void Tag::trackTotal(const std::string& newTrackTotal) {
+	std::string	trackString = numericalString(newTrackTotal) ? newTrackTotal : "";
+	if(trackString == "") text(FRAME_TRACK, track());
+	else                  text(FRAME_TRACK, track() + '/' + trackString);
+}
+
+///@pkg ID3.h
+void Tag::disc(const std::string& newDisc) {
+	std::string	discString = numericalString(newDisc) ? newDisc : "",
+	            total      = discTotal();
+	text(FRAME_DISC, total == "" ? discString : discString + '/' + total);
+}
+
+///@pkg ID3.h
+void Tag::discTotal(const std::string& newDiscTotal) {
+	std::string	discString = numericalString(newDiscTotal) ? newDiscTotal : "";
+	if(discString == "") text(FRAME_DISC, disc());
+	else                 text(FRAME_DISC, disc() + '/' + discString);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////  E N D   F R A M E   S E T T E R S //////////////////////
@@ -635,7 +621,10 @@ std::string Tag::getVersionString(bool verbose) const {
 size_t Tag::size() const { return frames.size(); }
 
 ///@pkg ID3.h
-std::string Tag::file() const { return filename; }
+std::string Tag::fileName() const { return filename; }
+
+///@pkg ID3.h
+ulong Tag::fileSize() const { return filesize; }
 
 ///@pkg ID3.h
 void Tag::print() const {
@@ -790,14 +779,14 @@ Text Tag::getTextStruct(const Frame* const frame) const {
 void Tag::readFile(std::istream& file) {
 	if(file) {
 		file.seekg(0, std::ifstream::end);
-		ulong filesize = file.tellg();
-		readFileV2(file, filesize);
-		readFileV1(file, filesize);
+		filesize = file.tellg(); //Get the filesize
+		readFileV2(file);
+		readFileV1(file);
 	}
 }
 
 ///@pkg ID3.h
-void Tag::readFileV1(std::istream& file, const ulong filesize) {
+void Tag::readFileV1(std::istream& file) {
 	V1::Tag tags;
 	V1::ExtendedTag extTags;
 	bool extTagsSet = false;
@@ -830,7 +819,7 @@ void Tag::readFileV1(std::istream& file, const ulong filesize) {
 }
 
 ///@pkg ID3.h
-void Tag::readFileV2(std::istream& file, const ulong filesize) {
+void Tag::readFileV2(std::istream& file) {
 	Header tagsHeader;
 	
 	if(filesize < HEADER_BYTE_SIZE) return;
