@@ -926,49 +926,6 @@ void Tag::readFileV2(std::istream& file) {
 		//The position to start reading from the file
 		ulong frameStartPos = HEADER_BYTE_SIZE;
 		
-		//Skip over the extended header
-		if(v2TagInfo.flagExtHeader) {
-			//Seek to the position to read the extended header
-			file.seekg(frameStartPos, std::ifstream::beg);
-			if(!file) return;
-			
-			//The extended header is different from ID3v2.4, and ID3v2.3, and ID3v2.2.
-			if(v2TagInfo.majorVer >= 4) {
-				V4ExtHeader extHeader;
-				v2TagInfo.totalSize += sizeof(V4ExtHeader);
-				
-				//Verify that there's enough space
-				if(frameStartPos + sizeof(V4ExtHeader) > filesize) return;
-				
-				//Get the extended header
-				file.read(reinterpret_cast<char*>(&extHeader), sizeof(V4ExtHeader));
-				
-				//Increment the start position. The extended header size is synchsafe in ID3v2.4
-				ulong extHeaderSize = byteIntVal(extHeader.size, 4, true);
-				frameStartPos += sizeof(V4ExtHeader) + extHeaderSize;
-				v2TagInfo.totalSize += extHeaderSize;
-			} else if(v2TagInfo.majorVer == 3) {
-				V3ExtHeader extHeader;
-				v2TagInfo.totalSize += sizeof(V3ExtHeader);
-				
-				//Verify that there's enough space
-				if(frameStartPos + sizeof(V3ExtHeader) > filesize) return;
-				
-				//Get the extended header
-				file.read(reinterpret_cast<char*>(&extHeader), sizeof(V3ExtHeader));
-				
-				//Increment the start position. The extended header size is not synchsafe in ID3v2.3
-				ulong extHeaderSize = byteIntVal(extHeader.size, 4, false);
-				frameStartPos += sizeof(V3ExtHeader) + extHeaderSize;
-				v2TagInfo.totalSize += extHeaderSize;
-			} else {
-				//In ID3v2.2, the extended header flag bit is used for a compression flag
-				//instead. Since there is no standard compression format used in ID3v2.2,
-				//it is not supported.
-				return;
-			}
-		}
-		
 		//Make sure the ID3v2 version is supported and that unsynchronisation
 		//isn't set on ID3v2.3 and below.
 		//In ID3v2.4, it is handled on a per-frame basis.
@@ -982,6 +939,45 @@ void Tag::readFileV2(std::istream& file) {
 		if(v2TagInfo.totalSize > filesize) {
 			if(filename.empty()) throw FileFormatException("Tag size format error on file when reading tags: tags are bigger than the file size!");
 			else throw FileFormatException("Tag size format error on file \"" + filename + "\" when reading tags: tags are bigger than the file size!");
+		}
+		
+		//Skip over the extended header
+		if(v2TagInfo.flagExtHeader) {
+			//Seek to the position to read the extended header
+			file.seekg(frameStartPos, std::ifstream::beg);
+			if(!file) return;
+			
+			//The extended header is different from ID3v2.4, and ID3v2.3, and ID3v2.2.
+			if(v2TagInfo.majorVer >= 4) {
+				V4ExtHeader extHeader;
+				
+				//Verify that there's enough space
+				if(frameStartPos + sizeof(V4ExtHeader) > filesize) return;
+				
+				//Get the extended header
+				file.read(reinterpret_cast<char*>(&extHeader), sizeof(V4ExtHeader));
+				
+				//Increment the start position. The extended header size is synchsafe in ID3v2.4
+				ulong extHeaderSize = byteIntVal(extHeader.size, 4, true);
+				frameStartPos += sizeof(V4ExtHeader) + extHeaderSize;
+			} else if(v2TagInfo.majorVer == 3) {
+				V3ExtHeader extHeader;
+				
+				//Verify that there's enough space
+				if(frameStartPos + sizeof(V3ExtHeader) > filesize) return;
+				
+				//Get the extended header
+				file.read(reinterpret_cast<char*>(&extHeader), sizeof(V3ExtHeader));
+				
+				//Increment the start position. The extended header size is not synchsafe in ID3v2.3
+				ulong extHeaderSize = byteIntVal(extHeader.size, 4, false);
+				frameStartPos += sizeof(V3ExtHeader) + extHeaderSize;
+			} else {
+				//In ID3v2.2, the extended header flag bit is used for a compression flag
+				//instead. Since there is no standard compression format used in ID3v2.2,
+				//it is not supported.
+				return;
+			}
 		}
 		
 		//The file has correctly formatted ID3v2 tags
@@ -1135,11 +1131,31 @@ void Tag::writeFile(std::ostream& file, const Tag& fileInfo) {
 			binaryTagData.insert(binaryTagData.end(), frameBytes.begin(), frameBytes.end());
 	}
 	
+	bool needToRewriteFile = fileInfo.tagsSet.v1 || fileInfo.tagsSet.v1_1 ||
+	                          binaryTagData.size() > fileInfo.v2TagInfo.totalSize;
+	
+	//If the data is smaller than the file's tag size, then extend it with padding
+	if(!needToRewriteFile && binaryTagData.size() < fileInfo.v2TagInfo.totalSize) {
+		ByteArray padding(fileInfo.v2TagInfo.totalSize - binaryTagData.size(), '\0');
+		//This check if just being overly cautious, probably not necessary
+		if(binaryTagData.size() + padding.size() < MAX_TAG_SIZE)
+			binaryTagData.insert(binaryTagData.end(), padding.begin(), padding.end());
+		else
+			needToRewriteFile = true;
+	}
+	
 	//Validate the size by throwing a TagSizeException if it's too big
-	if(binaryTagData.size() > MAX_TAG_SIZE)
+	if(binaryTagData.size() - HEADER_BYTE_SIZE > MAX_TAG_SIZE)
 		throw TagSizeException("Cannot write tags to file, as it exceeds the maximum size of "+std::to_string(MAX_TAG_SIZE)+"!\n");
 	
+	//<------------------------ TODO: Write the tag size to the vector ------->//
 	//<------------------------ TODO: Write the data to file ----------------->//
+	//If the ID3v2 sizes match
+	if(needToRewriteFile) {
+		
+	} else {
+		
+	}
 	
 	//Now that the write has been successful, remove any null/empty frames
 	auto itr = frames.begin();

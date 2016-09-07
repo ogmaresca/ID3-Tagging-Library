@@ -1382,6 +1382,14 @@ namespace ID3 {
 			 * An internal method used to write the content of the frames map to
 			 * file.
 			 * 
+			 * NOTE: The ID3v1, v1.1, and v1 Extended tags will be overwritten, the
+			 *       ID3v2 tag will be written to ID3v2.4.0, and it will not include
+			 *       unsynchronisation, encryption, compression, and extended header,
+			 *       or footer. If the new tag size is smaller than the old tag
+			 *       size, then padding will be added to make it fit. If it is
+			 *       bigger, or a v1 tag is on file, then the entire file will be
+			 *       rewritten to contain the tags.
+			 * 
 			 * @param file     The file stream object.
 			 * @param fileInfo A Tag object created in the write() method to get
 			 *                 the most up-to-date information about the file.
