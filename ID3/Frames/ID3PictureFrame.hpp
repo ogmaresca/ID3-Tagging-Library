@@ -59,7 +59,8 @@ namespace ID3 {
 		BAND_LOGOTYPE      = 19,
 		ARTIST_LOGOTYPE    = 19,
 		PUBLISHER_LOGOTYPE = 20,
-		STUDIO_LOGOTYPE    = 20
+		STUDIO_LOGOTYPE    = 20,
+		NULL_PICTURE       = 0xFF //NOTE: This value is not used by PictureFrame
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -165,6 +166,20 @@ namespace ID3 {
 			             const std::string& newMIMEType);
 			
 			/**
+			 * @see ID3::PictureFrame::picture(ByteArray&, std::string&)
+			 * @see ID3::PictureFrame::pictureType(PictureType)
+			 * @see ID3::PictureFrame::description(std::string&)
+			 */
+			inline void picture(const ByteArray& newPictureData,
+			                    const std::string& newMIMEType,
+			                    const std::string& newDescription,
+			                    const PictureType newType) {
+				picture(newPictureData, newMIMEType);
+				description(newDescription);
+				pictureType(newType);
+			}
+			
+			/**
 			 * Print information about the frame.
 			 * 
 			 * @see ID3::Frame::print()
@@ -179,7 +194,10 @@ namespace ID3 {
 			 * @param mimeType The MIME type to check.
 			 * @return If the MIME type is allowed.
 			 */
-			static bool allowedMIMEType(const std::string& mimeType);
+			static inline bool allowedMIMEType(const std::string& mimeType) {
+				return mimeType == "png"       || mimeType == "jpeg" ||
+				       mimeType == "image/png" || mimeType == "image/jpeg";
+			}
 		
 		protected:
 			/**

@@ -26,8 +26,7 @@ Picture::Picture(const ByteArray&   pictureByteArray,
                  const PictureType  pictureType) : MIME(mimeType),
 			                                          type(pictureType),
 			                                          description(pictureDescription),
-			                                          data(pictureByteArray),
-			                                          null(!PictureFrame::allowedMIMEType(mimeType)) {}
+			                                          data(pictureByteArray) {}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,9 +40,7 @@ PictureFrame::PictureFrame(const ushort version,
                                                                        version,
                                                                        frameBytes),
                                                           APICType(PictureType::OTHER) {
-	//If the frame content isn't null, then get the text content
-	if(!isNull)
-		read();
+	if(!isNull) read(); //If the frame content isn't null, then get the text content
 }
 
 ///@pkg ID3PictureFrame.h
@@ -220,13 +217,9 @@ void PictureFrame::read() {
 		for(ulong i = descStart; i + descGap <= FRAME_SIZE; i += descGap) {
 			//Prevent false positives in UTF-16 encodings
 			if(frameContent[i] == '\0') {
-				if(wideChars && frameContent[i+1] != '\0')
-					continue;
+				if(wideChars && frameContent[i+1] != '\0') continue;
 				descEnd = i;
-				textDescription = getUTF8String(encoding,
-				                                frameContent,
-				                                descStart,
-				                                descEnd);
+				textDescription = getUTF8String(encoding, frameContent, descStart, descEnd);
 				break;
 			}
 		}
@@ -249,13 +242,6 @@ void PictureFrame::read() {
 		textDescription = "";
 		pictureData = ByteArray();
 	}
-}
-
-///@pkg ID3PictureFrame.h
-///@static
-bool PictureFrame::allowedMIMEType(const std::string& mimeType) {
-	return mimeType == "png"       || mimeType == "jpeg" ||
-	       mimeType == "image/png" || mimeType == "image/jpeg";
 }
 
 ///@pkg ID3PictureFrame.h

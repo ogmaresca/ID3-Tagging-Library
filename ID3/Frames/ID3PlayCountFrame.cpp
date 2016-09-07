@@ -43,12 +43,10 @@ PlayCountFrame::PlayCountFrame(const unsigned long long playCount) noexcept : Fr
 PlayCountFrame::~PlayCountFrame() {}
 
 ///@pkg ID3PlayCountFrame.h
-FrameClass PlayCountFrame::type() const noexcept {
-	return FrameClass::CLASS_PLAY_COUNT;
-}
+FrameClass PlayCountFrame::type() const noexcept { return FrameClass::CLASS_PLAY_COUNT; }
 
 ///@pkg ID3PlayCountFrame.h
-bool PlayCountFrame::empty() const { return false; }
+bool PlayCountFrame::empty() const { return count == 0ULL; }
 
 ///@pkg ID3PlayCountFrame.h
 unsigned long long PlayCountFrame::playCount() const { return count; }
@@ -128,7 +126,7 @@ PopularimeterFrame::PopularimeterFrame(const unsigned long long playCount,
                                        uint8_t rating,
                                        const std::string& email) noexcept : Frame::Frame(FRAME_POPULARIMETER),
                                                                             emailAddress(email) {
-	count = 0ULL;
+	count = playCount;
 	//Take advantage of the already existing if statements
 	this->rating(rating);
 	isEdited = false;
@@ -138,9 +136,12 @@ PopularimeterFrame::PopularimeterFrame(const unsigned long long playCount,
 PopularimeterFrame::~PopularimeterFrame() {}
 
 ///@pkg ID3PlayCountFrame.h
-FrameClass PopularimeterFrame::type() const noexcept {
-	return FrameClass::CLASS_POPULARIMETER;
-}
+FrameClass PopularimeterFrame::type() const noexcept { return FrameClass::CLASS_POPULARIMETER; }
+
+///@pkg ID3PlayCountFrame.h
+bool PopularimeterFrame::empty() const { return count == 0ULL &&
+	                                             fiveStarRating == 0 &&
+	                                             emailAddress.empty(); }
 
 ///@pkg ID3PlayCountFrame.h
 ushort PopularimeterFrame::rating() const { return fiveStarRating; }

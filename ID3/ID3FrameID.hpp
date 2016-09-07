@@ -396,6 +396,8 @@ namespace ID3 {
 		
 		FRAME_CUSTOM_USER_INFO        = 80,
 		FRAME_CUSTOM_USER_INFORMATION = 80,
+		FRAME_USER_DEFINED_INFO       = 80,
+		FRAME_USER_DEFINED_TEXT       = 80,
 		FRAME_USER_INFO               = 80,
 		FRAMEID_TXXX                  = 80,
 		

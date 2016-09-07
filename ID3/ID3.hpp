@@ -157,8 +157,7 @@ namespace ID3 {
 	
 	/**
 	 * A struct that contains information about a picture embedded in ID3v2 tags.
-	 * The null variable will be set to true if given an invalid MIME type. The
-	 * picture data is not checked to verify that it is a valid image.
+	 * The picture data is not checked to verify that it is a valid image.
 	 */
 	struct Picture {
 		/**
@@ -177,11 +176,17 @@ namespace ID3 {
 			     const std::string& mimeType="",
 			     const std::string& pictureDescription="",
 			     const PictureType  pictureType=PictureType::FRONT_COVER);
+		/** @return Whether the MIME type is valid or not. */
+		inline bool null() const { return !PictureFrame::allowedMIMEType(MIME); }
+		/**
+		 * @return The size that this struct will take when written to an Attached
+		 *         Picture frame, excluding the header.
+		 */
+		inline ulong size() { return MIME.size() + 3 + description.size() + data.size(); }
 		std::string MIME;
 		PictureType type;
 		std::string description;
 		ByteArray   data;
-		bool        null;
 	};
 	
 	/**
@@ -541,267 +546,6 @@ namespace ID3 {
 			 */
 			std::vector<ByteArray> binaryDatas(const FrameID& frameName) const;
 			
-			/**
-			 * Get the title tag.
-			 * 
-			 * @return The title of the tag, or "" if no title is set.
-			 */
-			inline std::string title() const { return textString(FRAME_TITLE); }
-			
-			/**
-			 * Get the genre tag.
-			 * 
-			 * @param process If true, this will process the genre string according
-			 *                to the specification of the TCOM frame. It will look
-			 *                for a number surrounded by parenthesis. If found, the
-			 *                substring will be removed, and if no text follows the
-			 *                substring, the number will be parsed and the
-			 *                corresponding ID3v1 genre will be returned.
-			 *                If false, the raw genre string as it appears on file
-			 *                will be returned.
-			 * @return The genre of the tag, or "" if no genre is set.
-			 */
-			std::string genre(bool process=true) const;
-			
-			/**
-			 * Get the genre tag as a vector of genre string(s).
-			 * 
-			 * @see ID3::Tag::genre(bool)
-			 * @see ID3::Tag::textStrings(Frames)
-			 */
-			std::vector<std::string> genres(bool process=true) const;
-			
-			/**
-			 * Get the artist tag.
-			 * 
-			 * @return The artist of the tag, or "" if no artist is set.
-			 */
-			inline std::string artist() const { return textString(FRAME_ARTIST); }
-			
-			/**
-			 * Get the artist tag as a vector of artist string(s).
-			 * 
-			 * @see ID3::Tag::artist()
-			 * @see ID3::Tag::textStrings(Frames)
-			 */
-			inline std::vector<std::string> artists() const { return textStrings(FRAME_ARTIST); }
-			
-			/**
-			 * Get the album tag.
-			 * 
-			 * @return The album of the tag, or "" if no album is set.
-			 */
-			inline std::string album() const { return textString(FRAME_ALBUM); }
-			
-			/**
-			 * Get the album tag as a vector of album string(s).
-			 * 
-			 * @see ID3::Tag::album()
-			 * @see ID3::Tag::textStrings(Frames)
-			 */
-			inline std::vector<std::string> albums() const { return textStrings(FRAME_ALBUM); }
-			
-			/**
-			 * Get the album artist/band/orchestra/accompaniment tag.
-			 * 
-			 * @return The album artist of the tag, or "" if no album artist is set.
-			 */
-			inline std::string albumArtist() const  { return textString(FRAME_ALBUM_ARTIST); }
-			
-			/**
-			 * Get the album artist/band/orchestra/accompaniment tag as a vector of
-			 * album artist string(s).
-			 * 
-			 * @see ID3::Tag::albumArtist()
-			 * @see ID3::Tag::textStrings(Frames)
-			 */
-			inline std::vector<std::string> albumArtists() const { return textStrings(FRAME_ALBUM_ARTIST); }
-			
-			/**
-			 * Get the year tag. It first looks for the original recording time
-			 * frame, and if it can't find that then it looks for the year frame.
-			 * 
-			 * @return The year of the tag, or "" if no year is set.
-			 */
-			inline std::string year() const { return exists(FRAME_RECORDING_TIME) ?
-				                                      textString(FRAME_RECORDING_TIME).substr(0,4) :
-				                                      textString(FRAME_YEAR); }
-			
-			/**
-			 * Get the track tag.
-			 * 
-			 * NOTE: If there is a slash ('/') in the track, it and the following
-			 *       text will not be returned. See ID3::Tag::trackTotal() to get
-			 *       the track total.
-			 * 
-			 * @return The track of the tag, or "" if no track is set.
-			 * @see ID3::Tag::trackTotal()
-			 */
-			std::string track() const;
-			
-			/**
-			 * Get the total number of tracks in the set of the original recording.
-			 * This is taken from the TRCK frame, and consists of text
-			 * located after a slash ('/') in the frame content.
-			 * 
-			 * @return The track total of the tag, or "" if no track total is set.
-			 * @see ID3::Tag::track()
-			 */
-			std::string trackTotal() const;
-			
-			/**
-			 * Get the disc number tag.
-			 * 
-			 * NOTE: If there is a slash ('/') in the disc number, it and the
-			 *       following text will not be returned. See ID3::Tag::discTotal()
-			 *       to get the disc total.
-			 * 
-			 * @return The disc number of the tag, or "" if no disc is set.
-			 * @see ID3::Tag::discTotal()
-			 */
-			std::string disc() const;
-			
-			/**
-			 * Get the total number of discs in the set of the original recording.
-			 * This is taken from the TPOS frame, and consists of text
-			 * located after a slash ('/') in the frame content.
-			 * 
-			 * @return The disc total of the tag, or "" if no disc total is set.
-			 * @see ID3::Tag::disc()
-			 */
-			std::string discTotal() const;
-			
-			/**
-			 * Get the composer tag.
-			 * 
-			 * @return The composer of the tag, or "" if no composer is set.
-			 */
-			inline std::string composer() const { return textString(FRAME_COMPOSER); }
-			
-			/**
-			 * Get the composer tag as a vector of composer string(s).
-			 * 
-			 * @see ID3::Tag::composer()
-			 * @see ID3::Tag::textStrings(Frames)
-			 */
-			inline std::vector<std::string> composers() const { return textStrings(FRAME_COMPOSER); }
-			
-			/**
-			 * Get the BPM tag.
-			 * 
-			 * @return The BPM of the tag, or "" if no BPM is set.
-			 */
-			inline std::string bpm() const { return textString(FRAME_BPM); }
-			
-			/**
-			 * Get the tag comments as a vector of Text structs.
-			 * 
-			 * @see ID3::Tag::texts(FrameID&)
-			 */
-			inline std::vector<Text> comments() const { return texts(FRAME_COMMENT); }
-			
-			/**
-			 * Get a specific comment in the tag as a Text struct.
-			 * 
-			 * @see ID3::Tag::comments()
-			 * @see ID3::Tag::text(FrameID&, std::function&)
-			 */
-			Text comment(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const { return text(FRAME_COMMENT, filterFunc); }
-			
-			/**
-			 * Get the attached picture.
-			 * 
-			 * @return The attached picture, encapsulated in a ID3::Picture struct.
-			 *         If there is no attached picture, or it has an improper
-			 *         MIME type, the null field will be true.
-			 */
-			Picture picture() const;
-			
-			/**
-			 * Return a Picture struct that matches the given function.
-			 * 
-			 * NOTE: The filter function needs to take in a string and return a
-			 *       boolean. The string parameter is the picture's description.
-			 *       If no matching picture is found, a null Picture struct will be
-			 *       returned instead.
-			 * 
-			 * @param filterFunc The filter function. See the note above.
-			 * @return The matching picture in a Picture struct.
-			 */
-			Picture picture(const std::function<bool (const std::string&)>& filterFunc) const;
-			
-			/**
-			 * Get a vector of all attached pictures.
-			 * 
-			 * NOTE: If there are no pictures in the tag then the returned vector
-			 *       will be empty.
-			 * 
-			 * @return A vector of Picture structs.
-			 */
-			std::vector<Picture> pictures() const;
-			
-			/**
-			 * Get the play count.
-			 * 
-			 * NOTE: This first searches for the Play Count frame. If not found, it
-			 *       looks for the first Popularimeter frame. If that is not found
-			 *       as well, it returns 0.
-			 * 
-			 * @return The play count saved on the file.
-			 */
-			unsigned long long playCount() const;
-			
-			/**
-			 * Get the play count from a Popularimeter that matches the given function.
-			 * 
-			 * NOTE: Unlike the ID3::Tag::playCount() method, this method looks
-			 *       through the Popularimeter frames first. If no matching
-			 *       Popularimeter is found, and no Popularimeters exist on file,
-			 *       then it will look for the Play Count frame. Failing finding
-			 *       that frame, it will return 0.
-			 * 
-			 * NOTE: The filter function needs to take in a string and return a
-			 *       boolean. The string parameter is the Popularimeter's email.
-			 * 
-			 * @param filterFunc The filter function. See the notes above.
-			 * @return The matching play count, the value of the Play Count frame,
-			 *         or 0.
-			 */
-			unsigned long long playCount(const std::function<bool (const std::string&)>& filterFunc) const;
-			
-			/**
-			 * Get the rating from the first Popularimeter frame, or 0 if none are found.
-			 * 
-			 * @return The rating on file. The values are 1-5, or 0 if no rating is
-			 *         set.
-			 */
-			ushort rating() const;
-			
-			/**
-			 * Return the rating that matches the given function.
-			 * 
-			 * NOTE: If no matching Popularimeter is found, then 0 will be returned.
-			 * 
-			 * NOTE: The filter function needs to take in a string and return a
-			 *       boolean. The string parameter is the Popularimeter's email.
-			 * 
-			 * @param filterFunc The filter function. See the notes above.
-			 * @return The matching play count, the value of the Play Count frame,
-			 *         or 0.
-			 */
-			ushort rating(const std::function<bool (const std::string&)>& filterFunc) const;
-			
-			/**
-			 * Return the value of the given event timing code.
-			 * 
-			 * NOTE: If the event timing code does not exist on file, the returned
-			 *       EventTimingCode will have a value of 0.
-			 * 
-			 * @param code The event timing code to retrieve.
-			 * @return The event timing code, wrapped in a EventTimingCode struct.
-			 */
-			EventTimingCode timingCode(const TimingCodes code) const;
-			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
 			////////////////// E N D   F R A M E   G E T T E R S //////////////////
@@ -919,6 +663,25 @@ namespace ID3 {
 			void text(const FrameID& frameID,
 			          const std::function<std::string (const std::string&, const std::string&, const std::string&)>& transformFunc);
 			
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			////////////////// E N D   F R A M E   S E T T E R S //////////////////
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			/////////////// S T A R T   S P E C I F I C   F R A M E ///////////////
+			////////////////// G E T T E R S   &   S E T T E R S //////////////////
+			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////
+			
+			/**
+			 * Get the title tag.
+			 * 
+			 * @return The title of the tag, or "" if no title is set.
+			 */
+			inline std::string title() const { return textString(FRAME_TITLE); }
 			/**
 			 * Set the title tag.
 			 * 
@@ -926,6 +689,23 @@ namespace ID3 {
 			 */
 			inline void title(const std::string& newTitle) { text(FRAME_TITLE, newTitle); }
 			
+			/**
+			 * Get the genre tag.
+			 * 
+			 * @param process If true, this will process the genre string according
+			 *                to the specification of the TCOM frame. It will look
+			 *                for a number surrounded by parenthesis. If found, the
+			 *                substring will be removed, and if no text follows the
+			 *                substring, the number will be parsed and the
+			 *                corresponding ID3v1 genre will be returned.
+			 *                If false, the raw genre string as it appears on file
+			 *                will be returned.
+			 * @return The genre of the tag, or "" if no genre is set.
+			 */
+			std::string genre(bool process=true) const;
+			/** @see ID3::Tag::genre(bool)
+			 *  @see ID3::Tag::textStrings(Frames) */
+			std::vector<std::string> genres(bool process=true) const;
 			/**
 			 * Set the genre tag.
 			 * 
@@ -942,6 +722,15 @@ namespace ID3 {
 			inline void genres(const std::vector<std::string>& newGenres) { text(FRAME_GENRE, newGenres); }
 			
 			/**
+			 * Get the artist tag.
+			 * 
+			 * @return The artist of the tag, or "" if no artist is set.
+			 */
+			inline std::string artist() const { return textString(FRAME_ARTIST); }
+			/** @see ID3::Tag::artist()
+			 *  @see ID3::Tag::textStrings(Frames) */
+			inline std::vector<std::string> artists() const { return textStrings(FRAME_ARTIST); }
+			/**
 			 * Set the artist tag.
 			 * 
 			 * @param newArtist The new artist.
@@ -952,6 +741,16 @@ namespace ID3 {
 			/** @see ID3::Tag::artist(std::string&) */
 			inline void artists(const std::vector<std::string>& newArtists) { text(FRAME_ARTIST, newArtists); }
 			
+			/**
+			 * Get the album tag.
+			 * 
+			 * @return The album of the tag, or "" if no album is set.
+			 */
+			inline std::string album() const { return textString(FRAME_ALBUM); }
+			
+			/** @see ID3::Tag::album()
+			 *  @see ID3::Tag::textStrings(FrameID&) */
+			inline std::vector<std::string> albums() const { return textStrings(FRAME_ALBUM); }
 			/**
 			 * Set the album tag.
 			 * 
@@ -964,6 +763,15 @@ namespace ID3 {
 			inline void albums(const std::vector<std::string>& newAlbums) { text(FRAME_ALBUM, newAlbums); }
 			
 			/**
+			 * Get the album artist/band/orchestra/accompaniment tag.
+			 * 
+			 * @return The album artist of the tag, or "" if no album artist is set.
+			 */
+			inline std::string albumArtist() const  { return textString(FRAME_ALBUM_ARTIST); }
+			/** @see ID3::Tag::albumArtist()
+			 *  @see ID3::Tag::textStrings(FrameID&) */
+			inline std::vector<std::string> albumArtists() const { return textStrings(FRAME_ALBUM_ARTIST); }
+			/**
 			 * Set the album artist/band/orchestra/accompaniment tag.
 			 * 
 			 * @param newAlbumArtist The new album artist.
@@ -974,6 +782,15 @@ namespace ID3 {
 			/** @see ID3::Tag::albumArtist(std::string&) */
 			inline void albumArtists(const std::vector<std::string>& newAlbumArtists) { text(FRAME_ALBUM_ARTIST, newAlbumArtists); }
 			
+			/**
+			 * Get the year tag. It first looks for the original recording time
+			 * frame, and if it can't find that then it looks for the year frame.
+			 * 
+			 * @return The year of the tag, or "" if no year is set.
+			 */
+			inline std::string year() const { return exists(FRAME_RECORDING_TIME) ?
+			                                         textString(FRAME_RECORDING_TIME).substr(0,4) :
+			                                         textString(FRAME_YEAR); }
 			/**
 			 * Set the year tag. This sets both the ID3v2.3 year frame, and the
 			 * ID3v2.4 recording time frame.
@@ -988,10 +805,20 @@ namespace ID3 {
 			 * @param newYear The new year.
 			 */
 			void year(const std::string& newYear);
-			
 			/** @see ID3::Tag::year(std::string&) */
 			inline void year(const ushort newYear) { year(std::to_string(newYear)); }
 			
+			/**
+			 * Get the track tag.
+			 * 
+			 * NOTE: If there is a slash ('/') in the track, it and the following
+			 *       text will not be returned. See ID3::Tag::trackTotal() to get
+			 *       the track total.
+			 * 
+			 * @return The track of the tag, or "" if no track is set.
+			 * @see ID3::Tag::trackTotal()
+			 */
+			std::string track() const;
 			/**
 			 * Set the track tag.
 			 * 
@@ -1004,10 +831,17 @@ namespace ID3 {
 			 * @see ID3::Tag::trackTotal(std::string&)
 			 */
 			void track(const std::string& newTrack);
-			
 			/** @see ID3::Tag::track(std::string&) */
 			inline void track(const ulong newTrack) { track(std::to_string(newTrack)); }
-			
+			/**
+			 * Get the total number of tracks in the set of the original recording.
+			 * This is taken from the TRCK frame, and consists of text
+			 * located after a slash ('/') in the frame content.
+			 * 
+			 * @return The track total of the tag, or "" if no track total is set.
+			 * @see ID3::Tag::track()
+			 */
+			std::string trackTotal() const;
 			/**
 			 * Set the track total of the track tag.
 			 * 
@@ -1017,10 +851,20 @@ namespace ID3 {
 			 * @see ID3::Tag::track(std::string&)
 			 */
 			void trackTotal(const std::string& newTrackTotal);
-			
 			/** @see ID3::Tag::trackTotal(std::string&) */
 			inline void trackTotal(const ulong newTrackTotal) { text(FRAME_TRACK, track()+'/'+std::to_string(newTrackTotal)); }
 			
+			/**
+			 * Get the disc number tag.
+			 * 
+			 * NOTE: If there is a slash ('/') in the disc number, it and the
+			 *       following text will not be returned. See ID3::Tag::discTotal()
+			 *       to get the disc total.
+			 * 
+			 * @return The disc number of the tag, or "" if no disc is set.
+			 * @see ID3::Tag::discTotal()
+			 */
+			std::string disc() const;
 			/**
 			 * Set the disc tag.
 			 * 
@@ -1033,10 +877,17 @@ namespace ID3 {
 			 * @see ID3::Tag::discTotal(std::string&)
 			 */
 			void disc(const std::string& newDisc);
-			
 			/** @see ID3::Tag::track(std::string&) */
 			inline void disc(const ulong newDisc) { disc(std::to_string(newDisc)); }
-			
+			/**
+			 * Get the total number of discs in the set of the original recording.
+			 * This is taken from the TPOS frame, and consists of text
+			 * located after a slash ('/') in the frame content.
+			 * 
+			 * @return The disc total of the tag, or "" if no disc total is set.
+			 * @see ID3::Tag::disc()
+			 */
+			std::string discTotal() const;
 			/**
 			 * Set the disc total of the disc tag.
 			 * 
@@ -1046,10 +897,18 @@ namespace ID3 {
 			 * @see ID3::Tag::track(std::string&)
 			 */
 			void discTotal(const std::string& newDiscTotal);
-			
 			/** @see ID3::Tag::discTotal(std::string&) */
 			inline void discTotal(const ulong newDiscTotal) { text(FRAME_DISC, disc()+'/'+std::to_string(newDiscTotal)); }
 			
+			/**
+			 * Get the composer tag.
+			 * 
+			 * @return The composer of the tag, or "" if no composer is set.
+			 */
+			inline std::string composer() const { return textString(FRAME_COMPOSER); }
+			/** @see ID3::Tag::composer()
+			 *  @see ID3::Tag::textStrings(FrameID&) */
+			inline std::vector<std::string> composers() const { return textStrings(FRAME_COMPOSER); }
 			/**
 			 * Set the composer tag.
 			 * 
@@ -1062,6 +921,12 @@ namespace ID3 {
 			inline void composers(const std::vector<std::string>& newComposers) { text(FRAME_COMPOSER, newComposers); }
 			
 			/**
+			 * Get the BPM tag.
+			 * 
+			 * @return The BPM of the tag, or "" if no BPM is set.
+			 */
+			inline std::string bpm() const { return textString(FRAME_BPM); }
+			/**
 			 * Set the BPM tag.
 			 * 
 			 * NOTE: The BPM must be a valid integer.
@@ -1073,12 +938,24 @@ namespace ID3 {
 			inline void bpm(const ulong newBPM) { text(FRAME_BPM, std::to_string(newBPM)); }
 			
 			/**
+			 * Get the tag comments as a vector of Text structs.
+			 * 
+			 * @see ID3::Tag::texts(FrameID&)
+			 */
+			inline std::vector<Text> comments() const { return texts(FRAME_COMMENT); }
+			/**
+			 * Get a specific comment in the tag as a Text struct.
+			 * 
+			 * @see ID3::Tag::comments()
+			 * @see ID3::Tag::text(FrameID&, std::function&)
+			 */
+			Text comment(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const { return text(FRAME_COMMENT, filterFunc); }
+			/**
 			 * Set or create the first comment tag.
 			 * 
 			 * @see ID3::Tag::text(FrameID&, Text&)
 			 */
 			inline void comment(const Text& newComment) { text(FRAME_COMMENT, newComment); }
-			
 			/**
 			 * Set a specific comment tag.
 			 * 
@@ -1086,20 +963,214 @@ namespace ID3 {
 			 */
 			inline void comment(const Text& newComment,
 			                    const std::function<bool (const Text&)>& filterFunc) { text(FRAME_COMMENT, newComment, filterFunc); }
-			
-			/**
-			 * Set a specific comment tag.
-			 * 
-			 * @see ID3::Tag::text(FrameID&, Text&, std::function<bool (std::string&, std::string&, std::string&)>&)
-			 */
+			/** @see ID3::Tag::comment(Text&, std::function<bool (Text&)>&)
+			 *  @see ID3::Tag::text(FrameID&, Text&, std::function<bool (std::string&, std::string&, std::string&)>&) */
 			inline void comment(const Text& newComment,
 			                    const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc) {
 				text(FRAME_COMMENT, newComment, filterFunc);
 			}
+			/** @see ID3::Tag::comment(Text&, std::function<bool (Text&)>&)
+			 *  @see ID3::Tag::text(FrameID&, Text&, std::function<bool (std::string&, std::string&, std::string&)>&) */
+			inline void comment(const std::string& newComment,
+			                    const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc) {
+				text(FRAME_COMMENT, newComment, filterFunc);
+			}
+			
+			/**
+			 * Get the first attached picture.
+			 * 
+			 * @return The attached picture, encapsulated in a ID3::Picture struct.
+			 *         If there is no attached picture, or it has an improper
+			 *         MIME type, the null field will be true.
+			 */
+			Picture picture() const;
+			/**
+			 * Return a Picture struct that matches the given function.
+			 * 
+			 * NOTE: The filter function needs to take in a string and return a
+			 *       boolean. The first parameter is the picture's description, and
+			 *       the second is the picture type. If no matching picture is
+			 *       found, a "null" Picture struct will be returned instead.
+			 * 
+			 * @param filterFunc The filter function. See the note above.
+			 * @return The matching picture in a Picture struct.
+			 */
+			Picture picture(const std::function<bool (const std::string&, const PictureType type)>& filterFunc) const;
+			/**
+			 * Return a Picture struct that matches the given description and type.
+			 * 
+			 * NOTE: If no picture matches the given description, a "null" Picture
+			 *       struct will be returned instead.
+			 * 
+			 * @param description The description of the picture you wish to retrieve.
+			 * @param type        The ID3::PictureType enum picure type value (defaults to the front cover).
+			 * @return The matching picture as a Picture struct.
+			 */
+			inline Picture picture(const std::string& description, const PictureType type=PictureType::FRONT_COVER) const {
+				return picture([&description, type](const std::string& desc, const PictureType picType) -> bool {
+					return type == picType && description == desc;
+				});
+			}
+			/**
+			 * Get a vector of all attached pictures.
+			 * 
+			 * NOTE: If there are no pictures in the tag then the returned vector
+			 *       will be empty.
+			 * 
+			 * @return A vector of Picture structs.
+			 */
+			std::vector<Picture> pictures() const;
+			/**
+			 * Set a picture.
+			 * 
+			 * NOTE: If a picture already exists with the same description, it will
+			 *       be overriden by the given picture.
+			 * 
+			 * NOTE: If the picture type is FILE_ICON or OTHER_FILE_ICON, it will
+			 *       also override any saved picture with that type regardless of
+			 *       the description.
+			 * 
+			 * NOTE: The picture data being given is not validated. If the given
+			 *       Picture struct is "null", then it won't be written to file
+			 *       when calling a write() method.
+			 * 
+			 * @param newPicture The new picture to set.
+			 * @todo Throw ID3::TagSizeException when the picture is too big.
+			 * @todo Implement ID3::TagSizeException.
+			 */
+			void picture(const Picture& newPicture);
+			
+			/**
+			 * Get the play count.
+			 * 
+			 * NOTE: This first searches for the Play Count frame. If not found, it
+			 *       looks for the first Popularimeter frame. If that is not found
+			 *       as well, it returns 0.
+			 * 
+			 * @return The play count saved on the file.
+			 */
+			unsigned long long playCount() const;
+			/**
+			 * Get the play count from a Popularimeter that matches the given function.
+			 * 
+			 * NOTE: Unlike the ID3::Tag::playCount() method, this method looks
+			 *       through the Popularimeter frames first. If no matching
+			 *       Popularimeter is found, and no Popularimeters exist on file,
+			 *       then it will look for the Play Count frame. Failing finding
+			 *       that frame, it will return 0.
+			 * 
+			 * NOTE: The filter function needs to take in a string and return a
+			 *       boolean. The string parameter is the Popularimeter's email.
+			 * 
+			 * @param filterFunc The filter function. See the notes above.
+			 * @return The matching play count, the Play Count frame's value, or 0.
+			 */
+			unsigned long long playCount(const std::function<bool (const std::string&)>& filterFunc) const;
+			/**
+			 * Get the play count from a Popularimeter that matches the given function.
+			 * 
+			 * NOTE: Unlike the ID3::Tag::playCount() method, this method looks
+			 *       through the Popularimeter frames first. If no matching
+			 *       Popularimeter is found, and no Popularimeters exist on file,
+			 *       then it will look for the Play Count frame. Failing finding
+			 *       that frame, it will return 0.
+			 * 
+			 * @param email The email of the popularimeter to get.
+			 * @return The matching play count, the Play Count frame's value, or 0.
+			 */
+			inline unsigned long long playCount(const std::string& email) const {
+				return playCount([&email](const std::string& address) -> bool { return email == address; });
+			}
+			/**
+			 * Set the play count of a specific Popularimeter frame.
+			 * 
+			 * NOTE: This method only updates the PCNT frame, not the POPM frame.
+			 *       To update a POPM frame, use
+			 *       ID3::Tag::playCount(unsigned long long, std::string&) instead.
+			 * 
+			 * @param count The new play count.
+			 */
+			void playCount(const unsigned long long count);
+			
+			/**
+			 * Set the play count.
+			 * 
+			 * NOTE: If updating the play count with this method, it is recommended
+			 *       to use ID3::Tag::playCount(std::function&) or
+			 *       ID3::Tag::playCount(std::string&) only when retrieving the
+			 *       play count, as this method only updates/creates POPM frames
+			 *       and ID3::Tag::playCount() only retrieves the PCNT frame.
+			 * 
+			 * @param count The new play count.
+			 * @param email The email address of the Popularimeter.
+			 */
+			void playCount(const unsigned long long count, const std::string& email);
+			
+			/**
+			 * Get the 5-star rating from the first Popularimeter frame, or 0 if
+			 * none are found.
+			 * 
+			 * @return The rating on file. The values are 0-5.
+			 */
+			ushort rating() const;
+			/**
+			 * Return the rating that matches the given function.
+			 * 
+			 * NOTE: The filter function needs to take in a string and return a
+			 *       boolean. The string parameter is the Popularimeter's email.
+			 *       If no matching Popularimeter is found, then 0 will be returned.
+			 * 
+			 * @param filterFunc The filter function. See the note above.
+			 * @return The matching play count or 0.
+			 */
+			ushort rating(const std::function<bool (const std::string&)>& filterFunc) const;
+			/**
+			 * Return the rating that matches the given function.
+			 * 
+			 * NOTE: If no matching Popularimeter is found, then 0 will be returned.
+			 * 
+			 * @param email The email of the popularimeter to get.
+			 * @return The matching play count or 0.
+			 */
+			inline ushort rating(const std::string& email) const {
+				return rating([&email](const std::string& address) -> bool { return email == address; });
+			}
+			/**
+			 * Set the rating of a specific Popularimeter frame.
+			 * 
+			 * @param rating The new 1-5 star rating.
+			 * @param email  The email address of the Popularimeter.
+			 */
+			void rating(const uint8_t rating, const std::string& email);
+			
+			/**
+			 * Return the value of the given event timing code.
+			 * 
+			 * NOTE: If the event timing code does not exist on file, the returned
+			 *       EventTimingCode will have a value of 0.
+			 * 
+			 * @param code The event timing code to retrieve.
+			 * @return The event timing code, wrapped in a EventTimingCode struct.
+			 */
+			EventTimingCode timingCode(const TimingCodes code) const;
+			/**
+			 * Set an event timing code.
+			 * 
+			 * @param code              The timing code TimingCode enum value.
+			 * @param value             The value of the timing code.
+			 * @param forceMilliseconds If true, and the existing event timing
+			 *                          codes use MPEG frames, they will be cleared.
+			 *                          If false, the value will use the existing
+			 *                          timestamp format.
+			 */
+			void timingCode(const TimingCodes code,
+			                const ulong       value,
+			                const bool        forceMilliseconds=false);
 			
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
-			////////////////// E N D   F R A M E   S E T T E R S //////////////////
+			///////////////// E N D   S P E C I F I C   F R A M E /////////////////
+			////////////////// G E T T E R S   &   S E T T E R S //////////////////
 			///////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////
 			

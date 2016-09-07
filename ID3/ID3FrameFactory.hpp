@@ -112,7 +112,10 @@ namespace ID3 {
 			 *         FramePtr in the second slot.
 			 * @see ID3::FrameFactory::create(const ulong)
 			 */
-			FramePair createPair(const ulong readpos) const;
+			inline FramePair createPair(const ulong readpos) const {
+				FramePtr frame = create(readpos);
+				return FramePair(frame->frame(), frame);
+			}
 			
 			/**
 			 * Creates a text-content Frame. If the Frame ID is not a
@@ -148,10 +151,12 @@ namespace ID3 {
 			 *                                std::string&,
 			 *                                std::string&)
 			 */
-			FramePair createPair(const FrameID& frameName,
-			                     const std::string& textContent="",
-			                     const std::string& description="",
-			                     const std::string& language="") const;
+			inline FramePair createPair(const FrameID& frameName,
+			                            const std::string& textContent="",
+			                            const std::string& description="",
+			                            const std::string& language="") const {
+				return FramePair(frameName, create(frameName, textContent, description, language));
+			}
 			
 			/**
 			 * Creates a text-content Frame. If the Frame ID is not a
@@ -185,10 +190,12 @@ namespace ID3 {
 			 * @see ID3::FrameFactory::create(FrameID&,
 			 *                                std::vector<std::string>&)
 			 */
-			FramePair createPair(const FrameID&                  frameName,
-			                     const std::vector<std::string>& textContents,
-			                     const std::string&              description,
-			                     const std::string&              language) const;
+			inline FramePair createPair(const FrameID&                  frameName,
+			                            const std::vector<std::string>& textContents,
+			                            const std::string&              description,
+			                            const std::string&              language) const {
+				return FramePair(frameName, create(frameName, textContents, description, language));
+			}
 			
 			/**
 			 * Creates a text content or numerical Frame. If the Frame ID is not a
@@ -224,10 +231,12 @@ namespace ID3 {
 			 *                                std::string&,
 			 *                                std::string&)
 			 */
-			FramePair createPair(const FrameID&     frameName,
-			                     const long long    frameValue,
-			                     const std::string& description="",
-			                     const std::string& language="") const;
+			inline FramePair createPair(const FrameID&     frameName,
+			                            const long long    frameValue,
+			                            const std::string& description="",
+			                            const std::string& language="") const {
+				return FramePair(frameName, create(frameName, frameValue, description, language));
+			}
 			
 			/**
 			 * Create a picture Frame.
@@ -244,25 +253,53 @@ namespace ID3 {
 			                       const std::string& description="",
 			                       const PictureType  type=PictureType::FRONT_COVER) const;
 			
+			/** @see ID3::Frame::Factory::createPicture(ByteArray&,
+			 *                                          std::string&,
+			 *                                          std::string&,
+			 *                                          PictureType) */
+			inline FramePair createPicturePair(const ByteArray&   pictureByteArray,
+			                                   const std::string& mimeType,
+			                                   const std::string& description="",
+			                                   const PictureType  type=PictureType::FRONT_COVER) const {
+				FramePtr frame = createPicture(pictureByteArray, mimeType, description, type);
+				return FramePair(frame->frame(), frame);
+			}
+			
 			/**
-			 * Create a picture Frame pair.
+			 * Create a play count frame.
 			 * 
-			 * @param pictureByteArray A uint8_t vector of the picture's bytes.
-			 * @param mimeType         The MIME type of the image (PNG or JPEG only).
-			 * @param description      The image description (optional).
-			 * @param type             The ID3v2 APIC type (optional, defaults to
-			 *                         front cover).
-			 * @return A FramePair, with the Frame ID in the first slot and the
-			 *         FramePtr in the second slot.
-			 * @see ID3::Frame::Factory::createPicture(ByteArray&,
-			 *                                         std::string&,
-			 *                                         std::string&,
-			 *                                         PictureType)
+			 * @param count The play count.
+			 * @return A FramePtr with the relevant PictureFrame object.
 			 */
-			FramePair createPicturePair(const ByteArray&   pictureByteArray,
-			                            const std::string& mimeType,
-			                            const std::string& description="",
-			                            const PictureType  type=PictureType::FRONT_COVER) const;
+			FramePtr createPlayCount(const unsigned long long count) const;
+			
+			/** @see ID3::FrameFactory::createPlayCount(unsigned long long) */
+			inline FramePair createPlayCountPair(const unsigned long long count) const {
+				FramePtr frame = createPlayCount(count);
+				return FramePair(frame->frame(), frame);
+			}
+			
+			/**
+			 * Create a Popularimeter frame.
+			 * 
+			 * @param count  The play count.
+			 * @param rating The 1-5 star rating.
+			 * @param email  The email address.
+			 * @return A FramePtr with the relevant PictureFrame object.
+			 */
+			FramePtr createPlayCount(const unsigned long long count,
+			                         const uint8_t            rating,
+			                         const std::string&       email) const;
+			
+			/** @see ID3::FrameFactory::createPlayCount(unsigned long long,
+			 *                                          uint8_t,
+			 *                                          std::string&) */
+			inline FramePair createPlayCountPair(const unsigned long long count,
+			                              const uint8_t            rating,
+			                              const std::string&       email) const {
+				FramePtr frame = createPlayCount(count, rating, email);
+				return FramePair(frame->frame(), frame);
+			}
 		
 		private:
 			/**

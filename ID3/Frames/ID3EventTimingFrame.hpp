@@ -168,6 +168,11 @@ namespace ID3 {
 			void value(const TimingCodes timingCode, const ulong time);
 			
 			/**
+			 * Clear the timing codes.
+			 */
+			inline void clear() { map.clear(); }
+			
+			/**
 			 * Print information about the frame.
 			 * 
 			 * @see ID3::Frame::print()

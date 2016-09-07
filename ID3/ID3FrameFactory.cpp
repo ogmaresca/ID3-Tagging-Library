@@ -79,8 +79,7 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 		//Create the ByteArray with the entire frame contents
 		frameBytes = ByteArray(frameSize + HEADER_BYTE_SIZE, '\0');
 		musicFile->seekg(readpos, std::ifstream::beg);
-		if(musicFile->fail())
-			return FramePtr(new UnknownFrame(id));
+		if(musicFile->fail()) return FramePtr(new UnknownFrame(id));
 		musicFile->read(reinterpret_cast<char*>(&frameBytes.front()), frameSize + HEADER_BYTE_SIZE);
 	} else {
 		//The ID3v2.2 frame header has 6 bytes instead of 10
@@ -107,8 +106,7 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 		//a new ID3v2 tag
 		frameBytes = ByteArray(frameSize + HEADER_BYTE_SIZE, '\0');
 		musicFile->seekg(readpos, std::ifstream::beg);
-		if(musicFile->fail())
-			return FramePtr(new UnknownFrame(id));
+		if(musicFile->fail()) return FramePtr(new UnknownFrame(id));
 		
 		//Get the frame bytes, reserving the first four bytes in the ByteArray
 		musicFile->read(reinterpret_cast<char*>(&frameBytes.front()+4), frameSize + OLD_FRAME_HEADER_BYTE_SIZE);
@@ -119,16 +117,13 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 		
 		//Convert the ID to its ID3v2.4 equivalent, and save them to the currently
 		//unused first four bytes of the frame
-		for(ushort i = 0; i < 4; i++)
-			frameBytes[i] = id[i];
+		for(ushort i = 0; i < 4; i++) frameBytes[i] = id[i];
 		
 		//Convert the ID3v2.2 non-synchsafe 3-byte frame size to the ID3v2.4
 		//synchsafe 4-byte frame size
 		ByteArray v4Size = intToByteArray(frameSize, 4, true);
-		
 		//And save it to the frame bytes
-		for(ushort i = 0; i < 4; i++)
-			frameBytes[i+4] = v4Size[i];
+		for(ushort i = 0; i < 4; i++) frameBytes[i+4] = v4Size[i];
 		
 		//The frame should have the Discard Frame Upon Tag Alter flag
 		frameBytes[8] = Frame::FLAG1_DISCARD_UPON_TAG_ALTER_IF_UNKNOWN_V4;
@@ -159,12 +154,6 @@ FramePtr FrameFactory::create(const ulong readpos) const {
 }
 
 ///@pkg ID3FrameFactory.h
-FramePair FrameFactory::createPair(const ulong readpos) const {
-	FramePtr frame = create(readpos);
-	return FramePair(frame->frame(), frame);
-}
-
-///@pkg ID3FrameFactory.h
 FramePtr FrameFactory::create(const FrameID&     frameName,
                               const std::string& textContent,
                               const std::string& description,
@@ -188,17 +177,11 @@ FramePtr FrameFactory::create(const FrameID&     frameName,
 			return FramePtr(new PlayCountFrame(atoll(textContent.c_str())));
 		case FrameClass::CLASS_POPULARIMETER:
 			return FramePtr(new PopularimeterFrame(atoll(textContent.c_str()), 0, description));
-		default:
+		case FrameClass::CLASS_EVENT_TIMING:
+			return FramePtr(new EventTimingFrame());
+		case FrameClass::CLASS_UNKNOWN: default:
 			return FramePtr(new UnknownFrame(frameName));
 	}
-}
-
-///@pkg ID3FrameFactory.h
-FramePair FrameFactory::createPair(const FrameID&     frameName,
-                                   const std::string& textContent,
-                                   const std::string& description,
-                                   const std::string& language) const {
-	return FramePair(frameName, create(frameName, textContent, description, language));
 }
 
 ///@pkg ID3FrameFactory.h
@@ -227,14 +210,6 @@ FramePtr FrameFactory::create(const FrameID&                  frameName,
 }
 
 ///@pkg ID3FrameFactory.h
-FramePair FrameFactory::createPair(const FrameID&                  frameName,
-                                   const std::vector<std::string>& textContents,
-                                   const std::string&              description,
-                                   const std::string&              language) const {
-	return FramePair(frameName, create(frameName, textContents, description, language));
-}
-
-///@pkg ID3FrameFactory.h
 FramePtr FrameFactory::create(const FrameID&     frameName,
                               const long long    frameValue,
                               const std::string& description,
@@ -254,14 +229,6 @@ FramePtr FrameFactory::create(const FrameID&     frameName,
 }
 
 ///@pkg ID3FrameFactory.h
-FramePair FrameFactory::createPair(const FrameID&     frameName,
-                                   const long long    frameValue,
-                                   const std::string& description,
-                                   const std::string& language) const {
-	return FramePair(frameName, create(frameName, frameValue, description, language));
-}
-
-///@pkg ID3FrameFactory.h
 FramePtr FrameFactory::createPicture(const ByteArray&   pictureByteArray,
 			                            const std::string& mimeType,
 			                            const std::string& description,
@@ -270,19 +237,21 @@ FramePtr FrameFactory::createPicture(const ByteArray&   pictureByteArray,
 }
 
 ///@pkg ID3FrameFactory.h
-FramePair FrameFactory::createPicturePair(const ByteArray&   pictureByteArray,
-			                                 const std::string& mimeType,
-			                                 const std::string& description,
-			                                 const PictureType  type) const {
-	FramePtr frame = createPicture(pictureByteArray, mimeType, description, type);
-	return FramePair(frame->frame(), frame);
+FramePtr FrameFactory::createPlayCount(const unsigned long long count) const {
+	return FramePtr(new PlayCountFrame(count));
+}
+
+///@pkg ID3FrameFactory.h
+FramePtr FrameFactory::createPlayCount(const unsigned long long count,
+                                       const uint8_t            rating,
+                                       const std::string&       email) const {
+	return FramePtr(new PopularimeterFrame(count, rating, email));
 }
 
 ///@pkg ID3FrameFactory
 ///@static
 FrameClass FrameFactory::frameType(const FrameID& frameID) {
-	if(frameID.unknown())
-		return FrameClass::CLASS_UNKNOWN;
+	if(frameID.unknown()) return FrameClass::CLASS_UNKNOWN;
 	
 	switch(frameID) {
 		//Pictures

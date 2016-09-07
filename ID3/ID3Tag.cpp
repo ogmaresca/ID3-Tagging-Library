@@ -33,8 +33,7 @@ namespace {
 	 * @see ID3::Tag::genre(bool)
 	 */
 	static std::string processGenre(const std::string& genre) {
-		if(genre == "") return "";
-		
+		if(genre.empty()) return "";
 		std::string genreString;
 		
 		if(numericalString(genre)) {
@@ -55,10 +54,8 @@ namespace {
 				genreString = std::regex_replace(genre, findV1Genre, "");
 				//If there's nothing else in the tag string, then return
 				//the ID3v1 genre
-				if(genreString == "") genreString = V1::getGenreString(genreInt);
-			} else {
-				genreString = genre;
-			}
+				if(genreString.empty()) genreString = V1::getGenreString(genreInt);
+			} else { genreString = genre; }
 		}
 		
 		return genreString;
@@ -110,6 +107,7 @@ void Tag::revert() {
 	//Loop through every Frame and revert it
 	auto itr = frames.begin();
 	while(itr != frames.end()) {
+		if(itr->second.get() == nullptr) { itr = frames.erase(itr); continue; }
 		itr->second->revert();
 		//If the Frame is null or empty then remove it
 		if(itr->second->null() || itr->second->empty()) itr = frames.erase(itr);
@@ -128,8 +126,7 @@ bool Tag::exists(const FrameID& frameName) const { return frames.count(frameName
 
 ///@pkg ID3.h
 std::string Tag::textString(const FrameID& frameName) const {
-	//Get the frame
-	TextFrame* textFrameObj = getFrame<TextFrame>(frameName);
+	TextFrame* textFrameObj = getFrame<TextFrame>(frameName); //Get the frame
 	
 	//If the Frame object isn't valid and thus a null pointer, then return an
 	//empty string. Else, return the text content.
@@ -142,20 +139,15 @@ std::vector<std::string> Tag::textStrings(const FrameID& frameName) const {
 		//Get the text frames
 		std::vector<TextFrame*> textFrames = getFrames<TextFrame>(frameName);
 		
-		//The vector to return
-		std::vector<std::string> textStrings;
+		std::vector<std::string> textStrings; //The vector to return
 		
 		if(textFrames.size() == 0) {
-			//If no frames were returned
-			textStrings.push_back("");
+			textStrings.push_back(""); //If no frames were returned
 		} else {
-			//Prevent vector reallocations by making it as big as textFrames
-			textStrings.reserve(textFrames.size());
-			//Add the frame contents to textStrings
-			for(TextFrame* currentFrame : textFrames)
+			textStrings.reserve(textFrames.size()); //Reserve slots for each TextFrame
+			for(TextFrame* currentFrame : textFrames) //Add the frame contents
 				textStrings.push_back(currentFrame->content());
 		}
-		
 		return textStrings;
 	} else {
 		TextFrame* textFrame = getFrame<TextFrame>(frameName);
@@ -184,14 +176,12 @@ Text Tag::text(const FrameID& frameName,
 	//then try ignoring the filter function
 	if(descTextFrames.size() == 0) return text(frameName);
 	
-	for(const DescriptiveTextFrame* const currentFrame : descTextFrames) {
+	for(const DescriptiveTextFrame* const currentFrame : descTextFrames)
 		//Test the frame's description and language with the given filter function
 		if(filterFunc(currentFrame->description(), currentFrame->language()))
 			return getTextStruct(currentFrame);
-	}
 	
-	//No matching Frame found
-	return Text();
+	return Text(); //No matching Frame found
 }
 
 ///@pkg ID3.h
@@ -202,18 +192,13 @@ std::vector<Text> Tag::texts(const FrameID& frameName) const {
 	//If no relevant text frames were found, return one with an empty Text
 	if(textFrames.size() == 0) return std::vector<Text>(1, Text());
 	
-	//The vector to return
-	std::vector<Text> toReturn;
-	
-	//Reserve slots in toReturn for each Frame in the textFrames vector
-	toReturn.reserve(textFrames.size());
+	std::vector<Text> toReturn;          //The vector to return
+	toReturn.reserve(textFrames.size()); //Reserve slots for each TextFrame
 	
 	//Loop through every text frame and add a Text struct for each Frame
 	for(TextFrame* currentFrame : textFrames)
 		toReturn.push_back(getTextStruct(currentFrame));
-	
-	//Return the Text vector
-	return toReturn;
+	return toReturn; //Return the Text vector
 }
 
 ///@pkg ID3.h
@@ -231,161 +216,6 @@ std::vector<ByteArray> Tag::binaryDatas(const FrameID& frameName) const {
 		for(const Frame* const frame : frames) toReturn.push_back(frame->bytes());
 	}
 	return toReturn;
-}
-
-///@pkg ID3.h
-std::string Tag::genre(bool process) const {
-	std::string genreString = textString(Frames::FRAME_GENRE);
-	if(process) genreString = processGenre(genreString);
-	return genreString;
-}
-///@pkg ID3.h
-std::vector<std::string> Tag::genres(bool process) const {
-	std::vector<std::string> genreStrings = textStrings(Frames::FRAME_GENRE);
-	if(process)
-		for(std::size_t i = 0; i < genreStrings.size(); i++)
-			genreStrings[i] = processGenre(genreStrings[i]);
-	return genreStrings;
-}
-
-///@pkg ID3.h
-std::string Tag::track() const {
-	std::string trackString = textString(Frames::FRAME_TRACK);
-	return trackString.substr(0, trackString.find_first_of('/'));
-}
-///@pkg ID3.h
-std::string Tag::trackTotal() const {
-	std::string trackString = textString(Frames::FRAME_TRACK);
-	size_t slashPos = trackString.find_first_of('/');
-	return slashPos == std::string::npos ? "" : trackString.substr(slashPos + 1);
-}
-
-///@pkg ID3.h
-std::string Tag::disc() const {
-	std::string discString = textString(Frames::FRAME_DISC);
-	return discString.substr(0, discString.find_first_of('/'));
-}
-///@pkg ID3.h
-std::string Tag::discTotal() const {
-	std::string discString = textString(Frames::FRAME_DISC);
-	size_t slashPos = discString.find_first_of('/');
-	return slashPos == std::string::npos ? "" : discString.substr(slashPos + 1);
-}
-
-///@pkg ID3.h
-Picture Tag::picture() const {
-	//Get the picture Frame, or a nullptr if there isn't a picture
-	PictureFrame* picture = getFrame<PictureFrame>(Frames::FRAME_PICTURE);
-	
-	//Return a Picture struct
-	return picture == nullptr ? Picture() : Picture(picture->picture(),
-	                                                picture->mimeType(),
-	                                                picture->description(),
-	                                                picture->pictureType());
-}
-
-///@pkg ID3.h
-std::vector<Picture> Tag::pictures() const {
-	//Get the vector of PictureFrames in the Frame map.
-	std::vector<PictureFrame*> frames = getFrames<PictureFrame>(Frames::FRAME_PICTURE);
-	
-	//The Picture vector to return
-	std::vector<Picture> toReturn;
-	
-	//Reserve space for each picture Frame
-	toReturn.reserve(frames.size());
-	
-	//Loop through the Frame vector and add a Picture struct for each Frame
-	for(PictureFrame* currentFrame : frames)
-		toReturn.push_back(Picture(currentFrame->picture(),
-	                              currentFrame->mimeType(),
-	                              currentFrame->description(),
-	                              currentFrame->pictureType()));
-	
-	//Return the Picture vector
-	return toReturn;
-}
-
-///@pkg ID3.h
-Picture Tag::picture(const std::function<bool (const std::string&)>& filterFunc) const {
-	//Get the vector of PictureFrames in the Frame map.
-	std::vector<PictureFrame*> frames = getFrames<PictureFrame>(Frames::FRAME_PICTURE);
-	
-	//Look for a PictureFrame that matches the filter function
-	for(PictureFrame* currentFrame : frames) {
-		if(filterFunc(currentFrame->description()))
-			return Picture(currentFrame->picture(),
-	                     currentFrame->mimeType(),
-	                     currentFrame->description(),
-	                     currentFrame->pictureType());
-	}
-	
-	//Return an empty picture
-	return Picture();
-}
-
-///@pkg ID3.h
-unsigned long long Tag::playCount() const {
-	//Get the play count Frame, or a nullptr if it's not on file
-	PlayCountFrame* pcnt = getFrame<PlayCountFrame>(Frames::FRAME_PLAY_COUNT);
-	if(pcnt != nullptr) return pcnt->playCount();
-	
-	//If no FRAME_PLAY_COUNT frame, then try the Popularimeter
-	pcnt = getFrame<PlayCountFrame>(Frames::FRAME_POPULARIMETER);
-	
-	//Return the play count
-	return pcnt == nullptr ? 0ULL : pcnt->playCount();
-}
-
-///@pkg ID3.h
-unsigned long long Tag::playCount(const std::function<bool (const std::string&)>& filterFunc) const {
-	//Look through the Popularimeters with the filter function
-	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
-	for(const PopularimeterFrame* const popm : popularimeters) {
-		if(filterFunc(popm->email())) return popm->playCount();
-	}
-	
-	if(!popularimeters.size()) {
-		//No popularimeters on file, so get the play count Frame, or a nullptr if
-		//it's not on file
-		PlayCountFrame* pcnt = getFrame<PlayCountFrame>(Frames::FRAME_PLAY_COUNT);
-		if(pcnt != nullptr) return pcnt->playCount();
-	}
-	
-	//No matching Frame found, so return 0
-	return 0ULL;
-}
-
-///@pkg ID3.h
-ushort Tag::rating() const {
-	//Look for the first Popularimeter
-	PopularimeterFrame* popm = getFrame<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
-	
-	//Return the rating
-	return popm == nullptr ? 0 : popm->rating();
-}
-
-///@pkg ID3.h
-ushort Tag::rating(const std::function<bool (const std::string&)>& filterFunc) const {
-	//Look through the Popularimeters with the filter function
-	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
-	for(const PopularimeterFrame* const popm : popularimeters) {
-		if(filterFunc(popm->email())) return popm->rating();
-	}
-	
-	//No matching PopularimeterFrame found, so return 0
-	return 0;
-}
-
-///@pkg ID3.h
-EventTimingCode Tag::timingCode(const TimingCodes code) const {
-	EventTimingFrame* frame = getFrame<EventTimingFrame>(Frames::FRAME_EVENT_TIMING_CODES);
-	
-	return frame == nullptr || frame->null() ?
-	       //No valid event timing code frame found, return a struct with the default value
-	       EventTimingCode(code) :
-	       //Return a struct with all the values set
-	       EventTimingCode(code, frame->value(code), frame->format() == TimeStampFormat::MILLISECONDS);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -412,7 +242,6 @@ void Tag::text(const FrameID& frameID, const Text& text) {
 	} else {		
 		//See if it's a DescriptiveTextFrame
 		DescriptiveTextFrame* descFrameObj = getFrame<DescriptiveTextFrame>(frameID);
-		
 		//Set the content
 		if(descFrameObj == nullptr) textFrameObj->content(text.text);
 		else                        descFrameObj->content(text.text, text.description, text.language);
@@ -424,12 +253,10 @@ void Tag::text(const FrameID& frameID, const std::string& text) {
 	//Get the text frame. If a UnknownFrame exists at the position, delete it.
 	TextFrame* textFrameObj = getFrame<TextFrame>(frameID, true);
 	
-	if(textFrameObj == nullptr)
-		//If the Frame doesn't exist, create it
-		//If the FrameID shouldn't be a TextFrame, then this will be ignored.
-		addFrame(frameID, factory.create(frameID, text));
-	else
-		textFrameObj->content(text);
+	//If the Frame doesn't exist, create it
+	//If the FrameID shouldn't be a TextFrame, then this will be ignored.
+	if(textFrameObj == nullptr) addFrame(frameID, factory.create(frameID, text));
+	else                        textFrameObj->content(text); //Set the content
 }
 
 ///@pkg ID3.h
@@ -437,12 +264,10 @@ void Tag::text(const FrameID& frameID, const std::vector<std::string>& text) {
 	//Get the text frame. If a UnknownFrame exists at the position, delete it.
 	TextFrame* textFrameObj = getFrame<TextFrame>(frameID, true);
 	
-	if(textFrameObj == nullptr)
-		//If the Frame doesn't exist, create it
-		//If the FrameID shouldn't be a TextFrame, then this will be ignored.
-		addFrame(frameID, factory.create(frameID, text));
-	else
-		textFrameObj->contents(text);
+	//If the Frame doesn't exist, create it
+	//If the FrameID shouldn't be a TextFrame, then this will be ignored.
+	if(textFrameObj == nullptr) addFrame(frameID, factory.create(frameID, text));
+	else                        textFrameObj->contents(text); //Set the content
 }
 
 ///@pkg ID3.h
@@ -538,6 +363,30 @@ void Tag::text(const FrameID&  frameID,
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////  E N D   F R A M E   S E T T E R S //////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+///////////////////  S T A R T   S P E C I F I C   F R A M E ///////////////////
+//////////////////////  G E T T E R S   &   S E T T E R S //////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+///@pkg ID3.h
+std::string Tag::genre(bool process) const {
+	std::string genreString = textString(Frames::FRAME_GENRE);
+	return process ? processGenre(genreString) : genreString;
+}
+///@pkg ID3.h
+std::vector<std::string> Tag::genres(bool process) const {
+	std::vector<std::string> genreStrings = textStrings(Frames::FRAME_GENRE);
+	if(process) for(std::string& genre : genreStrings) genre = processGenre(genre);
+	return genreStrings;
+}
 ///@pkg ID3.h
 void Tag::genre(const ushort newGenre) { text(FRAME_GENRE, V1::getGenreString(newGenre)); }
 
@@ -546,7 +395,7 @@ void Tag::year(const std::string& newYear) {
 	static const ushort YEAR_LENGTH = 4;
 	//First chop off any additional characters
 	std::string yearString = newYear.substr(0, YEAR_LENGTH);
-	if(yearString != "" && numericalString(yearString)) {
+	if(!	yearString.empty() && numericalString(yearString)) {
 		//Prepend zeros to make it four characters long
 		while(yearString.size() < YEAR_LENGTH) yearString = '0' + yearString;
 		const std::string tdrc = textString(FRAME_RECORDING_TIME);
@@ -561,36 +410,238 @@ void Tag::year(const std::string& newYear) {
 }
 
 ///@pkg ID3.h
+std::string Tag::track() const {
+	std::string trackString = textString(Frames::FRAME_TRACK);
+	return trackString.substr(0, trackString.find_first_of('/'));
+}
+///@pkg ID3.h
+std::string Tag::trackTotal() const {
+	std::string trackString = textString(Frames::FRAME_TRACK);
+	size_t slashPos = trackString.find_first_of('/');
+	return slashPos == std::string::npos ? "" : trackString.substr(slashPos + 1);
+}
+///@pkg ID3.h
 void Tag::track(const std::string& newTrack) {
 	std::string	trackString = numericalString(newTrack) ? newTrack : "",
 	            total       = trackTotal();
-	text(FRAME_TRACK, total == "" ? trackString : trackString + '/' + total);
+	text(FRAME_TRACK, total.empty() ? trackString : trackString + '/' + total);
 }
-
 ///@pkg ID3.h
 void Tag::trackTotal(const std::string& newTrackTotal) {
 	std::string	trackString = numericalString(newTrackTotal) ? newTrackTotal : "";
-	if(trackString == "") text(FRAME_TRACK, track());
-	else                  text(FRAME_TRACK, track() + '/' + trackString);
+	if(trackString.empty()) text(FRAME_TRACK, track());
+	else                    text(FRAME_TRACK, track() + '/' + trackString);
 }
 
+///@pkg ID3.h
+std::string Tag::disc() const {
+	std::string discString = textString(Frames::FRAME_DISC);
+	return discString.substr(0, discString.find_first_of('/'));
+}
+///@pkg ID3.h
+std::string Tag::discTotal() const {
+	std::string discString = textString(Frames::FRAME_DISC);
+	size_t slashPos = discString.find_first_of('/');
+	return slashPos == std::string::npos ? "" : discString.substr(slashPos + 1);
+}
 ///@pkg ID3.h
 void Tag::disc(const std::string& newDisc) {
 	std::string	discString = numericalString(newDisc) ? newDisc : "",
 	            total      = discTotal();
-	text(FRAME_DISC, total == "" ? discString : discString + '/' + total);
+	text(FRAME_DISC, total.empty() ? discString : discString + '/' + total);
 }
-
 ///@pkg ID3.h
 void Tag::discTotal(const std::string& newDiscTotal) {
 	std::string	discString = numericalString(newDiscTotal) ? newDiscTotal : "";
-	if(discString == "") text(FRAME_DISC, disc());
-	else                 text(FRAME_DISC, disc() + '/' + discString);
+	if(discString.empty()) text(FRAME_DISC, disc());
+	else                   text(FRAME_DISC, disc() + '/' + discString);
+}
+
+///@pkg ID3.h
+Picture Tag::picture() const {
+	//Get the picture Frame, or a nullptr if there isn't a picture
+	PictureFrame* picture = getFrame<PictureFrame>(Frames::FRAME_PICTURE);
+	
+	//Return a Picture struct
+	return picture == nullptr ? Picture() : Picture(picture->picture(),
+	                                                picture->mimeType(),
+	                                                picture->description(),
+	                                                picture->pictureType());
+}
+///@pkg ID3.h
+std::vector<Picture> Tag::pictures() const {
+	//Get the vector of PictureFrames in the Frame map.
+	std::vector<PictureFrame*> frames = getFrames<PictureFrame>(Frames::FRAME_PICTURE);
+	
+	std::vector<Picture> toReturn;   //The Picture vector to return
+	toReturn.reserve(frames.size()); //Reserve space for each picture Frame
+	
+	//Loop through the Frame vector and add a Picture struct for each Frame
+	for(PictureFrame* currentFrame : frames)
+		toReturn.push_back(Picture(currentFrame->picture(),
+	                              currentFrame->mimeType(),
+	                              currentFrame->description(),
+	                              currentFrame->pictureType()));
+	
+	return toReturn; //Return the Picture vector
+}
+///@pkg ID3.h
+Picture Tag::picture(const std::function<bool (const std::string&, const PictureType)>& filterFunc) const {
+	//Get the vector of PictureFrames in the Frame map.
+	std::vector<PictureFrame*> frames = getFrames<PictureFrame>(Frames::FRAME_PICTURE);
+	
+	//Look for a PictureFrame that matches the filter function
+	for(PictureFrame* currentFrame : frames)
+		if(filterFunc(currentFrame->description(), currentFrame->pictureType()))
+			return Picture(currentFrame->picture(),
+	                     currentFrame->mimeType(),
+	                     currentFrame->description(),
+	                     currentFrame->pictureType());
+	
+	return Picture(); //Return an empty picture
+}
+///@pkg ID3.h
+void Tag::picture(const Picture& newPicture) {
+	if(exists(FRAME_PICTURE)) {
+		//Get the range of pictures. Each iterator has a "second" variable which
+		//stores the FramePtr object.
+		std::pair<FrameMap::iterator, FrameMap::iterator> range = frames.equal_range(FRAME_PICTURE);
+		//The frame object to use
+		PictureFrame* frame = nullptr;
+		//Whether only a single picture of that type can exist in the tag
+		bool singleType = newPicture.type == PictureType::FILE_ICON ||
+		                  newPicture.type == PictureType::OTHER_FILE_ICON;
+		
+		//Loop through the range
+		for(auto start = range.first; start != range.second; start++) {
+			//Get the Frame object from the FramePtr, and cast it to PictureFrame
+			PictureFrame* derivedFrame = dynamic_cast<PictureFrame*>(start->second.get());
+			//If the description doesn't match, or is singleType and the types don't match
+			if(derivedFrame == nullptr ||
+			   !(derivedFrame->description() == newPicture.description ||
+			     (singleType && derivedFrame->pictureType() == newPicture.type))) continue;
+			//Get the object
+			if(frame == nullptr) frame = derivedFrame;
+			//Keep the Frame object in case revert() gets called, but make it
+			//null to prevent it from being written to file
+			else derivedFrame->picture(ByteArray(), "", "", PictureType::NULL_PICTURE);
+		}
+		//If a frame was found, update it
+		if(frame != nullptr) {
+			frame->picture(newPicture.data, newPicture.MIME, newPicture.description, newPicture.type);
+			return;
+		}
+	}
+	//If no picture with the same description exists
+	addFrame(factory.createPicturePair(newPicture.data, newPicture.MIME, newPicture.description, newPicture.type));
+}
+
+///@pkg ID3.h
+unsigned long long Tag::playCount() const {
+	//Get the play count Frame, or a nullptr if it's not on file
+	PlayCountFrame* pcnt = getFrame<PlayCountFrame>(Frames::FRAME_PLAY_COUNT);
+	if(pcnt != nullptr) return pcnt->playCount();
+	
+	//If no FRAME_PLAY_COUNT frame, then try the Popularimeter
+	pcnt = getFrame<PlayCountFrame>(Frames::FRAME_POPULARIMETER);
+	
+	return pcnt == nullptr ? 0ULL : pcnt->playCount(); //Return the play count
+}
+
+///@pkg ID3.h
+unsigned long long Tag::playCount(const std::function<bool (const std::string&)>& filterFunc) const {
+	//Look through the Popularimeters with the filter function
+	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
+	for(const PopularimeterFrame* const popm : popularimeters)
+		if(filterFunc(popm->email())) return popm->playCount();
+	
+	if(!popularimeters.size()) {
+		//No popularimeters on file, so get the play count Frame, or a nullptr if
+		//it's not on file
+		PlayCountFrame* pcnt = getFrame<PlayCountFrame>(Frames::FRAME_PLAY_COUNT);
+		if(pcnt != nullptr) return pcnt->playCount();
+	}
+	return 0ULL; //No matching Frame found, so return 0
+}
+///@pkg ID3.h
+void Tag::playCount(const unsigned long long count) {
+	PlayCountFrame* pcnt = getFrame<PlayCountFrame>(FRAME_PLAY_COUNT);
+	if(pcnt == nullptr) addFrame(factory.createPlayCountPair(count));
+	else                pcnt->playCount(count);
+}
+///@pkg ID3.h
+void Tag::playCount(const unsigned long long count, const std::string& email) {
+	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
+	for(PopularimeterFrame* const popm : popularimeters) {
+		if(email == popm->email()) {
+			popm->playCount(count); //Update the playcount
+			return;
+		}
+	}
+	//No Popularimeter with the same play count found, create a new one
+	addFrame(factory.createPlayCountPair(count, 0, email));
+}
+
+///@pkg ID3.h
+ushort Tag::rating() const {
+	//Look for the first Popularimeter
+	PopularimeterFrame* popm = getFrame<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
+	return popm == nullptr ? 0 : popm->rating(); //Return the rating
+}
+///@pkg ID3.h
+ushort Tag::rating(const std::function<bool (const std::string&)>& filterFunc) const {
+	//Look through the Popularimeters with the filter function
+	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
+	for(const PopularimeterFrame* const popm : popularimeters)
+		if(filterFunc(popm->email())) return popm->rating();
+	return 0; //No matching PopularimeterFrame found, so return 0
+}
+///@pkg ID3.h
+void Tag::rating(const uint8_t rating, const std::string& email) {
+	std::vector<PopularimeterFrame*> popularimeters = getFrames<PopularimeterFrame>(Frames::FRAME_POPULARIMETER);
+	for(PopularimeterFrame* const popm : popularimeters) {
+		if(email == popm->email()) {
+			popm->rating(rating); //Update the playcount
+			return;
+		}
+	}
+	//No Popularimeter with the same rating found, create a new one
+	addFrame(factory.createPlayCountPair(0, rating, email));
+}
+
+///@pkg ID3.h
+EventTimingCode Tag::timingCode(const TimingCodes code) const {
+	EventTimingFrame* frame = getFrame<EventTimingFrame>(Frames::FRAME_EVENT_TIMING_CODES);	
+	return frame == nullptr || frame->null() ?
+	       //No valid event timing code frame found, return a struct with the default value
+	       EventTimingCode(code) :
+	       //Return a struct with all the values set
+	       EventTimingCode(code, frame->value(code), frame->format() == TimeStampFormat::MILLISECONDS);
+}
+
+///@pkg ID3.h
+void Tag::timingCode(const TimingCodes code, const ulong value, const bool forceMilliseconds) {
+	if(exists(FRAME_EVENT_TIMING_CODES)) {
+		EventTimingFrame* frame = getFrame<EventTimingFrame>(FRAME_EVENT_TIMING_CODES);
+		if(frame != nullptr) {
+			//Force the use of milliseconds
+			if(forceMilliseconds && frame->format() == TimeStampFormat::MPEG_FRAMES)
+				frame->clear();
+			frame->value(code, value); //Set the value
+			return;
+		}
+	}
+	//If the frame does not exist
+	FramePtr framePtr = factory.create(FRAME_EVENT_TIMING_CODES);
+	EventTimingFrame* frame = dynamic_cast<EventTimingFrame*>(framePtr.get());
+	if(frame != nullptr) frame->value(code, value);
+	addFrame(FRAME_EVENT_TIMING_CODES, framePtr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-//////////////////////  E N D   F R A M E   S E T T E R S //////////////////////
+/////////////////////  E N D   S P E C I F I C   F R A M E /////////////////////
+//////////////////////  G E T T E R S   &   S E T T E R S //////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -639,8 +690,8 @@ void Tag::print() const {
 	if(frames.size() && !uknfrms) return;*/
 	
 	std::cout << "\n......................\n";
-	if(filename == "") std::cout << "Printing information about ID3 File:\n";
-	else               std::cout << "Printing information about file " << filename << ":\n";
+	if(filename.empty()) std::cout << "Printing information about ID3 File:\n";
+	else                 std::cout << "Printing information about file " << filename << ":\n";
 	std::cout << "Tag size:                 " << v2TagInfo.size << '\n';
 	
 	std::cout << "ID3 version(s) and flags: " << getVersionString(true) << '\n';
@@ -732,8 +783,8 @@ DerivedFrame* Tag::getFrame(const FrameID& frameName, const bool mismatchDelete)
 template<typename DerivedFrame>
 std::vector<DerivedFrame*> Tag::getFrames(const FrameID& frameName) const {
 	//Get the range.
-	//Each const_iterator has a first variable, which stores the Frames value,
-	//and a second variable, which stores the FramePtr object.
+	//Each const_iterator has a "first" variable, which stores the FrameID value,
+	//and a "second" variable, which stores the FramePtr object.
 	std::pair<FrameMap::const_iterator, FrameMap::const_iterator> range = frames.equal_range(frameName);
 	
 	//The vector to return

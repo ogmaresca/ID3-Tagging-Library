@@ -66,10 +66,10 @@ namespace ID3 {
 			virtual FrameClass type() const noexcept;
 			
 			/**
-			 * Check if the Frame's content is empty. A PlayCountFrame is never
-			 * empty, as it could store a play count of 0.
+			 * Check if the Frame's content is empty. A PlayCountFrame is empty
+			 * when its play count is 0.
 			 * 
-			 * @return false
+			 * @return true if the play count > 0, false otheriwse.
 			 * @see ID3::Frame::empty()
 			 */
 			virtual bool empty() const;
@@ -181,6 +181,16 @@ namespace ID3 {
 			 * @see ID3::Frame::type()
 			 */
 			virtual FrameClass type() const noexcept;
+			
+			/**
+			 * Check if the Frame's content is empty. A PopularimeterFrame is empty
+			 * when its play count is 0, its rating is 0, and its email is an empty
+			 * string.
+			 * 
+			 * @return true if the Frame's values are their defaults, false otherwise.
+			 * @see ID3::Frame::empty()
+			 */
+			virtual bool empty() const;
 			
 			/**
 			 * Get the email address.
