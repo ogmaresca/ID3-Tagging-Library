@@ -60,7 +60,7 @@ TextFrame::~TextFrame() {}
 FrameClass TextFrame::type() const noexcept { return FrameClass::CLASS_TEXT; }
 
 ///@pkg ID3TextFrame.h
-bool TextFrame::empty() const { return textContent == ""; }
+bool TextFrame::empty() const { return textContent.empty(); }
 
 ///@pkg ID3TextFrame.h
 void TextFrame::print() const {
@@ -87,13 +87,9 @@ void TextFrame::print() const {
 ///@pkg ID3TextFrame.h
 ByteArray TextFrame::write() {
 	const char OLD_SEPARATOR = stringSeparator();
-	
-	if(OLD_SEPARATOR != '\0') {
-		//Loop through the text and convert every slash to a null character
+	if(OLD_SEPARATOR != '\0') //Loop through the text and convert every slash to a null character
 		for(char& curChar : textContent)
 			if(curChar == OLD_SEPARATOR) curChar = '\0';
-	}
-	
 	//Write the content
 	return Frame::write();
 }
@@ -152,18 +148,11 @@ std::vector<std::string> TextFrame::contents() const {
 	//A vector that contains a single string, for cases where there is no text
 	//content.
 	static std::vector<std::string> emptyString(1, "");
+	if(textContent.empty()) return emptyString; //If the string is empty, no use continuing
 	
-	//If the string is empty, no use continuing
-	if(textContent == "") return emptyString;
-	
-	//A vector of strings to return
-	std::vector<std::string> tokens;
-	
-	//The separating character
-	const char SEPARATOR = stringSeparator();
-	
-	//Loop variables
-	size_t tokenStart = 0, tokenEnd = textContent.find(SEPARATOR, 0);
+	std::vector<std::string> tokens; //A vector of strings to return
+	const char SEPARATOR = stringSeparator(); //The separating character
+	size_t tokenStart = 0, tokenEnd = textContent.find(SEPARATOR, 0); //Loop variables
 	
 	while((tokenEnd = textContent.find(SEPARATOR, tokenStart)) != textContent.npos) {
 		//If the substring isn't an empty string
@@ -173,14 +162,11 @@ std::vector<std::string> TextFrame::contents() const {
 	}
 	
 	//Add the last string token, if it isn't an empty string
-	if(tokenStart < textContent.size())
-		tokens.push_back(textContent.substr(tokenStart));
+	if(tokenStart < textContent.size()) tokens.push_back(textContent.substr(tokenStart));
 	
 	//In the edge case that the string contains only divider characters, then
-	//also return the empty string vector
-	if(tokens.size() == 0) return emptyString;
-	
-	return tokens;
+	//also return the empty string vector. Else, just return tokens.
+	return tokens.size() == 0 ? emptyString : tokens;
 }
 
 ///@pkg ID3TextFrame.h
@@ -193,7 +179,7 @@ void TextFrame::contents(const std::vector<std::string>& newContent) {
 		const char SEPARATOR = stringSeparator();
 		//Concatenate the strings
 		for(const std::string& currentStr : newContent) {
-			if(textContent != "") textContent += SEPARATOR;
+			if(!textContent.empty()) textContent += SEPARATOR;
 			textContent += currentStr;
 		}
 	}
@@ -220,8 +206,7 @@ char TextFrame::stringSeparator() const {
 ///@pkg ID3TextFrame.h
 bool TextFrame::operator==(const Frame* const frame) const noexcept {
 	//Check if the frame IDs or "null" statuses match
-	if(frame == nullptr || frame->frame() != id || isNull != frame->null())
-		return false;
+	if(frame == nullptr || frame->frame() != id || isNull != frame->null()) return false;
 	//Check if it's a TextFrame, and if it is compare the content
 	const TextFrame* const castFrame = dynamic_cast<const TextFrame* const>(frame);
 	//If it's not a TextFrame return false
@@ -235,9 +220,7 @@ bool TextFrame::operator==(const std::string& str) const noexcept {
 }
 
 ///@pkg ID3TextFrame.h
-TextFrame::operator std::string() const noexcept {
-	return textContent;
-}
+TextFrame::operator std::string() const noexcept { return textContent; }
 
 ///@pkg ID3TextFrame.h
 TextFrame& TextFrame::operator+=(const std::string& str) noexcept {
@@ -319,11 +302,9 @@ void NumericalTextFrame::contents(const std::vector<long long>& newContent) {
 	textContent = "";
 	
 	if(newContent.size() > 0) {
-		//The separating character
-		const char SEPARATOR = stringSeparator();
-		
+		const char SEPARATOR = stringSeparator(); //The separating character
 		for(const long currentStr : newContent) {
-			if(textContent != "") textContent += SEPARATOR;
+			if(!textContent.empty()) textContent += SEPARATOR;
 			textContent += std::to_string(currentStr);
 		}
 	}

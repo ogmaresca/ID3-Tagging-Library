@@ -371,6 +371,8 @@ namespace ID3 {
 			 * identity.
 			 * 
 			 * @return The new content of the frame, in bytes.
+			 * @throws ID3::FrameSizeException If the new tag size is too big for
+			 *                                 the file (doesn't fit in 28 bits).
 			 */
 			virtual ByteArray write();
 		
@@ -547,6 +549,8 @@ namespace ID3 {
 			 * the frame size to be synchsafe is the ID3 major version is <= 3.
 			 * 
 			 * @see ID3::Frame::write()
+			 * @throws ID3::FrameSizeException If the new tag size is too big for
+			 *                                 the file (doesn't fit in 28 bits).
 			 */
 			virtual ByteArray write();
 		

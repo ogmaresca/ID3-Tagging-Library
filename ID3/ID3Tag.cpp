@@ -11,7 +11,6 @@
  **********************************************************************/
 
 #include <iostream>  //For printing
-#include <exception> //For exceptions
 #include <cstring>   //For memcmp()
 #include <regex>     //For regular expressions
 
@@ -22,6 +21,7 @@
 #include "Frames/ID3PictureFrame.hpp"   //For PictureFrame
 #include "Frames/ID3PlayCountFrame.hpp" //For PlayCountFrame
 #include "ID3Constants.hpp"             //For constants such as HEADER_BYTE_SIZE
+#include "ID3Exception.hpp"             //For exceptions
 
 using namespace ID3;
 
@@ -65,42 +65,67 @@ namespace {
 ///@pkg ID3.h
 Tag::Tag(std::ifstream& file) : filesize(0) {
 	if(file && file.is_open()) readFile(file);
+	else                       throw FileNotOpenException();
 }
 
 ///@pkg ID3.h
 Tag::Tag(std::fstream& file) : filesize(0) {
 	if(file && file.is_open()) readFile(file);
+	else                       throw FileNotOpenException();
 }
 
 ///@pkg ID3.h
 Tag::Tag(const std::string& fileLoc) : filename(fileLoc), filesize(0) {
 	//Check if the file is an MP3 file
 	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase|std::regex::ECMAScript)))
-		return;
+		throw NotMP3FileException("File \"" + filename + "\" is not an MP3 or MP4 file!\n");
 	
-	std::ifstream file(fileLoc, std::ios::binary | std::ios::ate);
+	std::ifstream file(fileLoc, std::ios::in | std::ios::binary | std::ios::ate);
 	
 	if(file.is_open()) {
-		try {
-			readFile(file);
-		} catch(const std::exception& e) {
-			std::cerr << "Error in ID3::Tag::Tag(std::string&): " << e.what() << '\n';
-		} try {
-			file.close();
-		} catch(const std::exception& e) {
-			std::cerr << "Error in ID3::Tag::Tag(std::string&) closing the file: " << e.what() << '\n';
-		}
+		readFile(file);
+		file.close();
+	} else {
+		throw FileNotFoundException("File \"" + filename + "\" cannot be opened!\n");
 	}
 }
 
 ///@pkg ID3.h
-Tag::Tag() : filesize(0) {}
+Tag::Tag() noexcept : filesize(0) {}
 
 ///@pkg ID3.h
-void Tag::write(const std::string& fileLoc) {}
+Tag::operator bool() const noexcept { return !frames.empty(); }
 
 ///@pkg ID3.h
-void Tag::write(std::fstream& file) {}
+bool Tag::operator!() const noexcept { return frames.empty(); }
+
+///@pkg ID3.h
+void Tag::write(const std::string& fileLoc) {
+	//Check if the file is an MP3 file
+	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase|std::regex::ECMAScript)))
+		throw NotMP3FileException("File \"" + filename + "\" is not an MP3 or MP4 file!\n");
+	
+	std::ofstream file(fileLoc, std::ios::out | std::ios::binary);
+	
+	if(file.is_open()) {
+		Tag fileReference(fileLoc);
+		writeFile(file, fileReference);
+		file.close();
+		filename = fileLoc;
+	} else {
+		throw FileNotFoundException("File \"" + filename + "\" cannot be opened!\n");
+	}
+}
+
+///@pkg ID3.h
+void Tag::write(std::fstream& file) {
+	if(file && file.is_open()) {
+		Tag fileReference(file);
+		writeFile(file, fileReference);
+	} else {
+		throw FileNotOpenException();
+	}
+}
 
 ///@pkg ID3.h
 void Tag::revert() {
@@ -395,7 +420,7 @@ void Tag::year(const std::string& newYear) {
 	static const ushort YEAR_LENGTH = 4;
 	//First chop off any additional characters
 	std::string yearString = newYear.substr(0, YEAR_LENGTH);
-	if(!	yearString.empty() && numericalString(yearString)) {
+	if(!yearString.empty() && numericalString(yearString)) {
 		//Prepend zeros to make it four characters long
 		while(yearString.size() < YEAR_LENGTH) yearString = '0' + yearString;
 		const std::string tdrc = textString(FRAME_RECORDING_TIME);
@@ -944,15 +969,20 @@ void Tag::readFileV2(std::istream& file) {
 			}
 		}
 		
-		//Make sure the ID3v2 version is supported, that the size is okay,
-		//and that unsynchronisation isn't set for ID3v2.3 and below.
+		//Make sure the ID3v2 version is supported and that unsynchronisation
+		//isn't set on ID3v2.3 and below.
 		//In ID3v2.4, it is handled on a per-frame basis.
 		if(v2TagInfo.majorVer < MIN_SUPPORTED_VERSION ||
 		   v2TagInfo.majorVer > MAX_SUPPORTED_VERSION ||
 		   v2TagInfo.minorVer != SUPPORTED_MINOR_VERSION ||
-		   v2TagInfo.totalSize > filesize ||
 		   (v2TagInfo.flagUnsynchronisation && v2TagInfo.majorVer <= 3))
 			return;
+		
+		//Make sure that the size is valid, or throw a FormatExcetion
+		if(v2TagInfo.totalSize > filesize) {
+			if(filename.empty()) throw FileFormatException("Tag size format error on file when reading tags: tags are bigger than the file size!");
+			else throw FileFormatException("Tag size format error on file \"" + filename + "\" when reading tags: tags are bigger than the file size!");
+		}
 		
 		//The file has correctly formatted ID3v2 tags
 		tagsSet.v2 = true;
@@ -1074,6 +1104,50 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 		}*/
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::ExtendedTag&): " << e.what() << '\n';
+	}
+}
+
+///@pkg ID3.h
+void Tag::writeFile(std::ostream& file, const Tag& fileInfo) {
+	//The ID3v2 tag data to write to file
+	ByteArray binaryTagData(10, '\0');
+	//Make the tags at least one KiB long
+	binaryTagData.reserve(fileInfo.v2TagInfo.totalSize > 1024 ? fileInfo.v2TagInfo.totalSize : 1024);
+	
+	//Add "ID3"
+	binaryTagData[0] = 'I';
+	binaryTagData[1] = 'D';
+	binaryTagData[2] = '3';
+	
+	//Add the version
+	binaryTagData[3] = WRITE_VERSION;
+	binaryTagData[4] = SUPPORTED_MINOR_VERSION;
+	
+	//Byte 5 is the flag, which is already initialized to 0. No flags are being set.
+	//Bytes 6-9 are the size, and have already been intialized to 0.
+	
+	//Loop through every Frame and write it
+	for(const FramePair& framePair : frames) {
+		if(framePair.second.get() == nullptr) continue;
+		ByteArray frameBytes = framePair.second->write();
+		//If the Frame data is valid add the it to the tag data
+		if(frameBytes.size() > HEADER_BYTE_SIZE)
+			binaryTagData.insert(binaryTagData.end(), frameBytes.begin(), frameBytes.end());
+	}
+	
+	//Validate the size by throwing a TagSizeException if it's too big
+	if(binaryTagData.size() > MAX_TAG_SIZE)
+		throw TagSizeException("Cannot write tags to file, as it exceeds the maximum size of "+std::to_string(MAX_TAG_SIZE)+"!\n");
+	
+	//<------------------------ TODO: Write the data to file ----------------->//
+	
+	//Now that the write has been successful, remove any null/empty frames
+	auto itr = frames.begin();
+	while(itr != frames.end()) {
+		if(itr->second.get() == nullptr || itr->second->null() || itr->second->empty())
+			itr = frames.erase(itr);
+		else
+			itr++;
 	}
 }
 

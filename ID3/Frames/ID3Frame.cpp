@@ -14,7 +14,8 @@
 
 #include "ID3Frame.hpp" //For the class definitions
 #include "../ID3Functions.hpp" //For intToByteArray
-#include "../ID3Constants.hpp" //For HEADER_BYTE_SIZE and WRITE_VERSION
+#include "../ID3Constants.hpp" //For HEADER_BYTE_SIZE, WRITE_VERSION, and MAX_TAG_SIZE
+#include "../ID3Exception.hpp" //For FrameSizeException
 
 using namespace ID3;
 
@@ -80,11 +81,9 @@ FrameID Frame::frame() const { return id; }
 
 ///@pkg ID3Frame.h
 ByteArray Frame::bytes(bool header) const noexcept {
-	if(!header)
-		return frameContent;
+	if(!header) return frameContent;
 	const ushort HEADER_SIZE = headerSize();
-	if(frameContent.size() < HEADER_SIZE)
-		return ByteArray();
+	if(frameContent.size() < HEADER_SIZE) return ByteArray();
 	return ByteArray(frameContent.begin() + HEADER_SIZE, frameContent.end());
 }
 
@@ -97,6 +96,7 @@ bool Frame::edited() const { return isEdited; }
 ///@pkg ID3Frame.h
 bool Frame::createdFromFile() const { return isFromFile; }
 
+///@pkg ID3Frame.h
 bool Frame::flag(const FrameFlag flag) const {
 	//Verify that the frame is valid
 	if(frameContent.size() < HEADER_BYTE_SIZE || ID3Ver <= 3)
@@ -268,6 +268,10 @@ ByteArray Frame::write() {
 		//Call the abstract method to write the body
 		writeBody();
 		
+		//Validate the size by throwing a FrameSizeException if it's too big
+		if(frameContent.size() > MAX_TAG_SIZE)
+			throw FrameSizeException(id, id.description());
+		
 		//Save the frame size
 		ByteArray size = intToByteArray(frameContent.size() - HEADER_BYTE_SIZE, 4, true);
 		for(ushort i = 0; i < 4 && i < id.size(); i++)
@@ -374,9 +378,11 @@ ByteArray UnknownFrame::write() {
 	} else if(OLD_VERSION <= 3) {
 		//Whether a frame size is synchsafe has been changed from ID3v2.3 to
 		//ID3v2.4, so it must be updated to report the correct frame size
+		//The size must also be valided, as it used to be able to hold 32 bits of
+		//information, now only 28 bits
+		if(frameContent.size() > MAX_TAG_SIZE) throw FrameSizeException(id, id.description());
 		ByteArray frameSize = intToByteArray(frameContent.size() - HEADER_BYTE_SIZE, 4, true);
-		for(short i = 0; i < 4; i++)
-			frameContent[i+4] = frameSize[i];
+		for(short i = 0; i < 4; i++) frameContent[i+4] = frameSize[i];
 	}
 	return frameContent;
 }

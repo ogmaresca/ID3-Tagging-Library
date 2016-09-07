@@ -70,28 +70,6 @@ namespace ID3 {
 	
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////// E N U M S /////////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////
-	
-	/**
-	 * ID3v1 enums.
-	 */
-	/*namespace V1 {
-		**
-		 * An enum of speeds defined in ID3v1 Extended.
-		 */
-		/*enum ExtendedSpeeds {
-			UNSET    = 0,
-			SLOW     = 1,
-			MEDIUM   = 2,
-			FAST     = 3,
-			HARDCORE = 4
-		};
-	}*/
-	
-	/////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// S T R U C T S ///////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
@@ -260,15 +238,14 @@ namespace ID3 {
 			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
 			 *       be larger than the file itself, an ID3::FormatException will
 			 *       be thrown.
-			 * NOTE: If the file is not an MP3 or MP4 file an ID3::NotMP3Exception
-			 *       will be thrown.
+			 * NOTE: If the file is not an MP3 or MP4 file an
+			 *       ID3::NotMP3FileException will be thrown.
 			 * 
 			 * @param fileLoc The file path.
 			 * @throws ID3::ID3FileNotFoundException if the file does not exist.
-			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
-			 *         bigger than the file itself.
-			 * @throws ID3::NotMP3Exception if the file is not an MP3 or MP4 file.
-			 * @todo Implement the exceptions.
+			 * @throws ID3::FileFormatException if the ID3v2 tags on file are
+			 *         supposedly bigger than the file itself.
+			 * @throws ID3::NotMP3FileException if the file is not an MP3 or MP4 file.
 			 */
 			Tag(const std::string& fileLoc);
 			
@@ -279,16 +256,15 @@ namespace ID3 {
 			 * NOTE: The file must be open to read the tags. If it is not open, an
 			 *       ID3::FileNotOpenException is thrown.
 			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
-			 *       be larger than the file itself, an ID3::FormatException will
-			 *       be thrown.
+			 *       be larger than the file itself, an ID3::FileFormatException
+			 *       will be thrown.
 			 * NOTE: This constructor does not check to see if the given file is an
 			 *       MP3 or MP4 file.
 			 * 
 			 * @param file The ifstream file object.
 			 * @throws ID3::FileNotOpenException if the file is not open.
-			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
-			 *         bigger than the file itself.
-			 * @todo Implement the exceptions.
+			 * @throws ID3::FileFormatException if the ID3 tags on file are
+			 *         supposedly bigger than the file itself.
 			 */
 			Tag(std::ifstream& file);
 			
@@ -299,23 +275,32 @@ namespace ID3 {
 			 * NOTE: The file must be open to read the tags. If it is not open, an
 			 *       ID3::FileNotOpenException is thrown.
 			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
-			 *       be larger than the file itself, an ID3::FormatException will
-			 *       be thrown.
+			 *       be larger than the file itself, an ID3::FileFormatException
+			 *       will be thrown.
 			 * NOTE: This constructor does not check to see if the given file is an
 			 *       MP3 or MP4 file.
 			 * 
 			 * @param file The fstream file object.
 			 * @throws ID3::FileNotOpenException if the file is not open.
-			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
-			 *         bigger than the file itself.
-			 * @todo Implement the exceptions.
+			 * @throws ID3::FileFormatException if the ID3 tags on file are
+			 *         supposedly bigger than the file itself.
 			 */
 			Tag(std::fstream& file);
 			
 			/**
 			 * A constructor that creates a blank Tag object without a file.
 			 */
-			Tag();
+			Tag() noexcept;
+			
+			/**
+			 * Returns true if the Frame map is not empty, false otherwise.
+			 */
+			operator bool() const noexcept;
+			
+			/**
+			 * Returns true if the Frame map empty, false otherwise.
+			 */
+			bool operator!() const noexcept;
 			
 			/**
 			 * Write the tags to the file location given.
@@ -325,20 +310,25 @@ namespace ID3 {
 			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
 			 *       be larger than the file itself, an ID3::FormatException will
 			 *       be thrown.
-			 * NOTE: If the file is not an MP3 or MP4 file an ID3::NotMP3Exception
-			 *       will be thrown.
+			 * NOTE: If the file is not an MP3 or MP4 file a
+			 *       ID3::NotMP3FileException will be thrown.
 			 * NOTE: If another Tag object or another program has edited the ID3
 			 *       tags on the file between the creation of this object and the
 			 *       call to this method, the new tags will be overriden with the
 			 *       tags in this object.
+			 * NOTE: Any ID3v1, ID3v1.1, and ID3v1 Extended tags will be removed.
 			 * 
 			 * @param fileLoc The file to write to.
 			 * @throws ID3::FileNotFoundException if the file location saved in
 			 *         this object does not exist.
-			 * @throws ID3::NotMP3Exception if the file is not an MP3 file.
-			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
-			 *         bigger than the file itself.
-			 * @todo Implement the method and its exceptions.
+			 * @throws ID3::NotMP3FileException if the file is not an MP3 file.
+			 * @throws ID3::FileFormatException if the existing ID3 tags on file
+			 *         are supposedly bigger than the file itself.
+			 * @throws ID3::FrameSizeException if a frame in the tag is bigger than
+			 *         the maximum frame size (28 bits).
+			 * @throws ID3::TagSizeException if the tag to wirte is bigger than
+			 *         the maximum tag size (28 bits).
+			 * @todo Implement the method.
 			 */
 			void write(const std::string& fileLoc);
 			
@@ -370,18 +360,19 @@ namespace ID3 {
 			 *       tags on the file between the creation of this object and the
 			 *       call to this method, the new tags will be overriden with the
 			 *       tags in this object.
+			 * NOTE: Any ID3v1, ID3v1.1, and ID3v1 Extended tags will be removed.
 			 * 
 			 * @param file The fstream file object.
 			 * @throws ID3::FileNotOpenException if the file is not open.
-			 * @throws ID3::FormatException if the ID3 tags on file are supposedly
-			 *         bigger than the file itself.
-			 * @todo Implement the method and its exceptions.
+			 * @throws ID3::FileFormatException if the ID3 existing tags on file
+			 *         are supposedly bigger than the file itself.
+			 * @throws ID3::FrameSizeException if a frame in the tag is bigger than
+			 *         the maximum frame size (28 bits).
+			 * @throws ID3::TagSizeException if the tag to wirte is bigger than
+			 *         the maximum tag size (28 bits).
+			 * @todo Implement the method.
 			 */
 			void write(std::fstream& file);
-			
-			//TODO
-			//protected
-			//void write(std::ostream& file)
 			
 			/**
 			 * Revert any changes made to the tags since the last call to a
@@ -1336,26 +1327,25 @@ namespace ID3 {
 			inline Text getTextStruct(const Frame* const frame) const;
 			
 			/**
-			 * A constructor helper method that gets the tag information from the
-			 * given file.
+			 * A constructor helper method that reads the ID3 tags from the file.
 			 * 
-			 * @param file     The file stream object.
+			 * @param file The file stream object.
 			 */
 			void readFile(std::istream& file);
 			
 			/**
-			 * A constructor helper method that reads the ID3v1 tags from
-			 * the file.
+			 * A constructor helper method that reads the ID3v1 tags from the file.
 			 * 
-			 * @param file     The file stream object.
+			 * @param file The file stream object.
 			 */
 			void readFileV1(std::istream& file);
 			
 			/**
-			 * A constructor helper method that reads the ID3v2 tags from
-			 * the file.
+			 * A constructor helper method that reads the ID3v2 tags from the file.
 			 * 
-			 * @param file     The file stream object.
+			 * @param file The file stream object.
+			 * @throws ID3::FileFormatException if the ID3v2 tags on file are
+			 *         supposedly bigger than the file itself.
 			 */
 			void readFileV2(std::istream& file);
 			
@@ -1387,6 +1377,16 @@ namespace ID3 {
 			 * @param tags The ID3v1 Extended tag struct.
 			 */
 			void setTags(const V1::ExtendedTag& tags);
+			
+			/**
+			 * An internal method used to write the content of the frames map to
+			 * file.
+			 * 
+			 * @param file     The file stream object.
+			 * @param fileInfo A Tag object created in the write() method to get
+			 *                 the most up-to-date information about the file.
+			 */
+			void writeFile(std::ostream& file, const Tag& fileInfo);
 			
 			/**
 			 * A TagsOnFile struct that records all the ID3 versions
