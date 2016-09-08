@@ -10,7 +10,7 @@ It has been compiled exclusively with g++ and C++14. Add `-std=c++14` to the g++
 ##Dependencies
 [ICU](http://site.icu-project.org/) - [license](http://source.icu-project.org/repos/icu/icu/trunk/LICENSE).
 
-ID3-Tagging-Library requires the icu-uc package. Add "\`pkg-config icu-uc --cflags --libs\`" to the g++ command when compiling.
+ID3-Tagging-Library requires the icu-uc package. Add `` `pkg-config icu-uc --cflags --libs` `` to the g++ command when compiling.
 
 ##What ID3-Tagging-Library does do
 - Read ID3v1, ID3v1.1, ID3v1 Extended, ID3v2.2, ID3v2.3, and ID3v2.4 tags.
@@ -24,7 +24,7 @@ ID3-Tagging-Library requires the icu-uc package. Add "\`pkg-config icu-uc --cfla
 - Support ID3v2 tags not located at the beginning of the file.
 - Support ID3v2 frame grouping identities, aside from preserving its value.
 - Support unsynchronisation in ID3v2.3 tags, and writing unsynchronised frames.
-- Support editing tags besides the ones listed above.
+- Support editing tags aside the ones listed above.
 
 ##License
 ID3-Tagging-Library is licensed under the GNU Public License v3 (GPLv3). View `LICENSE.txt` for more information.
