@@ -10,8 +10,6 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <iostream>  //For printing
-
 #include "ID3EventTimingFrame.hpp" //For the class definition
 #include "../ID3.hpp"              //For EventTimingCode
 #include "../ID3Functions.hpp"     //For intToByteArray() and byteIntVal()
@@ -73,18 +71,17 @@ void EventTimingFrame::value(const TimingCodes timingCode, const ulong time) {
 }
 
 ///@pkg ID3EventTimingFrame.h
-void EventTimingFrame::print() const {
-	Frame::print();
-	std::cout << "Timestamps:     ";
+std::string EventTimingFrame::print() const {
+	std::string out = Frame::print() + "Timestamps:     ";
 	switch(timeStampFormat) {
-		case TimeStampFormat::MILLISECONDS: { std::cout << "Milliseconds"; break; }
-		case TimeStampFormat::MPEG_FRAMES:  { std::cout << "MPEG Frames"; break; }
-		default:                              std::cout << "Unknown";
+		case TimeStampFormat::MILLISECONDS: { out += "Milliseconds"; break; }
+		case TimeStampFormat::MPEG_FRAMES:  { out += "MPEG Frames"; break; }
+		default:                              out += "Unknown";
 	}
 	for(const std::pair<uint8_t, ulong>& eventCodePair : map)
-		std::cout << "\nEvent code pair:  (Timing code " <<
-		          eventCodePair.first << ", Value " << eventCodePair.second << ")\n";
-	std::cout << "Frame class:    EventTimingFrame\n";
+		out += "\nEvent code pair:  {Timing code " + std::to_string((ushort)eventCodePair.first) +
+		       ", Value " + std::to_string(eventCodePair.second) + "}\n";
+	return out + "Frame class:    EventTimingFrame\n";
 }
 
 ///@pkg ID3EventTimingFrame.h

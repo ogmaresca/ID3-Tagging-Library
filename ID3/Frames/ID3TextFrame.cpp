@@ -10,8 +10,6 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <iostream>  //For printing
-
 #include "ID3TextFrame.hpp"    //For the class definitions
 #include "../ID3.hpp"          //For the Text struct
 #include "../ID3Functions.hpp" //For getUTF8String() and numericalString()
@@ -63,25 +61,24 @@ FrameClass TextFrame::type() const noexcept { return FrameClass::CLASS_TEXT; }
 bool TextFrame::empty() const { return textContent.empty(); }
 
 ///@pkg ID3TextFrame.h
-void TextFrame::print() const {
-	Frame::print();
-	std::cout << "Content:        " << textContent << '\n';
+std::string TextFrame::print() const {
+	std::string out = Frame::print() + "Content:        " + textContent + '\n';
 	if(frameContent.size() > headerSize()) {
-		std::cout << "Encoding:       ";
+		out += "Encoding:       ";
 		switch(frameContent[headerSize()]) {
 			case FrameEncoding::ENCODING_UTF16: {
-				std::cout << "UTF-16"; break;
+				out += "UTF-16"; break;
 			} case FrameEncoding::ENCODING_UTF16BOM: {
-				std::cout << "UTF-16 BOM"; break;
+				out += "UTF-16 BOM"; break;
 			} case FrameEncoding::ENCODING_UTF8: {
-				std::cout << "UTF-8"; break;
+				out += "UTF-8"; break;
 			} case FrameEncoding::ENCODING_LATIN1: default: {
-				std::cout << "LATIN-1"; break;
+				out += "LATIN-1"; break;
 			}
 		}
-		std::cout << '\n';
+		out += '\n';
 	}
-	std::cout << "Frame class:    TextFrame\n";
+	return out + "Frame class:    TextFrame\n";
 }
 
 ///@pkg ID3TextFrame.h
@@ -303,10 +300,10 @@ void NumericalTextFrame::contents(const std::vector<long long>& newContent) {
 }
 
 ///@pkg ID3TextFrame.h
-void NumericalTextFrame::print() const {
-	Frame::print();
-	std::cout << "Content:        " << textContent << '\n';
-	std::cout << "Frame class:    NumericalTextFrame\n";
+std::string NumericalTextFrame::print() const {
+	return Frame::print() +
+	       "Content:        " + textContent +
+	       "\nFrame class:    NumericalTextFrame\n";
 }
 
 ///@pkg ID3TextFrame.h
@@ -403,12 +400,12 @@ DescriptiveTextFrame::~DescriptiveTextFrame() {}
 FrameClass DescriptiveTextFrame::type() const noexcept { return FrameClass::CLASS_DESCRIPTIVE; }
 
 ///@pkg ID3TextFrame.h
-void DescriptiveTextFrame::print() const {
-	Frame::print();
-	if(optionLanguage) std::cout << "Language:       " << textLanguage << '\n';
-	if(!optionNoDescription) std::cout << "Description:    " << textDescription << '\n';
-	std::cout << "Content:        " << textContent << '\n';
-	std::cout << "Frame class:    DescriptiveTextFrame\n";
+std::string DescriptiveTextFrame::print() const {
+	return Frame::print() +
+	              (optionLanguage ? "Language:       " + textLanguage + '\n' : "") +
+	              (optionNoDescription ? "" : "Description:    " + textDescription + '\n') +
+	              "Content:        " + textContent +
+	              "\nFrame class:    DescriptiveTextFrame\n";
 }
 
 ///@pkg ID3TextFrame.h
@@ -593,10 +590,10 @@ FrameClass URLTextFrame::type() const noexcept {
 }
 
 ///@pkg ID3TextFrame.h
-void URLTextFrame::print() const {
-	Frame::print();
-	std::cout << "URL:            " << textContent << '\n';
-	std::cout << "Frame class:    URLTextFrame\n";
+std::string URLTextFrame::print() const {
+	return Frame::print() +
+	       "URL:            " + textContent +
+	       "\nFrame class:    URLTextFrame\n";
 }
 
 ///@pkg ID3TextFrame.h

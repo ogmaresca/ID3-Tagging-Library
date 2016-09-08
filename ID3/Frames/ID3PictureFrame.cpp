@@ -10,7 +10,6 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <iostream>  //For printing
 #include <algorithm> //For std::all_of
 
 #include "ID3PictureFrame.hpp" //For the class definitions
@@ -99,12 +98,12 @@ void PictureFrame::picture(const ByteArray& newPictureData,
 }
 
 ///@pkg ID3PictureFrame.h
-void PictureFrame::print() const {
-	Frame::print();
-	std::cout << "Picture type:   " << (short)APICType << '\n';
-	std::cout << "MIME type:      " << textMIME << '\n';
-	std::cout << "Description:    " << textDescription << '\n';
-	std::cout << "Frame class:    PictureFrame\n";
+std::string PictureFrame::print() const {
+	return Frame::print() +
+	       "Picture type:   "   + std::to_string((short)APICType) +
+	       "\nMIME type:      " + textMIME +
+	       "\nDescription:    " + textDescription +
+	       "\nFrame class:    PictureFrame\n";
 }
 
 ///@pkg ID3TextFrame.h

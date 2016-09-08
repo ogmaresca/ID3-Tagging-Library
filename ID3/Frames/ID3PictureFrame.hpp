@@ -184,7 +184,7 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::print()
 			 */
-			virtual void print() const;
+			virtual std::string print() const;
 			
 			/**
 			 * Check if a given MIME type is allowed for ID3v2 pictures.

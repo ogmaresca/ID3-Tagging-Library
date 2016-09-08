@@ -141,7 +141,7 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::print()
 			 */
-			virtual void print() const;
+			virtual std::string print() const;
 			
 			/**
 			 * The write() method for TextFrame converts the string separator
@@ -345,7 +345,7 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::print()
 			 */
-			virtual void print() const;
+			virtual std::string print() const;
 		
 		protected:
 			/**
@@ -573,7 +573,7 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::print()
 			 */
-			virtual void print() const;
+			virtual std::string print() const;
 			
 		protected:
 			/**
@@ -767,7 +767,7 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::print()
 			 */
-			virtual void print() const;
+			virtual std::string print() const;
 			
 		protected:
 			/**

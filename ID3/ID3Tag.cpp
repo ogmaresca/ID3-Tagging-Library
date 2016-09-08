@@ -10,7 +10,7 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <iostream>  //For printing
+#include <iostream>  //For std::string
 #include <cstring>   //For memcmp()
 #include <regex>     //For regular expressions
 
@@ -848,23 +848,23 @@ std::string Tag::fileName() const { return filename; }
 ulong Tag::fileSize() const { return filesize; }
 
 ///@pkg ID3.h
-void Tag::print() const {
-	std::cout << "\n......................\n";
-	if(filename.empty()) std::cout << "Printing ID3 tag information:\n";
-	else                 std::cout << "Printing ID3 tag information about file " << filename << ":\n";
-	std::cout << "Tag size:                 " << v2TagInfo.size << '\n';
-	std::cout << "Padding size:             " << (v2TagInfo.totalSize - v2TagInfo.paddingStart) << '\n';
+void Tag::print(std::ostream& out) const {
+	out << "\n......................\n";
+	if(filename.empty()) out << "Printing ID3 tag information:\n";
+	else                 out << "Printing ID3 tag information about file " << filename << ":\n";
+	out << "Tag size:                 " << v2TagInfo.size << '\n'
+	    << "Padding size:             " << (v2TagInfo.totalSize - v2TagInfo.paddingStart) << '\n'
+	    << "ID3 version(s) and flags: " << getVersionString(true) << '\n'
+	    << "Number of frames:         " << frames.size() << '\n';
 	
-	std::cout << "ID3 version(s) and flags: " << getVersionString(true) << '\n';
-	std::cout << "Number of frames:         " << frames.size() << '\n';
+	for(const FramePair& currentFramePair : frames)
+		out << "--------------------------\n" << currentFramePair.second->print();
 	
-	for(const FramePair& currentFramePair : frames) {
-		std::cout << "--------------------------\n";
-		currentFramePair.second->print();
-	}
-	
-	std::cout << "..........................\n" << std::noboolalpha;
+	out << "..........................\n" << std::noboolalpha;
 }
+
+///@pkg ID3.h
+void Tag::print() const { print(std::cout); }
 
 ///@pkg ID3.h
 bool Tag::addFrame(const FrameID& frameName, FramePtr frame) {
@@ -1021,9 +1021,7 @@ void Tag::readFileV1(std::istream& file, const bool readFrames) {
 		if(!readFrames) return;
 		if(extTagsSet) setTags(extTags);
 		setTags(tags);
-	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::getFileV1(std::ifstream&): " << e.what() << '\n';
-	}
+	} catch(const std::exception& e) {}
 }
 
 ///@pkg ID3.h
@@ -1166,9 +1164,7 @@ void Tag::setTags(const V1::Tag& tags, bool zeroCheck) {
 		if(!exists(Frames::FRAME_COMMENT))
 			addFrame(factory.createPair(Frames::FRAME_COMMENT, terminatedstring(tags.comment, 30)));
 		addFrame(factory.createPair(Frames::FRAME_GENRE,  V1::getGenreString(tags.genre)));
-	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::Tag&, bool): " << e.what() << '\n';
-	}
+	} catch(const std::exception& e) {}
 }
 
 ///@pkg ID3.h
@@ -1197,9 +1193,7 @@ void Tag::setTags(const V1::P1Tag& tags, bool zeroCheck) {
 			addFrame(factory.createPair(Frames::FRAME_COMMENT, terminatedstring(tags.comment, 28)));
 		addFrame(factory.createPair(Frames::FRAME_TRACK,  std::to_string(tags.trackNum)));
 		addFrame(factory.createPair(Frames::FRAME_GENRE,  V1::getGenreString(tags.genre)));
-	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::P1Tag&, bool): " << e.what() << '\n';
-	}
+	} catch(const std::exception& e) {}
 }
 
 ///@pkg ID3.h
@@ -1220,9 +1214,7 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 			timingCode(TimingCodes::AUDIO_START, startTime, true);
 		if(timingCode(TimingCodes::AUDIO_END).value != 0)
 			timingCode(TimingCodes::AUDIO_END, endTime, true);
-	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::ExtendedTag&): " << e.what() << '\n';
-	}
+	} catch(const std::exception& e) {}
 }
 
 ///@pkg ID3.h

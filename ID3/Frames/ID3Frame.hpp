@@ -357,8 +357,10 @@ namespace ID3 {
 			
 			/**
 			 * Print information about the Frame.
+			 * 
+			 * @return The string information.
 			 */
-			virtual void print() const;
+			virtual std::string print() const;
 			
 			/**
 			 * Save any changes made to the frame, and get the updated content of
@@ -548,9 +550,9 @@ namespace ID3 {
 			/**
 			 * Print information about the frame.
 			 * 
-			 * @see ID3::Frame::print()
+			 * @return The string information.
 			 */
-			virtual void print() const;
+			virtual std::string print() const;
 			
 			/**
 			 * The write() method for UnknownFrame overrides the write() method in

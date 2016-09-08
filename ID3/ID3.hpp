@@ -13,7 +13,7 @@
 #ifndef ID3_HPP
 #define ID3_HPP
 
-#include <fstream>       //For std::fstream, std::ostream, and std::cout
+#include <fstream>       //For std::fstream and std::ostream
 #include <vector>        //For std::vector
 #include <unordered_map> //For std::unordered_map and std::pair
 #include <memory>        //For std::shared_ptr
@@ -1153,6 +1153,13 @@ namespace ID3 {
 			
 			/**
 			 * Print all the tag information.
+			 * 
+			 * @param out The output stream to print to.
+			 */
+			void print(std::ostream& out) const;
+			
+			/**
+			 * Print all the tag information to standard out.
 			 */
 			void print() const;
 			

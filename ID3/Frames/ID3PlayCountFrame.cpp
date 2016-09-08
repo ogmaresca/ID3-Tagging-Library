@@ -10,9 +10,6 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <iostream>  //For printing
-#include <algorithm> //For std::all_of
-
 #include "ID3PlayCountFrame.hpp" //For the class definitions
 #include "../ID3Functions.hpp"   //For intToByteArray(), byteIntVal(), and getUTF8String()
 
@@ -58,10 +55,10 @@ void PlayCountFrame::playCount(const unsigned long long newPlayCount) {
 }
 
 ///@pkg ID3PlayCountFrame.h
-void PlayCountFrame::print() const {
-	Frame::print();
-	std::cout << "Play count:     " << count << '\n';
-	std::cout << "Frame class:    PlayCountFrame\n";
+std::string PlayCountFrame::print() const {
+	return Frame::print() +
+	       "Play count:     " + std::to_string(count) +
+	       "\nFrame class:    PlayCountFrame\n";
 }
 
 ///@pkg ID3PlayCountFrame.h
@@ -168,12 +165,12 @@ void PopularimeterFrame::email(const std::string& newEmail) {
 }
 
 ///@pkg ID3PlayCountFrame.h
-void PopularimeterFrame::print() const {
-	Frame::print();
-	std::cout << "Play count:     " << count << '\n';
-	std::cout << "Rating:         " << (fiveStarRating == 0 ? "N/A" : std::to_string(fiveStarRating)) << '\n';
-	std::cout << "Email:          " << emailAddress << '\n';
-	std::cout << "Frame class:    PopularimeterFrame\n";
+std::string PopularimeterFrame::print() const {
+	return Frame::print() +
+	       "Play count:     " + std::to_string(count) +
+	       "\nRating:         " + (fiveStarRating == 0 ? "N/A" : std::to_string(fiveStarRating)) +
+	       "\nEmail:          " + emailAddress +
+	       "\nFrame class:    PopularimeterFrame\n";
 }
 
 ///@pkg ID3PlayCountFrame.h

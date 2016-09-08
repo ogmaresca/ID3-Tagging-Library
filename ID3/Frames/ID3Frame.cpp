@@ -10,7 +10,7 @@
  * @link https://github.com/ggodone-maresca/ID3-Tagging-Library        *
  **********************************************************************/
 
-#include <iostream>  //For printing
+#include <sstream>  //For StringStream
 
 #include "ID3Frame.hpp" //For the class definitions
 #include "../ID3Functions.hpp" //For intToByteArray
@@ -158,54 +158,57 @@ ushort Frame::headerSize() const {
 }
 
 ///@pkg ID3Frame.h
-void Frame::print() const {
+std::string Frame::print() const {
 	const ushort HEADER_SIZE = headerSize();
 	const ulong BODY_SIZE = size();
 	const ulong FRAME_SIZE = size(true);
 	
-	std::cout << std::showbase << "Information about " << id.description() << " frame " << id << ": \n";
-	std::cout << "Edited:         " << std::boolalpha << isEdited << '\n';
-	std::cout << "Read from file: " << std::boolalpha << isFromFile << '\n';
-	std::cout << "Null:           " << std::boolalpha << isNull << '\n';
+	std::stringstream out;
+	
+	out << std::showbase << "Information about " << id.description() << " frame " << id << ": \n";
+	out << "Edited:         " << std::boolalpha << isEdited << '\n';
+	out << "Read from file: " << std::boolalpha << isFromFile << '\n';
+	out << "Null:           " << std::boolalpha << isNull << '\n';
 	
 	if(isNull) {
-		std::cout << std::noboolalpha << std::noshowbase;
-		return;
+		out << std::noboolalpha << std::noshowbase;
+		return out.str();
 	}
 	
-	std::cout << "Frame size:     " << FRAME_SIZE << '\n';
-	if(FRAME_SIZE == 0) return;
+	out << "Frame size:     " << FRAME_SIZE << '\n';
+	if(FRAME_SIZE == 0) return out.str();
 	
-	std::cout << "Flags:          ";
-	if(flag(FrameFlag::DISCARD_UPON_TAG_ALTER_IF_UNKNOWN)) std::cout << " -discardIfUnknown";
-	if(flag(FrameFlag::DISCARD_UPON_AUDIO_ALTER)) std::cout << " -discardUponAudioAlter";
-	if(flag(FrameFlag::READ_ONLY))  std::cout << " -readOnly";
-	if(flag(FrameFlag::COMPRESSED)) std::cout << " -compressed";
-	if(flag(FrameFlag::ENCRYPTED))  std::cout << " -encrypted";
-	if(flag(FrameFlag::GROUPING_IDENTITY)) std::cout << " -groupingIdentity";
-	if(flag(FrameFlag::UNSYNCHRONISED)) std::cout << " -unsynchronisation";
-	if(flag(FrameFlag::DATA_LENGTH_INDICATOR)) std::cout << " -dataLengthIndicator";
-	std::cout << '\n';
+	out << "Flags:          ";
+	if(flag(FrameFlag::DISCARD_UPON_TAG_ALTER_IF_UNKNOWN)) out << " -discardIfUnknown";
+	if(flag(FrameFlag::DISCARD_UPON_AUDIO_ALTER)) out << " -discardUponAudioAlter";
+	if(flag(FrameFlag::READ_ONLY))  out << " -readOnly";
+	if(flag(FrameFlag::COMPRESSED)) out << " -compressed";
+	if(flag(FrameFlag::ENCRYPTED))  out << " -encrypted";
+	if(flag(FrameFlag::GROUPING_IDENTITY)) out << " -groupingIdentity";
+	if(flag(FrameFlag::UNSYNCHRONISED)) out << " -unsynchronisation";
+	if(flag(FrameFlag::DATA_LENGTH_INDICATOR)) out << " -dataLengthIndicator";
+	out << '\n';
 	if(flag(FrameFlag::GROUPING_IDENTITY))
-		std::cout << "Group identity: " << std::boolalpha << groupIdentity() << '\n';
-	std::cout << "Header size:    " << std::dec << HEADER_SIZE << '\n';
-	std::cout << "Header bytes:  ";
+		out << "Group identity: " << std::boolalpha << groupIdentity() << '\n';
+	out << "Header size:    " << std::dec << HEADER_SIZE << '\n';
+	out << "Header bytes:  ";
 	for(ulong i = 0; i < HEADER_SIZE && i < FRAME_SIZE; i++)
-		std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
-	std::cout << '\n';
+		out << std::hex << ' ' << static_cast<short>(frameContent[i]);
 	
-	std::cout << "Empty:          " << std::boolalpha << empty() << '\n';
-	std::cout << "Body size:      " << std::dec << BODY_SIZE << '\n';
-	std::cout << "Body bytes:    ";
+	out << "\nEmpty:          " << std::boolalpha << empty() << '\n';
+	out << "Body size:      " << std::dec << BODY_SIZE << '\n';
+	out << "Body bytes:    ";
 	if(BODY_SIZE <= 100) {
 		for(ulong i = HEADER_SIZE; i < FRAME_SIZE; i++)
-			std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
+			out << std::hex << ' ' << static_cast<short>(frameContent[i]);
 	} else {
-		std::cout << " (only showing the first 100 bytes)";
+		out << " (only showing the first 100 bytes)";
 		for(ulong i = HEADER_SIZE; i < HEADER_SIZE + 100UL && i < FRAME_SIZE; i++)
-			std::cout << std::hex << ' ' << static_cast<short>(frameContent[i]);
+			out << std::hex << ' ' << static_cast<short>(frameContent[i]);
 	}
-	std::cout << '\n' << std::noboolalpha << std::dec << std::noshowbase;
+	out << '\n' << std::noboolalpha << std::dec << std::noshowbase;
+	
+	return out.str();
 }
 
 ///@pkg ID3Frame.h
@@ -356,10 +359,7 @@ bool UnknownFrame::empty() const {
 }
 
 ///@pkg ID3Frame.h
-void UnknownFrame::print() const {
-	Frame::print();
-	std::cout << "Frame class:    UnknownFrame\n";
-}
+std::string UnknownFrame::print() const { return Frame::print() + "Frame class:    UnknownFrame\n"; }
 
 ///@pkg ID3Frame.h
 ByteArray UnknownFrame::write() {
