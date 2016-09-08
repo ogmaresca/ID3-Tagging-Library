@@ -15,6 +15,7 @@
 #include "ID3TextFrame.hpp"    //For the class definitions
 #include "../ID3.hpp"          //For the Text struct
 #include "../ID3Functions.hpp" //For getUTF8String() and numericalString()
+#include "../ID3Constants.hpp" //For MAX_TAG_SIZE
 
 using namespace ID3;
 
@@ -42,9 +43,8 @@ TextFrame::TextFrame(const FrameID&   frameName,
 
 ///@pkg ID3TextFrame.h
 TextFrame::TextFrame(const FrameID&     frameName,
-                     const std::string& value) noexcept : Frame::Frame(frameName) {
-	textContent = value;
-}
+                     const std::string& value) noexcept : Frame::Frame(frameName),
+                                                          textContent(value) {}
 
 ///@pkg ID3TextFrame.h
 TextFrame::TextFrame(const FrameID&                  frameName,
@@ -90,19 +90,15 @@ ByteArray TextFrame::write() {
 	if(OLD_SEPARATOR != '\0') //Loop through the text and convert every slash to a null character
 		for(char& curChar : textContent)
 			if(curChar == OLD_SEPARATOR) curChar = '\0';
+	//Cut off the text if it goes over MAX_TAG_SIZE
+	if(requiredSize() > MAX_TAG_SIZE)
+		textContent = textContent.substr(0, MAX_TAG_SIZE - headerSize() - 1);
 	//Write the content
 	return Frame::write();
 }
 
 ///@pkg ID3TextFrame.h
 void TextFrame::writeBody() {
-	//TODO: If the LATIN-1 Text option is set, don't just automatically assume
-	//      that the text content string is in ASCII.
-	//TODO: Trim strings that are too long
-	
-	//Reserve space in the ByteArray to fit the header, encoding, and text content
-	frameContent.reserve(frameContent.size() + 1 + textContent.size());
-	
 	//Check if the text content is pure ASCII or if it has to be encoded in UTF-8
 	bool isASCII = true;
 	for(const char currentChar : textContent) {
@@ -111,7 +107,6 @@ void TextFrame::writeBody() {
 			break;
 		}
 	}
-	
 	//Set the encoding to LATIN-1 if it's pure ASCII, else UTF-8
 	frameContent.push_back(isASCII ? FrameEncoding::ENCODING_LATIN1 : FrameEncoding::ENCODING_UTF8);
 	
@@ -145,8 +140,7 @@ void TextFrame::content(const std::string& newContent) {
 
 ///@pkg ID3TextFrame.h
 std::vector<std::string> TextFrame::contents() const {
-	//A vector that contains a single string, for cases where there is no text
-	//content.
+	//A vector that contains a single string, for cases where there is no text content.
 	static std::vector<std::string> emptyString(1, "");
 	if(textContent.empty()) return emptyString; //If the string is empty, no use continuing
 	
@@ -215,9 +209,7 @@ bool TextFrame::operator==(const Frame* const frame) const noexcept {
 }
 
 ///@pkg ID3TextFrame.h
-bool TextFrame::operator==(const std::string& str) const noexcept {
-	return textContent == str;
-}
+bool TextFrame::operator==(const std::string& str) const noexcept { return textContent == str; }
 
 ///@pkg ID3TextFrame.h
 TextFrame::operator std::string() const noexcept { return textContent; }
@@ -423,13 +415,17 @@ void DescriptiveTextFrame::print() const {
 void DescriptiveTextFrame::writeBody() {
 	//TODO: If the LATIN-1 Text option is set, don't just automatically assume
 	//      that the text content string is in ASCII.
-	//TODO: Trim strings that are too long
 	
-	//Reserve space in the ByteArray to fit the header, encoding, language,
-	//description, and text content
-	frameContent.reserve(frameContent.size() + 1 + (optionLanguage ? LANGUAGE_SIZE : 0)
-	                     + (optionNoDescription ? 0 : textDescription.size() + 1)
-	                     + textContent.size());
+	//The textContent is already cut off to prevent it from going over the frame
+	//length in TextFrame::write(). DescriptiveTextFrames contain more data, so
+	//it needs to be dealt with individually
+	if(requiredSize() > MAX_TAG_SIZE) {
+		textContent = textContent.substr(0, MAX_TAG_SIZE - headerSize() - (optionLanguage ? LANGUAGE_SIZE : 0) - 2);
+		if(!optionNoDescription && requiredSize() > MAX_TAG_SIZE) //If the description needs to be trimmed
+			textDescription = textDescription.substr(0, MAX_TAG_SIZE - headerSize() -
+			                                         (optionLanguage ? LANGUAGE_SIZE : 0) -
+			                                         2 - textContent.size());
+	}
 	
 	//Set the encoding to UTF-8
 	frameContent.push_back(FrameEncoding::ENCODING_UTF8);
@@ -605,7 +601,6 @@ void URLTextFrame::print() const {
 
 ///@pkg ID3TextFrame.h
 void URLTextFrame::writeBody() {
-	//TODO: Trim strings that are too long
 	//TODO: Actually encode the text content as LATIN-1, instead of just assuming
 	//it is in ASCII.
 	

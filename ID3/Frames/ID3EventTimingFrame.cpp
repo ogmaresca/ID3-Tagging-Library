@@ -89,11 +89,6 @@ void EventTimingFrame::print() const {
 
 ///@pkg ID3EventTimingFrame.h
 void EventTimingFrame::writeBody() {
-	const ushort TIME_BYTE_LENGTH = 4;
-
-	//Expand the ByteArray to fit the header, timestamp format, and all the timing codes
-	frameContent.reserve(frameContent.size() + 1 + (map.size() * (1 + TIME_BYTE_LENGTH)));
-	
 	//Save the timestamp format
 	frameContent.push_back(static_cast<uint8_t>(timeStampFormat));
 	

@@ -110,6 +110,11 @@ namespace ID3 {
 		
 		public:
 			/**
+			 * The amount of bytes a timestamp value requires.
+			 */
+			static const ushort TIME_BYTE_LENGTH = 4;
+			
+			/**
 			 * The destructor.
 			 */
 			virtual ~EventTimingFrame();
@@ -223,6 +228,9 @@ namespace ID3 {
 			 * @see ID3::Frame::writeBody()
 			 */
 			virtual void writeBody();
+			
+			/** @see ID3::Frame::requiredSize() */
+			virtual inline ulong requiredSize() { return headerSize() + 1 + (map.size() * (1 + TIME_BYTE_LENGTH)); }
 			
 			/**
 			 * The time stamp format. The only formats that should be saved are

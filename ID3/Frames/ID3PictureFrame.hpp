@@ -269,6 +269,11 @@ namespace ID3 {
 			 */
 			virtual void writeBody();
 			
+			/** @see ID3::Frame::requiredSize() */
+			virtual inline ulong requiredSize() { return headerSize() + 4 +
+				                                          textMIME.length() + textDescription.size() +
+				                                          pictureData.size(); }
+			
 			/**
 			 * The image MIME type.
 			 * 

@@ -62,29 +62,6 @@ FileNotFoundException::~FileNotFoundException() noexcept {}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////  F I L E N O T O P E N E X C E P T I O N ///////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-///@pkg ID3Exception.hpp
-FileNotOpenException::FileNotOpenException() noexcept {
-	message = "ID3::FileNotOpenException: file stream is not open!\n";
-}
-
-///@pkg ID3Exception.hpp
-FileNotOpenException::FileNotOpenException(const std::exception& e) noexcept : Exception(e) {}
-
-///@pkg ID3Exception.hpp
-FileNotOpenException::FileNotOpenException(const std::string& customError) noexcept {
-	message = "ID3::FileNotOpenException: " + (customError.empty() ? "file stream is not open!\n" :
-	                                                                 customError + '\n');
-}
-
-///@pkg ID3Exception.hpp
-FileNotOpenException::~FileNotOpenException() noexcept {}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 ////////////////////  N O T M P 3 F I L E E X C E P T I O N ////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -203,3 +180,26 @@ FrameSizeException::FrameSizeException(const std::string& frameID, const std::st
 
 ///@pkg ID3Exception.hpp
 FrameSizeException::~FrameSizeException() noexcept {}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////  W R I T E E X C E P T I O N /////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+///@pkg ID3Exception.hpp
+WriteException::WriteException() noexcept {
+	message = "ID3::WriteException: error writing to file.\n";
+}
+
+///@pkg ID3Exception.hpp
+WriteException::WriteException(const std::exception& e) noexcept : Exception(e) {}
+
+///@pkg ID3Exception.hpp
+WriteException::WriteException(const std::string& customError) noexcept {
+	message = "ID3::WriteException: " + (customError.empty() ? "error writing to file.\n" :
+	                                                           customError + '\n');
+}
+
+///@pkg ID3Exception.hpp
+WriteException::~WriteException() noexcept {}

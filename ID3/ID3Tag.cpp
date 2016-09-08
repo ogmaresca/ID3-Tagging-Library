@@ -60,30 +60,31 @@ namespace {
 		
 		return genreString;
 	}
+	
+	/**
+	 * Check if a file is a valid MP3 or MP4 file.
+	 * 
+	 * @param fileLoc The file location.
+	 * @throws NotMP3FileException if the file location is not valid.
+	 */
+	static void validateFileLocation(const std::string& fileLoc) {
+		//Check if the file is an MP3 file
+		if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase|std::regex::ECMAScript)))
+			throw NotMP3FileException("File \"" + fileLoc + "\" is not an MP3 or MP4 file!\n");
+	}
 }
 
 ///@pkg ID3.h
-Tag::Tag(std::ifstream& file) : filesize(0) {
-	if(file && file.is_open()) readFile(file);
-	else                       throw FileNotOpenException();
-}
+Tag::Tag(const std::string& fileLoc) : Tag(fileLoc, true) {}
 
 ///@pkg ID3.h
-Tag::Tag(std::fstream& file) : filesize(0) {
-	if(file && file.is_open()) readFile(file);
-	else                       throw FileNotOpenException();
-}
-
-///@pkg ID3.h
-Tag::Tag(const std::string& fileLoc) : filename(fileLoc), filesize(0) {
-	//Check if the file is an MP3 file
-	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase|std::regex::ECMAScript)))
-		throw NotMP3FileException("File \"" + filename + "\" is not an MP3 or MP4 file!\n");
+Tag::Tag(const std::string& fileLoc, const bool readFrames) : filename(fileLoc), filesize(0) {
+	validateFileLocation(fileLoc); //Throws NotMP3FileException
 	
 	std::ifstream file(fileLoc, std::ios::in | std::ios::binary | std::ios::ate);
 	
 	if(file.is_open()) {
-		readFile(file);
+		readFile(file, readFrames);
 		file.close();
 	} else {
 		throw FileNotFoundException("File \"" + filename + "\" cannot be opened!\n");
@@ -100,31 +101,169 @@ Tag::operator bool() const noexcept { return !frames.empty(); }
 bool Tag::operator!() const noexcept { return frames.empty(); }
 
 ///@pkg ID3.h
-void Tag::write(const std::string& fileLoc) {
-	//Check if the file is an MP3 file
-	if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase|std::regex::ECMAScript)))
-		throw NotMP3FileException("File \"" + filename + "\" is not an MP3 or MP4 file!\n");
+void Tag::write(const std::string& fileLoc,
+                const float        paddingFactor,
+			       const bool         setFileNameUponSuccess,
+			       const bool         discardNonCoverPictures,
+			       const bool         discardUnknown) {
+	if(!setFileNameUponSuccess) filename = fileLoc;
+	validateFileLocation(fileLoc); //Throws NotMP3FileException
 	
-	std::ofstream file(fileLoc, std::ios::out | std::ios::binary);
+	//A newly-constructed Tag of the file, to get the most up-to-date file information
+	const Tag fileInfo(fileLoc, false);
 	
-	if(file.is_open()) {
-		Tag fileReference(fileLoc);
-		writeFile(file, fileReference);
+	std::fstream file(fileLoc, std::ios_base::in | std::ios_base::out | std::ios_base::binary);
+	if(!file.is_open())
+		throw FileNotFoundException("File \"" + fileLoc + "\" cannot be opened!\n");
+	
+	//The ID3v2 tag data to write to file
+	ByteArray binaryTagData(10, '\0');
+	//Make the tags at least one KiB long
+	binaryTagData.reserve(fileInfo.v2TagInfo.totalSize > 1024 ? fileInfo.v2TagInfo.totalSize : 1024);
+	
+	//Add "ID3"
+	binaryTagData[0] = 'I';
+	binaryTagData[1] = 'D';
+	binaryTagData[2] = '3';
+	
+	//Add the version
+	binaryTagData[3] = WRITE_VERSION;
+	binaryTagData[4] = SUPPORTED_MINOR_VERSION;
+	
+	//Byte 5 is the flag, which is already initialized to 0. No flags are being set.
+	//Bytes 6-9 are the size, and have already been intialized to 0.
+	
+	//Loop through every Frame and write it
+	bool foundCoverPicture = false;
+	for(const FramePair& framePair : frames) {
+		//Ignore null and empty Frames
+		if(framePair.second.get() == nullptr || framePair.second->null() || framePair.second->empty()) continue;
+		//Delete non-conforming pictures if discardNonCoverPictures is true
+		if(discardNonCoverPictures && dynamic_cast<PictureFrame*>(framePair.second.get()) != nullptr) {
+			if(!foundCoverPicture && dynamic_cast<PictureFrame*>(framePair.second.get())->pictureType() == PictureType::FRONT_COVER)
+				foundCoverPicture = true;
+			else
+				continue;
+		}
+		//Delete unknown frames if discardUnknown is true
+		if(discardUnknown && dynamic_cast<UnknownFrame*>(framePair.second.get()) != nullptr) continue;
+		
+		ByteArray frameBytes = framePair.second->write();
+		//If the Frame data is valid add the it to the tag data
+		if(frameBytes.size() > HEADER_BYTE_SIZE)
+			binaryTagData.insert(binaryTagData.end(), frameBytes.begin(), frameBytes.end());
+	}
+	
+	//Whether the file needs to be completely rewritten
+	bool needToRewriteFile = fileInfo.tagsSet.v1 || fileInfo.tagsSet.v1_1 || !fileInfo.tagsSet.v2 ||
+	                         binaryTagData.size() > fileInfo.v2TagInfo.totalSize;
+	
+	//Reset the v2 tag info
+	v2TagInfo = TagInfo();
+	v2TagInfo.majorVer = WRITE_VERSION;
+	v2TagInfo.majorVer = SUPPORTED_MINOR_VERSION;
+	v2TagInfo.paddingStart = binaryTagData.size();
+	
+	//If the data is smaller than the file's tag size, then extend it with padding
+	if(!needToRewriteFile) {
+		//Ignore case where tag data size == file tag size
+		if(binaryTagData.size() < fileInfo.v2TagInfo.totalSize) {		
+			ByteArray padding(fileInfo.v2TagInfo.totalSize - binaryTagData.size(), '\0');
+			
+			//This check if just being overly cautious, probably not necessary
+			if(binaryTagData.size() + padding.size() < MAX_TAG_SIZE)
+				binaryTagData.insert(binaryTagData.end(), padding.begin(), padding.end());
+			else
+				needToRewriteFile = true;
+		}
+	} else if(paddingFactor > 0.0) { //Append padding
+		//Get the padding size, then round it up to the next highest multiple of 4096.
+		const ulong factorMult  = binaryTagData.size() + (binaryTagData.size() * paddingFactor),
+		            paddingSize = (factorMult + (4096 - (factorMult % 4096))) - binaryTagData.size();
+		
+		ByteArray padding(paddingSize, '\0');
+		if(binaryTagData.size() + padding.size() < MAX_TAG_SIZE)
+				binaryTagData.insert(binaryTagData.end(), padding.begin(), padding.end());
+	}
+	
+	//Validate the size by throwing a TagSizeException if it's too big
+	if(binaryTagData.size() - HEADER_BYTE_SIZE > MAX_TAG_SIZE)
+		throw TagSizeException("Cannot write tags to file \""+fileLoc+"\", as it exceeds the maximum size of "+std::to_string(MAX_TAG_SIZE)+"!\n");
+	
+	//Save the frame size
+	ByteArray sizeBytes = intToByteArray(binaryTagData.size() - HEADER_BYTE_SIZE, 4, true);
+	for(ushort i = 0; i < 4; i++) binaryTagData[i+6] = sizeBytes[i];
+	v2TagInfo.size = binaryTagData.size() - HEADER_BYTE_SIZE;
+	v2TagInfo.totalSize = binaryTagData.size();
+	
+	if(needToRewriteFile) {
+		//Rewrite the file to accomodate the bigger tags/removed ID3v1 tags.
+		            //The start of the audio data in the file
+		const ulong AUDIO_START = fileInfo.tagsSet.v2 ? fileInfo.v2TagInfo.totalSize : 0,
+		            //The end of the audio data in the file
+		            AUDIO_END = fileInfo.filesize -
+		                        (fileInfo.tagsSet.v1 || fileInfo.tagsSet.v1_1 ? V1::BYTE_SIZE : 0) -
+		                        (fileInfo.tagsSet.v1Extended ? V1::EXTENDED_BYTE_SIZE : 0);
+		
+		//This will probably never be true, but you can never be too careful
+		if(AUDIO_END < AUDIO_START)
+			throw FileFormatException("Cannot write tags to file \""+fileLoc+"\", ID3v1 and ID3v2 tags overlap on file.");
+		
+		//Create a ByteArray of the music file
+		ByteArray binaryAudioData(AUDIO_END - AUDIO_START, '\0');
+		
+		//Seek to the audio start and read the audio
+		file.seekg(AUDIO_START, std::ios_base::beg);
+		if(!file) throw WriteException("Cannot write tags to file \""+fileLoc+"\", error seeking on file.");
+		file.read(reinterpret_cast<char*>(&binaryAudioData.front()), binaryAudioData.size());
+		
+		//Close the file, and re-open it truncated
 		file.close();
-		filename = fileLoc;
+		file.open(fileLoc, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
+		if(!file.is_open()) throw WriteException("Cannot write tags to file \""+fileLoc+"\", unable to open file in write mode.");
+		
+		//Write the tags
+		file.seekp(0, std::ios_base::beg);
+		file.write(reinterpret_cast<char*>(&binaryTagData.front()), binaryTagData.size());
+		
+		//Write the audio
+		file.seekp(0, std::ios_base::end);
+		file.write(reinterpret_cast<char*>(&binaryAudioData.front()), binaryAudioData.size());
 	} else {
-		throw FileNotFoundException("File \"" + filename + "\" cannot be opened!\n");
+		//Overwrite the existing ID3v2 tags
+		//Seek to the beginning
+		file.seekp(0, std::ios_base::beg);
+		
+		//Write the tags
+		file.write(reinterpret_cast<char*>(&binaryTagData.front()), binaryTagData.size());
 	}
-}
-
-///@pkg ID3.h
-void Tag::write(std::fstream& file) {
-	if(file && file.is_open()) {
-		Tag fileReference(file);
-		writeFile(file, fileReference);
-	} else {
-		throw FileNotOpenException();
+	
+	//Now that the write has been successful, remove any null/empty frames
+	foundCoverPicture = false;
+	auto itr = frames.begin();
+	while(itr != frames.end()) {
+		//Delete null and empty Frames
+		if(itr->second.get() == nullptr || itr->second->null() || itr->second->empty()) {
+			itr = frames.erase(itr);
+		} else if(discardNonCoverPictures && dynamic_cast<PictureFrame*>(itr->second.get()) != nullptr) {
+			//Delete non-conforming pictures if discardNonCoverPictures is true
+			if(!foundCoverPicture && dynamic_cast<PictureFrame*>(itr->second.get())->pictureType() == PictureType::FRONT_COVER) {
+				foundCoverPicture = true;
+				itr++;
+			} else {
+				itr = frames.erase(itr);
+			}
+		} else if(discardUnknown && dynamic_cast<UnknownFrame*>(itr->second.get()) != nullptr) {
+			itr = frames.erase(itr); //Delete unknown frames if discardUnknown is true
+		}else {
+			itr++;
+		}
 	}
+	
+	//Close the file
+	file.close();
+	if(setFileNameUponSuccess) filename = fileLoc;
+	tagsSet.v1 = false, tagsSet.v1_1 = false, tagsSet.v1Extended = false;
 }
 
 ///@pkg ID3.h
@@ -527,6 +666,12 @@ Picture Tag::picture(const std::function<bool (const std::string&, const Picture
 }
 ///@pkg ID3.h
 void Tag::picture(const Picture& newPicture) {
+	//Validate the picture size
+	if(newPicture.size() + HEADER_BYTE_SIZE > MAX_TAG_SIZE) {
+		FrameID picID = FRAME_PICTURE;
+		throw FrameSizeException(picID, picID.description());
+	}
+	
 	if(exists(FRAME_PICTURE)) {
 		//Get the range of pictures. Each iterator has a "second" variable which
 		//stores the FramePtr object.
@@ -704,20 +849,11 @@ ulong Tag::fileSize() const { return filesize; }
 
 ///@pkg ID3.h
 void Tag::print() const {
-	//A testing section to not print out music files with only TextFrame and
-	//PictureFrame Frames
-	/*ulong uknfrms = 0;
-	for(FramePair currentFramePair : frames) {
-		if(dynamic_cast<TextFrame*>(currentFramePair.second.get()) == nullptr &&
-		   dynamic_cast<PictureFrame*>(currentFramePair.second.get()) == nullptr)
-			uknfrms++;
-	}
-	if(frames.size() && !uknfrms) return;*/
-	
 	std::cout << "\n......................\n";
-	if(filename.empty()) std::cout << "Printing information about ID3 File:\n";
-	else                 std::cout << "Printing information about file " << filename << ":\n";
+	if(filename.empty()) std::cout << "Printing ID3 tag information:\n";
+	else                 std::cout << "Printing ID3 tag information about file " << filename << ":\n";
 	std::cout << "Tag size:                 " << v2TagInfo.size << '\n';
+	std::cout << "Padding size:             " << (v2TagInfo.totalSize - v2TagInfo.paddingStart) << '\n';
 	
 	std::cout << "ID3 version(s) and flags: " << getVersionString(true) << '\n';
 	std::cout << "Number of frames:         " << frames.size() << '\n';
@@ -725,11 +861,6 @@ void Tag::print() const {
 	for(const FramePair& currentFramePair : frames) {
 		std::cout << "--------------------------\n";
 		currentFramePair.second->print();
-		//A testing section to compare the byte differences from the file and
-		//the results of the write() method
-		/*currentFramePair.second->write();
-		std::cout << "--------------------------\n";
-		currentFramePair.second->print();*/
 	}
 	
 	std::cout << "..........................\n" << std::noboolalpha;
@@ -852,17 +983,17 @@ Text Tag::getTextStruct(const Frame* const frame) const {
 }
 
 ///@pkg ID3.h
-void Tag::readFile(std::istream& file) {
+void Tag::readFile(std::istream& file, const bool readFrames) {
 	if(file) {
 		file.seekg(0, std::ifstream::end);
 		filesize = file.tellg(); //Get the filesize
-		readFileV2(file);
-		readFileV1(file);
+		readFileV2(file, readFrames);
+		readFileV1(file, readFrames);
 	}
 }
 
 ///@pkg ID3.h
-void Tag::readFileV1(std::istream& file) {
+void Tag::readFileV1(std::istream& file, const bool readFrames) {
 	V1::Tag tags;
 	V1::ExtendedTag extTags;
 	bool extTagsSet = false;
@@ -887,6 +1018,7 @@ void Tag::readFileV1(std::istream& file) {
 			}
 		}
 		
+		if(!readFrames) return;
 		if(extTagsSet) setTags(extTags);
 		setTags(tags);
 	} catch(const std::exception& e) {
@@ -895,121 +1027,117 @@ void Tag::readFileV1(std::istream& file) {
 }
 
 ///@pkg ID3.h
-void Tag::readFileV2(std::istream& file) {
+void Tag::readFileV2(std::istream& file, const bool readFrames) {
 	Header tagsHeader;
 	
 	if(filesize < HEADER_BYTE_SIZE) return;
 	
-	try {
-		file.seekg(0, std::ifstream::beg);
+	file.seekg(0, std::ifstream::beg);
+	if(!file) return;
+	
+	file.read(reinterpret_cast<char*>(&tagsHeader), HEADER_BYTE_SIZE);
+	if(memcmp(tagsHeader.header, "ID3", 3) != 0) return;
+	
+	//Get the tag flags
+	if((tagsHeader.flags & FLAG_UNSYNCHRONISATION) == FLAG_UNSYNCHRONISATION)
+		v2TagInfo.flagUnsynchronisation = true;
+	if((tagsHeader.flags & FLAG_EXT_HEADER) == FLAG_EXT_HEADER)
+		v2TagInfo.flagExtHeader = true;
+	if((tagsHeader.flags & FLAG_EXPERIMENTAL) == FLAG_EXPERIMENTAL)
+		v2TagInfo.flagExperimental = true;
+	if((tagsHeader.flags & FLAG_FOOTER) == FLAG_FOOTER)
+		v2TagInfo.flagFooter = true;
+	
+	//Get the major version and size
+	v2TagInfo.majorVer = tagsHeader.majorVer;
+	v2TagInfo.minorVer = tagsHeader.minorVer;
+	v2TagInfo.size = byteIntVal(tagsHeader.size, 4, true);
+	v2TagInfo.totalSize = HEADER_BYTE_SIZE + v2TagInfo.size + (v2TagInfo.flagFooter ? HEADER_BYTE_SIZE : 0);
+	
+	//The position to start reading from the file
+	ulong frameStartPos = HEADER_BYTE_SIZE;
+	
+	//Make sure the ID3v2 version is supported and that unsynchronisation
+	//isn't set on ID3v2.3 and below.
+	//In ID3v2.4, it is handled on a per-frame basis.
+	if(v2TagInfo.majorVer < MIN_SUPPORTED_VERSION ||
+		v2TagInfo.majorVer > MAX_SUPPORTED_VERSION ||
+		v2TagInfo.minorVer != SUPPORTED_MINOR_VERSION ||
+		(v2TagInfo.flagUnsynchronisation && v2TagInfo.majorVer <= 3))
+		return;
+	
+	//Make sure that the size is valid, or throw a FormatExcetion
+	if(v2TagInfo.totalSize > filesize)
+		throw FileFormatException("Tag size format error on file \"" + filename + "\" when reading tags: tags are bigger than the file size!");
+	
+	//Skip over the extended header
+	if(v2TagInfo.flagExtHeader) {
+		//Seek to the position to read the extended header
+		file.seekg(frameStartPos, std::ifstream::beg);
 		if(!file) return;
 		
-		file.read(reinterpret_cast<char*>(&tagsHeader), HEADER_BYTE_SIZE);
-		if(memcmp(tagsHeader.header, "ID3", 3) != 0) return;
-		
-		//Get the tag flags
-		if((tagsHeader.flags & FLAG_UNSYNCHRONISATION) == FLAG_UNSYNCHRONISATION)
-			v2TagInfo.flagUnsynchronisation = true;
-		if((tagsHeader.flags & FLAG_EXT_HEADER) == FLAG_EXT_HEADER)
-			v2TagInfo.flagExtHeader = true;
-		if((tagsHeader.flags & FLAG_EXPERIMENTAL) == FLAG_EXPERIMENTAL)
-			v2TagInfo.flagExperimental = true;
-		if((tagsHeader.flags & FLAG_FOOTER) == FLAG_FOOTER)
-			v2TagInfo.flagFooter = true;
-		
-		//Get the major version and size
-		v2TagInfo.majorVer = tagsHeader.majorVer;
-		v2TagInfo.minorVer = tagsHeader.minorVer;
-		v2TagInfo.size = byteIntVal(tagsHeader.size, 4, true);
-		v2TagInfo.totalSize = HEADER_BYTE_SIZE + v2TagInfo.size + (v2TagInfo.flagFooter ? HEADER_BYTE_SIZE : 0);
-		
-		//The position to start reading from the file
-		ulong frameStartPos = HEADER_BYTE_SIZE;
-		
-		//Make sure the ID3v2 version is supported and that unsynchronisation
-		//isn't set on ID3v2.3 and below.
-		//In ID3v2.4, it is handled on a per-frame basis.
-		if(v2TagInfo.majorVer < MIN_SUPPORTED_VERSION ||
-		   v2TagInfo.majorVer > MAX_SUPPORTED_VERSION ||
-		   v2TagInfo.minorVer != SUPPORTED_MINOR_VERSION ||
-		   (v2TagInfo.flagUnsynchronisation && v2TagInfo.majorVer <= 3))
-			return;
-		
-		//Make sure that the size is valid, or throw a FormatExcetion
-		if(v2TagInfo.totalSize > filesize) {
-			if(filename.empty()) throw FileFormatException("Tag size format error on file when reading tags: tags are bigger than the file size!");
-			else throw FileFormatException("Tag size format error on file \"" + filename + "\" when reading tags: tags are bigger than the file size!");
-		}
-		
-		//Skip over the extended header
-		if(v2TagInfo.flagExtHeader) {
-			//Seek to the position to read the extended header
-			file.seekg(frameStartPos, std::ifstream::beg);
-			if(!file) return;
+		//The extended header is different from ID3v2.4, and ID3v2.3, and ID3v2.2.
+		if(v2TagInfo.majorVer >= 4) {
+			V4ExtHeader extHeader;
 			
-			//The extended header is different from ID3v2.4, and ID3v2.3, and ID3v2.2.
-			if(v2TagInfo.majorVer >= 4) {
-				V4ExtHeader extHeader;
-				
-				//Verify that there's enough space
-				if(frameStartPos + sizeof(V4ExtHeader) > filesize) return;
-				
-				//Get the extended header
-				file.read(reinterpret_cast<char*>(&extHeader), sizeof(V4ExtHeader));
-				
-				//Increment the start position. The extended header size is synchsafe in ID3v2.4
-				ulong extHeaderSize = byteIntVal(extHeader.size, 4, true);
-				frameStartPos += sizeof(V4ExtHeader) + extHeaderSize;
-			} else if(v2TagInfo.majorVer == 3) {
-				V3ExtHeader extHeader;
-				
-				//Verify that there's enough space
-				if(frameStartPos + sizeof(V3ExtHeader) > filesize) return;
-				
-				//Get the extended header
-				file.read(reinterpret_cast<char*>(&extHeader), sizeof(V3ExtHeader));
-				
-				//Increment the start position. The extended header size is not synchsafe in ID3v2.3
-				ulong extHeaderSize = byteIntVal(extHeader.size, 4, false);
-				frameStartPos += sizeof(V3ExtHeader) + extHeaderSize;
-			} else {
-				//In ID3v2.2, the extended header flag bit is used for a compression flag
-				//instead. Since there is no standard compression format used in ID3v2.2,
-				//it is not supported.
-				return;
-			}
+			//Verify that there's enough space
+			if(frameStartPos + sizeof(V4ExtHeader) > filesize) return;
+			
+			//Get the extended header
+			file.read(reinterpret_cast<char*>(&extHeader), sizeof(V4ExtHeader));
+			
+			//Increment the start position. The extended header size is synchsafe in ID3v2.4
+			ulong extHeaderSize = byteIntVal(extHeader.size, 4, true);
+			frameStartPos += sizeof(V4ExtHeader) + extHeaderSize;
+		} else if(v2TagInfo.majorVer == 3) {
+			V3ExtHeader extHeader;
+			
+			//Verify that there's enough space
+			if(frameStartPos + sizeof(V3ExtHeader) > filesize) return;
+			
+			//Get the extended header
+			file.read(reinterpret_cast<char*>(&extHeader), sizeof(V3ExtHeader));
+			
+			//Increment the start position. The extended header size is not synchsafe in ID3v2.3
+			ulong extHeaderSize = byteIntVal(extHeader.size, 4, false);
+			frameStartPos += sizeof(V3ExtHeader) + extHeaderSize;
+		} else {
+			//In ID3v2.2, the extended header flag bit is used for a compression flag
+			//instead. Since there is no standard compression format used in ID3v2.2,
+			//it is not supported.
+			return;
 		}
-		
-		//The file has correctly formatted ID3v2 tags
-		tagsSet.v2 = true;
-		
-		//Initialize the Tag's FrameFactory properly
-		factory = FrameFactory(file, v2TagInfo.majorVer, v2TagInfo.totalSize);
-		
-		//Loop over the ID3 tags, and stop once all ID3 frames have been
-		//reached or a frame is null. Add every frame to the frames map.
-		while(frameStartPos + HEADER_BYTE_SIZE < v2TagInfo.totalSize) {
-			//Create a new Frame at this position
-			FramePtr frame = factory.create(frameStartPos);
-			//Add the Frame to the map if it's not null
-			if(!frame->null()) addFrame(frame->frame(), frame);
-			//If the frame content is a valid size (bigger than an ID3v2 header)
-			//then continue on to the next frame. If not, then stop the loop.
-			if(frame->size(true) > HEADER_BYTE_SIZE && !frame->frame().unknown()) {
-				frameStartPos += frame->size(true);
-				
-				//Account for 4 bytes added when reading ID3v2.2 frames from the
-				//ID3::FrameFactory class
-				if(v2TagInfo.majorVer <= 2) frameStartPos -= 4;
-			}
-			else {
-				//Get the start of padding and exit the loop
-				v2TagInfo.paddingStart = frameStartPos;
-				break;
-			}
+	}
+	
+	//The file has correctly formatted ID3v2 tags
+	tagsSet.v2 = true;
+	
+	//Initialize the Tag's FrameFactory properly
+	factory = FrameFactory(file, v2TagInfo.majorVer, v2TagInfo.totalSize);
+	
+	if(!readFrames) return; //If readFrames is false, stop now
+	
+	//Loop over the ID3 tags, and stop once all ID3 frames have been
+	//reached or a frame is null. Add every frame to the frames map.
+	while(frameStartPos + HEADER_BYTE_SIZE < v2TagInfo.totalSize) {
+		//Create a new Frame at this position
+		FramePtr frame = factory.create(frameStartPos);
+		//Add the Frame to the map if it's not null
+		if(!frame->null()) addFrame(frame->frame(), frame);
+		//If the frame content is a valid size (bigger than an ID3v2 header)
+		//then continue on to the next frame. If not, then stop the loop.
+		if(frame->size(true) > HEADER_BYTE_SIZE && !frame->frame().unknown()) {
+			frameStartPos += frame->size(true);
+			
+			//Account for 4 bytes added when reading ID3v2.2 frames from the
+			//ID3::FrameFactory class
+			if(v2TagInfo.majorVer <= 2) frameStartPos -= 4;
 		}
-	} catch(const std::exception& e) {
-		std::cerr << "Error in ID3::Tag::getFileV2(std::ifstream&): " << e.what() << '\n';
+		else {
+			//Get the start of padding and exit the loop
+			v2TagInfo.paddingStart = frameStartPos;
+			break;
+		}
 	}
 }
 
@@ -1104,75 +1232,11 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 }
 
 ///@pkg ID3.h
-void Tag::writeFile(std::ostream& file, const Tag& fileInfo) {
-	//The ID3v2 tag data to write to file
-	ByteArray binaryTagData(10, '\0');
-	//Make the tags at least one KiB long
-	binaryTagData.reserve(fileInfo.v2TagInfo.totalSize > 1024 ? fileInfo.v2TagInfo.totalSize : 1024);
-	
-	//Add "ID3"
-	binaryTagData[0] = 'I';
-	binaryTagData[1] = 'D';
-	binaryTagData[2] = '3';
-	
-	//Add the version
-	binaryTagData[3] = WRITE_VERSION;
-	binaryTagData[4] = SUPPORTED_MINOR_VERSION;
-	
-	//Byte 5 is the flag, which is already initialized to 0. No flags are being set.
-	//Bytes 6-9 are the size, and have already been intialized to 0.
-	
-	//Loop through every Frame and write it
-	for(const FramePair& framePair : frames) {
-		if(framePair.second.get() == nullptr) continue;
-		ByteArray frameBytes = framePair.second->write();
-		//If the Frame data is valid add the it to the tag data
-		if(frameBytes.size() > HEADER_BYTE_SIZE)
-			binaryTagData.insert(binaryTagData.end(), frameBytes.begin(), frameBytes.end());
-	}
-	
-	bool needToRewriteFile = fileInfo.tagsSet.v1 || fileInfo.tagsSet.v1_1 ||
-	                          binaryTagData.size() > fileInfo.v2TagInfo.totalSize;
-	
-	//If the data is smaller than the file's tag size, then extend it with padding
-	if(!needToRewriteFile && binaryTagData.size() < fileInfo.v2TagInfo.totalSize) {
-		ByteArray padding(fileInfo.v2TagInfo.totalSize - binaryTagData.size(), '\0');
-		//This check if just being overly cautious, probably not necessary
-		if(binaryTagData.size() + padding.size() < MAX_TAG_SIZE)
-			binaryTagData.insert(binaryTagData.end(), padding.begin(), padding.end());
-		else
-			needToRewriteFile = true;
-	}
-	
-	//Validate the size by throwing a TagSizeException if it's too big
-	if(binaryTagData.size() - HEADER_BYTE_SIZE > MAX_TAG_SIZE)
-		throw TagSizeException("Cannot write tags to file, as it exceeds the maximum size of "+std::to_string(MAX_TAG_SIZE)+"!\n");
-	
-	//<------------------------ TODO: Write the tag size to the vector ------->//
-	//<------------------------ TODO: Write the data to file ----------------->//
-	//If the ID3v2 sizes match
-	if(needToRewriteFile) {
-		
-	} else {
-		
-	}
-	
-	//Now that the write has been successful, remove any null/empty frames
-	auto itr = frames.begin();
-	while(itr != frames.end()) {
-		if(itr->second.get() == nullptr || itr->second->null() || itr->second->empty())
-			itr = frames.erase(itr);
-		else
-			itr++;
-	}
-}
-
-///@pkg ID3.h
 Tag::TagsOnFile::TagsOnFile() : v1(false), v1_1(false), v1Extended(false), v2(false) {}
 
 ///@pkg ID3.h
-Tag::TagInfo::TagInfo() : majorVer(-1),
-                          minorVer(-1),
+Tag::TagInfo::TagInfo() : majorVer(WRITE_VERSION),
+                          minorVer(SUPPORTED_MINOR_VERSION),
                           flagUnsynchronisation(false),
                           flagExtHeader(false),
                           flagExperimental(false),

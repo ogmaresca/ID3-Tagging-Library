@@ -136,6 +136,9 @@ namespace ID3 {
 			 */
 			virtual void writeBody();
 			
+			/** @see ID3::Frame::requiredSize() */
+			virtual inline ulong requiredSize() { return headerSize() + 4; }
+			
 			/**
 			 * The play count.
 			 * 
@@ -288,6 +291,9 @@ namespace ID3 {
 			 * @see ID3::Frame::writeBody()
 			 */
 			virtual void writeBody();
+			
+			/** @see ID3::Frame::requiredSize() */
+			virtual inline ulong requiredSize() { return PlayCountFrame::requiredSize() + emailAddress.size() + 2; }
 			
 			/**
 			 * The email address.

@@ -62,25 +62,25 @@ namespace ID3 {
 	 * The minimum ID3v2 supported major version. Any music file with a
 	 * smaller version will not be read.
 	 */
-	extern const ushort MIN_SUPPORTED_VERSION;
+	extern const uint8_t MIN_SUPPORTED_VERSION;
 	
 	/**
 	 * The maximum ID3v2 supported major version. Any music file with a
 	 * greater version will not be read.
 	 */
-	extern const ushort MAX_SUPPORTED_VERSION;
+	extern const uint8_t MAX_SUPPORTED_VERSION;
 	
 	/**
 	 * The ID3v2 supported minor version. Any music with an ID3v2 version
 	 * that does not use this minor version will not be read. This is
 	 * also the minor version that will be used for writing.
 	 */
-	extern const ushort SUPPORTED_MINOR_VERSION;
+	extern const uint8_t SUPPORTED_MINOR_VERSION;
 	
 	/**
 	 * The ID3v2 major version that ID3_Tagging-Library writes as.
 	 */
-	extern const ushort WRITE_VERSION;
+	extern const uint8_t WRITE_VERSION;
 	
 	/**
 	 * The flag values in found in the ID3v2 header.

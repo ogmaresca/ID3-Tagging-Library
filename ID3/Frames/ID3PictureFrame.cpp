@@ -108,18 +108,7 @@ void PictureFrame::print() const {
 }
 
 ///@pkg ID3TextFrame.h
-void PictureFrame::writeBody() {
-	//TODO: Do something (like throw an exception) if the picture data is too
-	//      large for the frame
-	
-	//The description starts after the header, encoding, MIME type, and
-	//picture type.
-	const ulong DESCRIPTION_SIZE = frameContent.size() + 3 + textMIME.length();
-	
-	//Expand the ByteArray to fit the header, encoding, MIME type, description
-	//text, picture type, and picture data
-	frameContent.reserve(DESCRIPTION_SIZE + textDescription.size() + 1 + pictureData.size());
-	
+void PictureFrame::writeBody() {	
 	//Set the encoding to UTF-8
 	frameContent.push_back(FrameEncoding::ENCODING_UTF8);
 	

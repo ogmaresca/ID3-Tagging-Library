@@ -423,9 +423,10 @@ namespace ID3 {
 			
 			/**
 			 * The writeBody() method is called after building the frame header
-			 * in frameContents. The frame data should be appended to frameContents
+			 * in frameContents. The frame data should be appended to frameContent
 			 * in this method. The frame size will be set in write() after calling
-			 * writeBody().
+			 * writeBody(). frameContent will have been reserved the number of
+			 * bytes from requiredSize().
 			 * 
 			 * This method will not be called if the Frame is empty or null.
 			 * 
@@ -434,6 +435,15 @@ namespace ID3 {
 			 * @abstract
 			 */
 			virtual void writeBody() = 0;
+			
+			/**
+			 * Get the amount of bytes that the current content of the Frame will
+			 * require to write the content.
+			 * 
+			 * @return The amount of bytes that the Frame requires.
+			 * @abstract
+			 */
+			virtual ulong requiredSize() = 0;
 			
 			/**
 			 * Unsynchronise frame byte contents. This checks for the
@@ -589,6 +599,9 @@ namespace ID3 {
 			 * @see ID3::Frame::writeBody()
 			 */
 			virtual void writeBody();
+			
+			/** @see ID3::Frame::requiredSize() */
+			virtual inline ulong requiredSize() { return frameContent.size(); }
 	};
 }
 

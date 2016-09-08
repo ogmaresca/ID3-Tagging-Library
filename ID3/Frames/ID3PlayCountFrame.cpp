@@ -183,10 +183,6 @@ void PopularimeterFrame::writeBody() {
 	//If the size parameter is 0, then the ByteArray will be as big as it needs to
 	ByteArray playCountArr = intToByteArray(count, count >= (1ULL << 32) ? 0 : 4, false);
 	
-	//Reserve space for the header, email address, its null separator, the rating,
-	//and the play count
-	frameContent.reserve(frameContent.size() + emailAddress.size() + 2 + playCountArr.size());
-	
 	//Write the email address to file and its null separator
 	frameContent.insert(frameContent.end(), emailAddress.begin(), emailAddress.end());
 	frameContent.push_back('\0');

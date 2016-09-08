@@ -146,7 +146,8 @@ namespace ID3 {
 			/**
 			 * The write() method for TextFrame converts the string separator
 			 * character in the text content if it will be different in ID3v2.4,
-			 * and then calls ID3::Frame::write().
+			 * and then calls ID3::Frame::write(). It will also trim the text
+			 * content to fit within the maxmimum frame size.
 			 * 
 			 * @see ID3::Frame::write()
 			 */
@@ -217,6 +218,9 @@ namespace ID3 {
 			 * @see ID3::Frame::writeBody()
 			 */
 			virtual void writeBody();
+			
+			/** @see ID3::Frame::requiredSize() */
+			virtual inline ulong requiredSize() { return headerSize() + 1 + textContent.size(); }
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -656,6 +660,26 @@ namespace ID3 {
 			 */
 			virtual void writeBody();
 			
+			/** @see ID3::Frame::requiredSize() */
+			virtual inline ulong requiredSize() { return TextFrame::requiredSize() +
+			                                             (optionLanguage ? LANGUAGE_SIZE : 0) +
+			                                             (optionNoDescription ? 0 : textDescription.size() + 1); }
+			
+			/**
+			 * The read() method for TextFrame first gets the text encoding of the
+			 * frame at the 11th byte, and then reads the description and text, as
+			 * well as the language if the option is set. If text is not encoded in
+			 * UTF-8, it is converted to UTF-8 before saving it. If there is no
+			 * null characters after the encoding byte and (optional) language
+			 * bytes, then it will be assumed that the frame doesn't contain a
+			 * description.
+			 * 
+			 * NOTE: This will use the options that were given in the constructor.
+			 * 
+			 * @see ID3::Frame::read()
+			 */
+			virtual void read();
+			
 			/**
 			 * The description of the frame.
 			 * 
@@ -696,21 +720,6 @@ namespace ID3 {
 			 * @see ID3::DescriptiveTextFrame::OPTION_NO_DESCRIPTION
 			 */
 			const bool optionNoDescription;
-			
-			/**
-			 * The read() method for TextFrame first gets the text encoding of the
-			 * frame at the 11th byte, and then reads the description and text, as
-			 * well as the language if the option is set. If text is not encoded in
-			 * UTF-8, it is converted to UTF-8 before saving it. If there is no
-			 * null characters after the encoding byte and (optional) language
-			 * bytes, then it will be assumed that the frame doesn't contain a
-			 * description.
-			 * 
-			 * NOTE: This will use the options that were given in the constructor.
-			 * 
-			 * @see ID3::Frame::read()
-			 */
-			virtual void read();
 	};
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -816,6 +825,9 @@ namespace ID3 {
 			 * @see ID3::Frame::writeBody()
 			 */
 			virtual void writeBody();
+			
+			/** @see ID3::Frame::requiredSize() */
+			virtual inline ulong requiredSize() { return TextFrame::requiredSize() - 1; }
 	};
 }
 

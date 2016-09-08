@@ -251,6 +251,9 @@ ByteArray Frame::write() {
 		//This automatically clears any flags
 		frameContent = ByteArray(HEADER_SIZE, '\0');
 		
+		//Reserve space for the frame content
+		frameContent.reserve(requiredSize());
+		
 		//Save the frame name
 		for(ushort i = 0; i < 4 && i < id.size(); i++)
 			frameContent[i] = id[i];
@@ -261,7 +264,7 @@ ByteArray Frame::write() {
 		
 		//Save the grouping identity
 		if(GROUPING_IDENTITY) {
-			frameContent[9] = FLAG2_GROUPING_IDENTITY_V4;
+			frameContent[9] = frameContent[9] | FLAG2_GROUPING_IDENTITY_V4;
 			frameContent[HEADER_SIZE - 1] = GROUP_IDENTITY;
 		}
 		
@@ -372,7 +375,7 @@ ByteArray UnknownFrame::write() {
 	//If the frame is invalid, or the Discard Frame Upon Tag Alter flag is set,
 	//then clear the frame
 	if(flag(FrameFlag::DISCARD_UPON_TAG_ALTER_IF_UNKNOWN) || isNull || empty() ||
-	   frameContent.size() < HEADER_BYTE_SIZE) {
+	   frameContent.size() < HEADER_BYTE_SIZE || frameContent.size() > MAX_TAG_SIZE) {
 		frameContent = ByteArray();
 		isNull = true;
 	} else if(OLD_VERSION <= 3) {

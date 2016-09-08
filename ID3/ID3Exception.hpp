@@ -94,25 +94,6 @@ namespace ID3 {
 	};
 	
 	/**
-	 * An exception that is thrown when trying to read or write from a passed-in
-	 * file stream object, but the object is not open.
-	 */
-	class FileNotOpenException : virtual public Exception {
-		public:
-			/** @see ID3::Exception::Exception() */
-			FileNotOpenException() noexcept;
-			
-			/** @see ID3::Exception::Exception(std::exception&) */
-			FileNotOpenException(const std::exception& e) noexcept;
-			
-			/** @see ID3::Exception::Exception(std::string&) */
-			FileNotOpenException(const std::string& customError) noexcept;
-			
-			/** @see ID3::Exception::~Exception() */
-			virtual ~FileNotOpenException();
-	};
-	
-	/**
 	 * An exception that is thrown when trying to read/write tags from/to a file
 	 * that is not an MP3 or MP4 file.
 	 */
@@ -217,6 +198,25 @@ namespace ID3 {
 			
 			/** @see ID3::Exception::~Exception() */
 			virtual ~FrameSizeException();
+	};
+	
+	/**
+	 * An exception that is thrown when the an error occurs when writing to the
+	 * file, but one of the above exceptions don't cover the issue.
+	 */
+	class WriteException : virtual public Exception {
+		public:
+			/** @see ID3::Exception::Exception() */
+			WriteException() noexcept;
+			
+			/** @see ID3::Exception::Exception(std::exception&) */
+			WriteException(const std::exception& e) noexcept;
+			
+			/** @see ID3::Exception::Exception(std::string&) */
+			WriteException(const std::string& customError) noexcept;
+			
+			/** @see ID3::Exception::~Exception() */
+			virtual ~WriteException();
 	};
 }
 
