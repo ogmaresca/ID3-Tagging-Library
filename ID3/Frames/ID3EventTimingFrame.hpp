@@ -34,6 +34,7 @@ namespace ID3 {
 	 */
 	enum class TimingCodes : uint8_t {
 		PADDING                  = 0x0, //(has no meaning)
+		AUDIO_START              = 0x1,
 		INITIAL_SILENCE_END      = 0x1,
 		INTRO_START              = 0x2,
 		MAIN_PART_START          = 0x3,

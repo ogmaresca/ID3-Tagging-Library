@@ -1213,19 +1213,13 @@ void Tag::setTags(const V1::ExtendedTag& tags) {
 		addFrame(factory.createPair(Frames::FRAME_ARTIST, terminatedstring(tags.artist, 60)));
 		addFrame(factory.createPair(Frames::FRAME_ALBUM,  terminatedstring(tags.album, 60)));
 		addFrame(factory.createPair(Frames::FRAME_GENRE,  terminatedstring(tags.genre, 30)));
-		/* Placeholder comment for when I add playback speed support and support for start and end times.
-		uint speed;
-		startTime = atoi(tags.startTime);
-		endTime = atoi(tags.endTime);
-		speed = tags.speed;
 		
-		switch(speed) {
-			case 1: { playbackSpeed = V1::ExtendedSpeeds::SLOW; break; }
-			case 2: { playbackSpeed = V1::ExtendedSpeeds::MEDIUM; break; }
-			case 3: { playbackSpeed = V1::ExtendedSpeeds::FAST; break; }
-			case 4: { playbackSpeed = V1::ExtendedSpeeds::HARDCORE; break; }
-			case 0: default: { playbackSpeed = V1::ExtendedSpeeds::UNSET; break; }
-		}*/
+		//Set the start and end times
+		uint8_t startTime = atoi(tags.startTime), endTime = atoi(tags.endTime);
+		if(timingCode(TimingCodes::AUDIO_START).value != 0)
+			timingCode(TimingCodes::AUDIO_START, startTime, true);
+		if(timingCode(TimingCodes::AUDIO_END).value != 0)
+			timingCode(TimingCodes::AUDIO_END, endTime, true);
 	} catch(const std::exception& e) {
 		std::cerr << "Error in ID3::Tag::setTags(ID3::V1::ExtendedTag&): " << e.what() << '\n';
 	}

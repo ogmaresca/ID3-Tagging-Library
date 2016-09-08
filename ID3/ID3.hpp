@@ -13,7 +13,7 @@
 #ifndef ID3_HPP
 #define ID3_HPP
 
-#include <fstream>       //For std::ifstream and std::fstream
+#include <fstream>       //For std::fstream, std::ostream, and std::cout
 #include <vector>        //For std::vector
 #include <unordered_map> //For std::unordered_map and std::pair
 #include <memory>        //For std::shared_ptr
@@ -1298,7 +1298,7 @@ namespace ID3 {
 			 * @param file       The file stream object.
 			 * @param readFrames Whether to read frames or not.
 			 */
-			void readFile(std::istream& file, const bool readFrames=false);
+			void readFile(std::istream& file, const bool readFrames=true);
 			
 			/**
 			 * A constructor helper method that reads the ID3v1 tags from the file.
@@ -1306,7 +1306,7 @@ namespace ID3 {
 			 * @param file The file stream object.
 			 * @param readFrames Whether to read frames or not.
 			 */
-			void readFileV1(std::istream& file, const bool readFrames=false);
+			void readFileV1(std::istream& file, const bool readFrames=true);
 			
 			/**
 			 * A constructor helper method that reads the ID3v2 tags from the file.
@@ -1316,7 +1316,7 @@ namespace ID3 {
 			 * @throws ID3::FileFormatException if the ID3v2 tags on file are
 			 *         supposedly bigger than the file itself.
 			 */
-			void readFileV2(std::istream& file, const bool readFrames=false);
+			void readFileV2(std::istream& file, const bool readFrames=true);
 			
 			/**
 			 * A constructor helper method that gets a v1 tag struct and sets the class'
