@@ -103,9 +103,9 @@ bool Tag::operator!() const noexcept { return frames.empty(); }
 ///@pkg ID3.h
 void Tag::write(const std::string& fileLoc,
                 const float        paddingFactor,
-			       const bool         setFileNameUponSuccess,
-			       const bool         discardNonCoverPictures,
-			       const bool         discardUnknown) {
+                const bool         setFileNameUponSuccess,
+                const bool         discardNonCoverPictures,
+                const bool         discardUnknown) {
 	if(!setFileNameUponSuccess) filename = fileLoc;
 	validateFileLocation(fileLoc); //Throws NotMP3FileException
 	

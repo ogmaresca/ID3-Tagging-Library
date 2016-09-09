@@ -137,7 +137,7 @@ const std::unordered_map<std::string, Frames> FrameID::FRAME_STR_ENUM_MAP = [](c
 }(FrameID::FRAME_STR_LIST);
 
 ///@pkg ID3FrameID.h
-inline Frames FrameID::getFrameName(const std::string& frameID) noexcept {
+inline Frames FrameID::getFrameName(const std::string& frameID) {
 	auto itr = FRAME_STR_ENUM_MAP.find(frameID);
 	
 	return itr == FRAME_STR_ENUM_MAP.end() ?
@@ -148,7 +148,7 @@ inline Frames FrameID::getFrameName(const std::string& frameID) noexcept {
 }
 
 ///@pkg ID3FrameID.h
-inline std::string FrameID::getFrameName(const Frames frameID) noexcept {
+inline std::string FrameID::getFrameName(const Frames frameID) {
 	return static_cast<ushort>(frameID) >= FRAME_STR_LIST.size() ?
 	       //If an unknown Frames enum value is given, return the last frame ID
 	       //which should be an unknown frame
