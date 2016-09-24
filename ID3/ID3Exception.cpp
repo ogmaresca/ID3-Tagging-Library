@@ -53,8 +53,8 @@ FileNotFoundException::FileNotFoundException(const std::exception& e) noexcept :
 
 ///@pkg ID3Exception.hpp
 FileNotFoundException::FileNotFoundException(const std::string& customError) noexcept {
-	message = "ID3::FileNotFoundException: " + customError.empty() ? "file stream was not found!\n" :
-	                                                                 customError + '\n';
+	message = "ID3::FileNotFoundException: " + (customError.empty() ? "file stream was not found!\n" :
+	                                                                  customError + '\n');
 }
 
 ///@pkg ID3Exception.hpp

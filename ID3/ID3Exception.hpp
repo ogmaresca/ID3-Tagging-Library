@@ -43,14 +43,14 @@ namespace ID3 {
 			 * 
 			 * @param e Another exception object.
 			 */
-			Exception(const std::exception& e) noexcept;
+			explicit Exception(const std::exception& e) noexcept;
 			
 			/**
 			 * Create an Exception with a custom message.
 			 * 
 			 * @param customError The custom message.
 			 */
-			Exception(const std::string& customError) noexcept;
+			explicit Exception(const std::string& customError) noexcept;
 			
 			/**
 			 * The destructor.
@@ -84,10 +84,10 @@ namespace ID3 {
 			FileNotFoundException() noexcept;
 			
 			/** @see ID3::Exception::Exception(std::exception&) */
-			FileNotFoundException(const std::exception& e) noexcept;
+			explicit FileNotFoundException(const std::exception& e) noexcept;
 			
 			/** @see ID3::Exception::Exception(std::string&) */
-			FileNotFoundException(const std::string& customError) noexcept;
+			explicit FileNotFoundException(const std::string& customError) noexcept;
 			
 			/** @see ID3::Exception::~Exception() */
 			virtual ~FileNotFoundException();
@@ -103,10 +103,10 @@ namespace ID3 {
 			NotMP3FileException() noexcept;
 			
 			/** @see ID3::Exception::Exception(std::exception&) */
-			NotMP3FileException(const std::exception& e) noexcept;
+			explicit NotMP3FileException(const std::exception& e) noexcept;
 			
 			/** @see ID3::Exception::Exception(std::string&) */
-			NotMP3FileException(const std::string& customError) noexcept;
+			explicit NotMP3FileException(const std::string& customError) noexcept;
 			
 			/** @see ID3::Exception::~Exception() */
 			virtual ~NotMP3FileException();
@@ -122,10 +122,10 @@ namespace ID3 {
 			FileFormatException() noexcept;
 			
 			/** @see ID3::Exception::Exception(std::exception&) */
-			FileFormatException(const std::exception& e) noexcept;
+			explicit FileFormatException(const std::exception& e) noexcept;
 			
 			/** @see ID3::Exception::Exception(std::string&) */
-			FileFormatException(const std::string& customError) noexcept;
+			explicit FileFormatException(const std::string& customError) noexcept;
 			
 			/** @see ID3::Exception::~Exception() */
 			virtual ~FileFormatException();
@@ -140,10 +140,10 @@ namespace ID3 {
 			SizeException() noexcept;
 			
 			/** @see ID3::Exception::Exception(std::exception&) */
-			SizeException(const std::exception& e) noexcept;
+			explicit SizeException(const std::exception& e) noexcept;
 			
 			/** @see ID3::Exception::Exception(std::string&) */
-			SizeException(const std::string& customError) noexcept;
+			explicit SizeException(const std::string& customError) noexcept;
 			
 			/** @see ID3::Exception::~Exception() */
 			virtual ~SizeException();
@@ -161,10 +161,10 @@ namespace ID3 {
 			TagSizeException() noexcept;
 			
 			/** @see ID3::Exception::Exception(std::exception&) */
-			TagSizeException(const std::exception& e) noexcept;
+			explicit TagSizeException(const std::exception& e) noexcept;
 			
 			/** @see ID3::Exception::Exception(std::string&) */
-			TagSizeException(const std::string& customError) noexcept;
+			explicit TagSizeException(const std::string& customError) noexcept;
 			
 			/** @see ID3::Exception::~Exception() */
 			virtual ~TagSizeException();
@@ -182,10 +182,10 @@ namespace ID3 {
 			FrameSizeException() noexcept;
 			
 			/** @see ID3::Exception::Exception(std::exception&) */
-			FrameSizeException(const std::exception& e) noexcept;
+			explicit FrameSizeException(const std::exception& e) noexcept;
 			
 			/** @see ID3::Exception::Exception(std::string&) */
-			FrameSizeException(const std::string& customError) noexcept;
+			explicit FrameSizeException(const std::string& customError) noexcept;
 			
 			/**
 			 * Create an FrameSizeException with the frame ID and description in
@@ -210,10 +210,10 @@ namespace ID3 {
 			WriteException() noexcept;
 			
 			/** @see ID3::Exception::Exception(std::exception&) */
-			WriteException(const std::exception& e) noexcept;
+			explicit WriteException(const std::exception& e) noexcept;
 			
 			/** @see ID3::Exception::Exception(std::string&) */
-			WriteException(const std::string& customError) noexcept;
+			explicit WriteException(const std::string& customError) noexcept;
 			
 			/** @see ID3::Exception::~Exception() */
 			virtual ~WriteException();

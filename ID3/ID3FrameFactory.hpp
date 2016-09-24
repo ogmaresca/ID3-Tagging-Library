@@ -308,7 +308,7 @@ namespace ID3 {
 			 * 
 			 * @param The ID3v2 major version.
 			 */
-			FrameFactory(const ushort version);
+			explicit FrameFactory(const ushort version);
 			
 			/**
 			 * An internal method used to match each ID3 frame ID with

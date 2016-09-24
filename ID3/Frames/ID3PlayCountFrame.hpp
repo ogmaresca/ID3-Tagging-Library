@@ -118,7 +118,7 @@ namespace ID3 {
 			 * @param playCount The play count (defaults to 0).
 			 * @see ID3::Frame::Frame()
 			 */
-			PlayCountFrame(const unsigned long long playCount=0ULL) noexcept;
+			explicit PlayCountFrame(const unsigned long long playCount=0ULL) noexcept;
 			
 			/**
 			 * The read() method for PlayCountFrame reads the play count from the

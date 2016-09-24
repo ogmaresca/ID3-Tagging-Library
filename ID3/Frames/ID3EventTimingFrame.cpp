@@ -50,7 +50,7 @@ EventTimingFrame::~EventTimingFrame() {}
 FrameClass EventTimingFrame::type() const noexcept { return FrameClass::CLASS_EVENT_TIMING; }
 
 ///@pkg ID3EventTimingFrame.h
-bool EventTimingFrame::empty() const { return map.size() == 0; }
+bool EventTimingFrame::empty() const { return map.empty(); }
 
 ///@pkg ID3EventTimingFrame.h
 TimeStampFormat EventTimingFrame::format() const { return timeStampFormat; }

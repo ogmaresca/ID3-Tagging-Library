@@ -240,7 +240,7 @@ namespace ID3 {
 			 * @param type The picture type (optional). Defaults to the front cover.
 			 * 
 			 */
-			PictureFrame(const ByteArray pictureBytes,
+			PictureFrame(const ByteArray& pictureBytes,
 			             const std::string& mimeType,
 			             const std::string& description="",
 			             const PictureType type=PictureType::FRONT_COVER);

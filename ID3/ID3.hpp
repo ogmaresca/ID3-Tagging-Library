@@ -35,14 +35,20 @@
  * 
  * All strings are stored in UTF-8 text encoding.
  * 
- * ID3 class knowledge:
- *     The ID3::Tag class knows the C++ type equivalent of what each frame
- *     stores, and any special formatting the frame has, as well as the ID3
- *     header, footer, and ID3v1.
- *     The ID3::FrameFactory class knows the frame header and how to create a
- *     Frame object.
- *     The ID3::Frame class' children know how to parse and store the bytes of
- *     their frame(s), but not if the data is invalid or not.
+ * ID3 class roles:
+ * 	Tag handles the ID3v1 tags and the ID3v2 tag outside of the individual
+ *        frames, any special formatting a frame, storing frames, and access to
+ *        frames for code outside of the ID3-Tagging-Library.
+ *    FrameFactory handles reading the frame bytes off files, processing the
+ *         frame header, and creating the right Frame class for each frame type.
+ *    FrameID handles ensuring that each frame ID is a valid ID3v2 frame ID
+ *         supported by the library.
+ *    Frame and its children handle how to read the bytes of a frame body,
+ *         store its data as a relevant C++ data type, and re-create the frame
+ *         as binary data.
+ *    Exception and its children provide relevant information about errors that
+ *         occur in the library that cannot be reasonably solved by the method
+ *         throwing the exception.
  * 
  * ID3-Tagging-Library places a focus on compatibility when reading. As long as
  * there aren't any fundamental differences between ID3v2 versions (such as
@@ -220,7 +226,32 @@ namespace ID3 {
 	/**
 	 * A class that, given a file or filename, will read its ID3 tags.
 	 * Call Tag::null() after instantiation to check if the file was
-	 * properly read. Files must be .mp3 files.
+	 * properly read. Files must be MP3, MP4, or WAV files.
+	 * 
+	 * Frame/tag fields with their own methods:
+	 *     Album
+	 *     Album Artist
+	 *     Artist
+	 *     BPM
+	 *     Comment
+	 *     Composer
+	 *     Conductor
+	 *     Description
+	 *     Disc
+	 *     Disc Total
+	 *     Genre
+	 *     Language
+	 *     Lyrics
+	 *     Picture
+	 *     Play Count
+	 *     Publisher
+	 *     Rating
+	 *     Tagging Time (get method only)
+	 *     Timing Codes
+	 *     Title
+	 *     Track
+	 *     Track Total
+	 *     Year
 	 * 
 	 * Defined in ID3Tag.cpp.
 	 */	
@@ -234,16 +265,16 @@ namespace ID3 {
 			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
 			 *       be larger than the file itself, an ID3::FormatException will
 			 *       be thrown.
-			 * NOTE: If the file is not an MP3 or MP4 file an
+			 * NOTE: If the file is not an MP3, MP4, or WAV file an
 			 *       ID3::NotMP3FileException will be thrown.
 			 * 
 			 * @param fileLoc The file path.
 			 * @throws ID3::ID3FileNotFoundException if the file does not exist.
 			 * @throws ID3::FileFormatException if the ID3v2 tags on file are
 			 *         supposedly bigger than the file itself.
-			 * @throws ID3::NotMP3FileException if the file is not an MP3 or MP4 file.
+			 * @throws ID3::NotMP3FileException if the file is not an MP3, MP4, or WAV file.
 			 */
-			Tag(const std::string& fileLoc);
+			explicit Tag(const std::string& fileLoc);
 			
 			/**
 			 * A constructor that creates a blank Tag object without a file.
@@ -268,7 +299,7 @@ namespace ID3 {
 			 * NOTE: If the given file contains ID3v2 tags whose size is stated to
 			 *       be larger than the file itself, an ID3::FormatException will
 			 *       be thrown.
-			 * NOTE: If the file is not an MP3 or MP4 file a
+			 * NOTE: If the file is not an MP3, MP4, or WAV file a
 			 *       ID3::NotMP3FileException will be thrown.
 			 * NOTE: If another Tag object or another program has edited the ID3
 			 *       tags on the file between the creation of this object and the
@@ -282,6 +313,7 @@ namespace ID3 {
 			 *       size, then padding will be added to make it fit. If it is
 			 *       bigger, or a v1 tag is on file, then the entire file will be
 			 *       rewritten to contain the tags.
+			 * NOTE: The tagging time timestamp is in GMT, not your current timezone.
 			 * 
 			 * @param fileLoc        The file to write to.
 			 * @param paddingFactor  The padding to add to the tag, if the file
@@ -302,9 +334,15 @@ namespace ID3 {
 			 *                                pictures in the tag will not be saved.
 			 * @param discardUnknown An option to reduce tag size. If true, all
 			 *                       unknown frames will be discarded.
+			 * @param addTaggingTime If true, an ID3v2.4.0 timestamp of the time
+			 *                       write() was called will be added to the TDTG
+			 *                       frame (ID3::Frames::FRAME_TAGGING_TIME).
+			 *                       If false, any existing TDTG frame in the tags
+			 *                       will be discarded.
 			 * @throws ID3::FileNotFoundException if the file location saved in
 			 *         this object does not exist.
-			 * @throws ID3::NotMP3FileException if the file is not an MP3 file.
+			 * @throws ID3::NotMP3FileException if the file is not an MP3, MP4, or
+			 *         WAV file.
 			 * @throws ID3::FileFormatException if the existing ID3 tags on file
 			 *         are supposedly bigger than the file itself, or the ID3v1 and
 			 *         ID3v2 tags overlap on file.
@@ -317,7 +355,8 @@ namespace ID3 {
 			           const float        paddingFactor=0.1,
 			           const bool         setFileNameUponSuccess=true,
 			           const bool         discardNonCoverPictures=false,
-			           const bool         discardUnknown=false);
+			           const bool         discardUnknown=false,
+			           const bool         addTaggingTime=true);
 			
 			/**
 			 * Write the tags to the file. This method will write to the last valid
@@ -886,6 +925,80 @@ namespace ID3 {
 			inline void bpm(const ulong newBPM) { text(FRAME_BPM, std::to_string(newBPM)); }
 			
 			/**
+			 * Get the subtitle/description tag.
+			 * 
+			 * @return The description of the tag, or "" if no description is set.
+			 */
+			inline std::string description() const { return textString(FRAME_DESCRIPTION); }
+			/**
+			 * Set the subtitle/description tag.
+			 * 
+			 * @param newDescription The new description.
+			 */
+			inline void description(const std::string& newDescription) { text(FRAME_DESCRIPTION, newDescription); }
+			
+			/**
+			 * Get the conductor tag.
+			 * 
+			 * @return The conductor of the tag, or "" if no conductor is set.
+			 */
+			inline std::string conductor() const { return textString(FRAME_CONDUCTOR); }
+			/**
+			 * Set the conductor tag.
+			 * 
+			 * @param newConductor The new conductor.
+			 */
+			inline void conductor(const std::string& newConductor) { text(FRAME_CONDUCTOR, newConductor); }
+			
+			/**
+			 * Get the publisher tag.
+			 * 
+			 * @return The publisher of the tag, or "" if no publisher is set.
+			 */
+			inline std::string publisher() const { return textString(FRAME_PUBLISHER); }
+			/**
+			 * Set the publisher tag.
+			 * 
+			 * @param newPublisher The new publisher.
+			 */
+			inline void publisher(const std::string& newPublisher) { text(FRAME_PUBLISHER, newPublisher); }
+			
+			/**
+			 * Get the language of the tag.
+			 * 
+			 * NOTE: The language returned should be an ISO-639-2 code.
+			 * 
+			 * @return The language of the tag, or "" if no language is set.
+			 */
+			inline std::string language() const { return textString(FRAME_LANGUAGE); }
+			/** @see ID3::Tag::composer()
+			 *  @see ID3::Tag::textStrings(FrameID&) */
+			inline std::vector<std::string> languages() const { return textStrings(FRAME_LANGUAGE); }
+			/**
+			 * Set the language tag.
+			 * 
+			 * NOTE: The string being set should be an ISO-639-2 code.
+			 * 
+			 * @param newLanguage The new language.
+			 */
+			inline void language(const std::string& newLanguage) { text(FRAME_LANGUAGE, newLanguage); }
+			/** @see ID3::Tag::language(std::string&) */
+			inline void language(const std::vector<std::string>& newLanguage) { text(FRAME_LANGUAGE, newLanguage); }
+			/** @see ID3::Tag::language(std::string&) */
+			inline void languages(const std::vector<std::string>& newLanguages) { text(FRAME_LANGUAGE, newLanguages); }
+			
+			/**
+			 * Get the tagging time. The timestamp is in the ID3v2.4 timestamp
+			 * format (YYYY-MM-ddTHH:mm:ss).
+			 * 
+			 * NOTE: ID3-Tagging-Library will automatically set the tagging time
+			 *       when calling ID3::Tag::write().
+			 * 
+			 * @return The frame tagging time, or "" if it hasn't been set.
+			 */
+			inline std::string taggingTime() const { return textString(FRAME_TAGGING_TIME); }
+			
+			/**
 			 * Get the tag comments as a vector of Text structs.
 			 * 
 			 * @see ID3::Tag::texts(FrameID&)
@@ -897,7 +1010,7 @@ namespace ID3 {
 			 * @see ID3::Tag::comments()
 			 * @see ID3::Tag::text(FrameID&, std::function&)
 			 */
-			Text comment(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const { return text(FRAME_COMMENT, filterFunc); }
+			inline Text comment(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const { return text(FRAME_COMMENT, filterFunc); }
 			/**
 			 * Set or create the first comment tag.
 			 * 
@@ -922,6 +1035,43 @@ namespace ID3 {
 			inline void comment(const std::string& newComment,
 			                    const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc) {
 				text(FRAME_COMMENT, newComment, filterFunc);
+			}
+			
+			/**
+			 * Get the text of the first lyrics frame in the tags.
+			 * 
+			 * @see ID3::Tag::textString(FrameID&)
+			 */
+			inline std::string lyrics() const { return textString(FRAME_LYRICS); }
+			/** @see ID3::Tag::lyrics()
+			 *  @see ID3::Tag::text(FrameID&, std::function&) */
+			inline Text lyrics(const std::function<bool (const std::string&, const std::string&)>& filterFunc) const {
+				return text(FRAME_LYRICS, filterFunc);
+			}
+			/**
+			 * Set the first lyrics frame in the tags.
+			 * 
+			 * @see ID3::Tag::text(FrameID&, Text&)
+			 */
+			inline void lyrics(const Text& newLyrics) { text(FRAME_LYRICS, newLyrics); }
+			/** @see ID3::Tag::lyrics(Text&)
+			 *  @see ID3::Tag::text(FrameID&, Text&, std::function&) */
+			inline void lyrics(const Text& newLyrics,
+			                   const std::function<bool (const Text&)>& filterFunc) { text(FRAME_LYRICS, newLyrics, filterFunc); }
+			/** @see ID3::Tag::lyrics(Text&)
+			 *  @see ID3::Tag::text(FrameID&, Text&, std::function&) */
+			inline void lyrics(const Text& newLyrics,
+			                   const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc) {
+				text(FRAME_LYRICS, newLyrics, filterFunc);
+			}
+			/** @see ID3::Tag::lyrics(Text&)
+			 *  @see ID3::Tag::text(FrameID&, std::string&) */
+			inline void lyrics(const std::string& newLyrics) { text(FRAME_LYRICS, newLyrics); }
+			/** @see ID3::Tag::lyrics(Text&)
+			 *  @see ID3::Tag::text(FrameID&, std::string&, std::function&) */
+			inline void lyrics(const std::string& newLyrics,
+			                   const std::function<bool (const std::string&, const std::string&, const std::string&)>& filterFunc) {
+				text(FRAME_LYRICS, newLyrics, filterFunc);
 			}
 			
 			/**

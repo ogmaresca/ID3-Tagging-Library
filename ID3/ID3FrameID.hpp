@@ -462,6 +462,7 @@ namespace ID3 {
 		FRAME_URL_OFFICIAL_PUBLISHER = 92,
 		FRAMEID_WPUB                 = 92,
 		
+		FRAME_CUSTOM_URL       = 93,
 		FRAME_USER_DEFINED_URL = 93,
 		FRAME_URL_USER_DEFINED = 93,
 		FRAMEID_WXXX           = 93,

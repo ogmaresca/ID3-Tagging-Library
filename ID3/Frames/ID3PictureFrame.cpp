@@ -43,7 +43,7 @@ PictureFrame::PictureFrame(const ushort version,
 }
 
 ///@pkg ID3PictureFrame.h
-PictureFrame::PictureFrame(const ByteArray pictureBytes,
+PictureFrame::PictureFrame(const ByteArray& pictureBytes,
 			                  const std::string& mimeType,
 			                  const std::string& description,
 			                  const PictureType type) : Frame::Frame(FRAME_PICTURE),

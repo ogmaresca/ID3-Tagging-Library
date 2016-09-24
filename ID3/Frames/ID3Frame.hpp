@@ -410,7 +410,7 @@ namespace ID3 {
 			 * 
 			 * @param frameName The frame ID (defaults to Unknown Frame)
 			 */
-			Frame(const FrameID& frameName=Frames::FRAME_UNKNOWN_FRAME) noexcept;
+			explicit Frame(const FrameID& frameName=Frames::FRAME_UNKNOWN_FRAME) noexcept;
 			
 			/**
 			 * Read and process the bytes of an ID3v2 frame. This method should
@@ -586,7 +586,7 @@ namespace ID3 {
 			 * 
 			 * @see ID3::Frame::Frame(FrameID&)
 			 */
-			UnknownFrame(const FrameID& frameName=Frames::FRAME_UNKNOWN_FRAME) noexcept;
+			explicit UnknownFrame(const FrameID& frameName=Frames::FRAME_UNKNOWN_FRAME) noexcept;
 			
 			/**
 			 * The read() method for UnknownFrame is an empty method.

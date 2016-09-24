@@ -13,6 +13,7 @@
 #include <iostream>  //For std::string
 #include <cstring>   //For memcmp()
 #include <regex>     //For regular expressions
+#include <time.h>    //For strftime()
 
 #include "ID3.hpp"                      //For the Tag class definition
 #include "ID3Functions.hpp"             //For assorted functions
@@ -69,8 +70,27 @@ namespace {
 	 */
 	static void validateFileLocation(const std::string& fileLoc) {
 		//Check if the file is an MP3 file
-		if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4)$", std::regex::icase|std::regex::ECMAScript)))
+		if(!std::regex_search(fileLoc, std::regex("\\.(?:mp3|tag|mp4|m4a|m4p|m4b|m4r|m4v|wav|wave)$", std::regex::icase|std::regex::ECMAScript)))
 			throw NotMP3FileException("File \"" + fileLoc + "\" is not an MP3 or MP4 file!\n");
+	}
+	
+	/**
+	 * Get a timestamp of the current time in UTC, formatted according to the
+	 * ID3v2.4.0 standard (YYYY-MM-ddTHH:mm:ss).
+	 * 
+	 * @return The formatted timestamp.
+	 */
+	static std::string getCurrentID3V4Timestamp() {
+		try {
+			time_t rawtime;
+			time(&rawtime);
+			struct tm* utctime = gmtime(&rawtime);
+			char buffer [20];
+			strftime(buffer, 20, "%Y-%m-%dT%H:%M:%S", utctime);
+			return std::string(buffer, 20);
+		} catch(...) {
+			return "";
+		}
 	}
 }
 
@@ -105,7 +125,8 @@ void Tag::write(const std::string& fileLoc,
                 const float        paddingFactor,
                 const bool         setFileNameUponSuccess,
                 const bool         discardNonCoverPictures,
-                const bool         discardUnknown) {
+                const bool         discardUnknown,
+                const bool         addTaggingTime) {
 	if(!setFileNameUponSuccess) filename = fileLoc;
 	validateFileLocation(fileLoc); //Throws NotMP3FileException
 	
@@ -132,6 +153,16 @@ void Tag::write(const std::string& fileLoc,
 	
 	//Byte 5 is the flag, which is already initialized to 0. No flags are being set.
 	//Bytes 6-9 are the size, and have already been intialized to 0.
+	
+	//If the ID3v2 version is older, add the year to the TDRC frame
+	if(v2TagInfo.majorVer < 4) year(year());
+	
+	//Set the tagging time frame to the current UTC time, or delete it if
+	//addTaggingTime is false
+	if(addTaggingTime)
+		text(FRAME_TAGGING_TIME, getCurrentID3V4Timestamp());
+	else if(exists(FRAME_TAGGING_TIME))
+		text(FRAME_TAGGING_TIME, "");
 	
 	//Loop through every Frame and write it
 	bool foundCoverPicture = false;
@@ -161,7 +192,7 @@ void Tag::write(const std::string& fileLoc,
 	//Reset the v2 tag info
 	v2TagInfo = TagInfo();
 	v2TagInfo.majorVer = WRITE_VERSION;
-	v2TagInfo.majorVer = SUPPORTED_MINOR_VERSION;
+	v2TagInfo.minorVer = SUPPORTED_MINOR_VERSION;
 	v2TagInfo.paddingStart = binaryTagData.size();
 	
 	//If the data is smaller than the file's tag size, then extend it with padding
@@ -827,7 +858,6 @@ std::string Tag::getVersionString(bool verbose) const {
 		versionString += "v2." + std::to_string(v2TagInfo.majorVer) + ".";
 		versionString += std::to_string(v2TagInfo.minorVer);
 		if(verbose) {
-			std::string flagString;
 			if(v2TagInfo.flagUnsynchronisation) versionString += " -unsynchronisation";
 			if(v2TagInfo.flagExtHeader)         versionString += " -extendedheader";
 			if(v2TagInfo.flagExperimental)      versionString += " -experimental";
@@ -994,13 +1024,13 @@ void Tag::readFile(std::istream& file, const bool readFrames) {
 
 ///@pkg ID3.h
 void Tag::readFileV1(std::istream& file, const bool readFrames) {
-	V1::Tag tags;
-	V1::ExtendedTag extTags;
-	bool extTagsSet = false;
-	
 	if(filesize < V1::BYTE_SIZE) return;
 	
 	try {
+		V1::Tag tags;
+		V1::ExtendedTag extTags;
+		bool extTagsSet = false;
+		
 		file.seekg(-V1::BYTE_SIZE, std::ifstream::end);
 		if(file.fail()) return;
 		
